@@ -4,6 +4,7 @@ export interface IRegisterData {
     email: string;
     password: string;
     specializations: string
+    certificateUrl: string
   }
   
  export interface IRegisterResponse {

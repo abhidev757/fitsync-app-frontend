@@ -29,7 +29,7 @@ const adminRoutes = (
     <Route path="userDetails/:id" element={<UserDetails />} />
     <Route path="trainerDetails/:id" element={<TrainerDetails />} />
     <Route path="trainerVerification" element={<TrainerVerification />} />
-    <Route path="trainerVerificationDetails" element={<TrainerVerificationDetails />} />
+    <Route path="trainerVerificationDetails/:id" element={<TrainerVerificationDetails />} />
     <Route path="specialization" element={<Specialization />} />
     </Route>
     

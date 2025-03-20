@@ -9,15 +9,12 @@ import { RootState } from "../../store";
 interface TrainerDetails {
   name: string;
   email: string;
-  phoneNumber: string;
-  address: string;
+  phone: string;
   specializations: string;
   yearsOfExperience: number;
-  age: number;
-  dob: string;
   sex: string;
   profileImage: string;
-  certificateImage: string;
+  certificateUrl: string;
 }
 
 const TrainerDetails = () => {
@@ -72,12 +69,9 @@ const TrainerDetails = () => {
             <div className="space-y-4">
               <InfoRow label="Full Name" value={trainerData.name} />
               <InfoRow label="Email" value={trainerData.email} />
-              <InfoRow label="Phone Number" value={trainerData.phoneNumber} />
-              <InfoRow label="Address" value={trainerData.address} />
+              <InfoRow label="Phone Number" value={trainerData.phone} />
               <InfoRow label="Specialization" value={trainerData.specializations} />
               <InfoRow label="Years of Experience" value={`${trainerData.yearsOfExperience} years`} />
-              <InfoRow label="Age" value={trainerData.age ? trainerData.age.toString() : "N/A"} />
-              <InfoRow label="DOB" value={trainerData.dob || "N/A"} />
               <InfoRow label="Sex" value={trainerData.sex || "N/A"} />
             </div>
           </div>
@@ -87,7 +81,7 @@ const TrainerDetails = () => {
             <h2 className="text-white text-xl font-semibold mb-4">Certificate</h2>
             <div className="bg-white rounded-lg p-4">
               <img
-                src={trainerData.certificateImage || "/placeholder.svg"}
+                src={trainerData.certificateUrl || "/placeholder.svg"}
                 alt="Trainer Certificate"
                 className="w-full rounded-lg"
               />

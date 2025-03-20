@@ -1,9 +1,24 @@
 // src/components/trainer/TrainerSidebar.tsx
-import { Link, useLocation } from 'react-router-dom';
-import { Home, Calendar, MessageSquare, BookOpen, Clock, Wallet, User } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Home, Calendar, MessageSquare, BookOpen, Clock, Wallet, User, LogOut } from 'lucide-react';
+import { logoutTrainer } from '../../slices/trainerAuthSlice';
+import { LogoutTrainer } from '../../axios/trainerApi';
+import { AppDispatch } from '../../store';
+import { useDispatch } from 'react-redux';
 
 const TrainerSidebar = () => {
   const location = useLocation();
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const handleLogout = async () => {
+    try {
+      await LogoutTrainer()
+      dispatch(logoutTrainer());
+      navigate('/trainer/trainerSignin');
+    } catch (err) {
+      console.log(err);
+    }
+  };
   
   const menuItems = [
     { path: '/trainer/trainerDashboard', label: 'Home', icon: Home },
@@ -46,6 +61,10 @@ const TrainerSidebar = () => {
               </Link>
             );
           })}
+          <button onClick={handleLogout} className="flex items-center px-4 py-3 rounded-md text-gray-300 hover:bg-gray-700 w-full text-left">
+            <LogOut className="h-5 w-5 mr-3" />
+            Logout
+          </button>
         </nav>
       </div>
     </div>

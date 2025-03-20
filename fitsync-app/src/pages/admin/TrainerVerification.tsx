@@ -1,56 +1,40 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { fetchApplicants } from '../../axios/adminApi';
+import { format } from "date-fns";
 
 interface VerificationRequest {
-  id: number;
+  _id: string;
   name: string;
-  specialization: string;
+  specializations: string;
   status: string;
-  date: string;
+  createdAt: string;
 }
 
 const TrainerVerification = () => {
   const navigate = useNavigate()
   const [currentPage, setCurrentPage] = useState(1);
+  const [applicants, setApplicants] = useState<VerificationRequest[]>([]);
   
-  const verificationRequests: VerificationRequest[] = [
-    {
-      id: 1,
-      name: "John Doe",
-      specialization: "Yoga & Mindfulness",
-      status: "Pending",
-      date: "2023-10-01"
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      specialization: "Strength Training",
-      status: "Pending",
-      date: "2023-10-02"
-    },
-    {
-      id: 3,
-      name: "Emily Johnson",
-      specialization: "Nutrition Coaching",
-      status: "Pending",
-      date: "2023-10-03"
-    },
-    {
-      id: 4,
-      name: "Jane Smith",
-      specialization: "Strength Training",
-      status: "Pending",
-      date: "2023-10-02"
-    },
-    {
-      id: 5,
-      name: "Emily Johnson",
-      specialization: "Nutrition Coaching",
-      status: "Pending",
-      date: "2023-10-03"
-    }
-  ];
+  useEffect(() => {
+          const fetchAllApplicants = async () => {
+              try {
+                  const data = await fetchApplicants();
+                  setApplicants(data);
+              } catch (error) {
+                  console.error('Failed to fetch Applicants:', error);
+              }
+          };
+    
+          fetchAllApplicants();
+      }, []);
+
+      const handleViewTrainer = (id: string) => {
+        navigate(`/admin/trainerVerificationDetails/${id}`);
+      };
+
+      console.log("Trainer Data:",applicants);
 
   return (
     <div className="p-6">
@@ -66,9 +50,9 @@ const TrainerVerification = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                 Specialization
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+              {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                 Status
-              </th>
+              </th> */}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                 Date
               </th>
@@ -78,23 +62,23 @@ const TrainerVerification = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
-            {verificationRequests.map((request) => (
-              <tr key={request.id} className="bg-gray-800">
+            {applicants.map((request) => (
+              <tr key={request._id} className="bg-gray-800">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                   {request.name}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                  {request.specialization}
+                  {request.specializations}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                {/* <td className="px-6 py-4 whitespace-nowrap">
                   <span className="text-yellow-500">{request.status}</span>
-                </td>
+                </td> */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                  {request.date}
+                {format(new Date(request.createdAt), "dd/MM/yyyy")}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <button 
-                    onClick={() => navigate(`/admin/trainerVerificationDetails`) }
+                    onClick={()=>handleViewTrainer(request._id) }
                     className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded"
                   >
                     View

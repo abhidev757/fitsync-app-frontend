@@ -21,7 +21,7 @@ export const trainerGoogleSignin = async (data: { credential: string }): Promise
 };
 
 // Logout
-export const logoutTrainer = async () => {
+export const LogoutTrainer = async () => {
   await axiosInstance.post("/trainer/logoutTrainer");
 };
 
@@ -80,5 +80,19 @@ export const updateTrainerProfile = async (userData: ITrainerProfileEditData, us
     console.error("Error updating profile:", error);
     throw error;
   }
+
 };
+export const uploadCertificate = async (certificate: File) => {
+  const formData = new FormData();
+  formData.append("certificate", certificate); // Append the file to FormData
+
+  const response = await axiosInstance.post("/trainer/upload-certificate", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data", // Set the content type for file upload
+    },
+  });
+
+  return response.data; // Return the response data
+};
+
 

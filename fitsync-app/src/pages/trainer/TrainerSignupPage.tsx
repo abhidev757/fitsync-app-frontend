@@ -1,10 +1,9 @@
 import { useState, useEffect, FormEvent } from "react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
-import { registerTrainer, trainerGoogleSignin } from "../../axios/trainerApi";
+import { registerTrainer, trainerGoogleSignin, uploadCertificate } from "../../axios/trainerApi";
 import { toast } from "react-toastify";
-// import { IApiError } from "../../types/error.types";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 
 function SignupPage() {
@@ -12,6 +11,7 @@ function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [specializations, setSpecializations] = useState("");
+  const [certificate, setCertificate] = useState<File | null>(null); // State for certificate file
   const [errors, setErrors] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,13 +33,13 @@ function SignupPage() {
       toast.error("Google authentication failed. No credentials received.");
       return;
     }
-  
+
     setIsLoading(true);
     try {
       const data = await trainerGoogleSignin({
         credential: credentialResponse.credential,
       });
-  
+
       localStorage.setItem("userId", data._id);
       toast.success("Google Sign In successful!");
       navigate(data.isGoogleLogin ? "/trainer/TrainerDashboard" : "/");
@@ -56,35 +56,46 @@ function SignupPage() {
     }
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setErrors([]);
+  const [isUploading, setIsUploading] = useState(false);
 
-    try {
-      const data = await registerTrainer({ name, email, password, specializations });
-    
-      localStorage.setItem("trainerId", data._id);
-      localStorage.setItem("trainerEmailId", data.email);
-    
-      toast.success("Registration successful! Please verify your email.");
-      navigate("/trainerOtpVerification");
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        const axiosError = err as AxiosError<{ message?: string; errors?: string[] }>;
-        
-        if (axiosError.response?.data?.errors) {
-          setErrors(axiosError.response.data.errors);
-        } else {
-          setErrors(["An unexpected error occurred. Please try again later."]);
-        }
-    
-        toast.error(axiosError.response?.data?.message || "Registration failed.");
-      } else {
-        setErrors(["An unknown error occurred."]);
-        toast.error("An unknown error occurred.");
-      }
-    }
+const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setErrors([]);
+  
+  if (!certificate) {
+    toast.error("Please upload a certificate.");
+    return;
   }
+
+  if (isUploading) return;
+  setIsUploading(true);
+
+  try {
+    const response = await uploadCertificate(certificate);
+    console.log("Upload response:", response);
+    const certificateUrl = response.fileUrl;
+
+    const data = await registerTrainer({
+      name,
+      email,
+      password,
+      specializations,
+      certificateUrl,
+    });
+
+    localStorage.setItem("trainerId", data._id);
+    localStorage.setItem("trainerEmailId", data.email);
+
+    toast.success("Registration successful! Please verify your email.");
+    navigate("/trainerOtpVerification");
+  } catch (err) {
+    console.error("Registration Error:", err);
+    toast.error("An error occurred.");
+  } finally {
+    setIsUploading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -176,6 +187,25 @@ function SignupPage() {
                 </button>
               </div>
             </div>
+
+            {/* Certificate Upload Field */}
+            <div className="space-y-2">
+              <label htmlFor="certificate" className="block text-sm font-medium">
+                Certificate
+              </label>
+              <input
+                id="certificate"
+                type="file"
+                required
+                accept=".pdf,.doc,.docx"
+                className="w-full p-3 rounded bg-gray-800 border border-gray-700"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    setCertificate(e.target.files[0]);
+                  }
+                }}
+              />
+            </div>
           </div>
 
           <div className="flex space-x-4 pt-4">
@@ -188,9 +218,9 @@ function SignupPage() {
             </button>
 
             <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => toast.error("Google Sign In was unsuccessful")}
-              />
+              onSuccess={handleGoogleSuccess}
+              onError={() => toast.error("Google Sign In was unsuccessful")}
+            />
           </div>
 
           <div className="text-center pt-4">

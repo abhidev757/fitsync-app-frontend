@@ -12,11 +12,11 @@ export default function OTPVerification() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedEmailId = localStorage.getItem("emailId");
+    const storedEmailId = localStorage.getItem("trainerEmailId");
     if (storedEmailId) {
       setEmailId(storedEmailId);
     } else {
-      navigate("/trainer/trainerSignup");
+      navigate("/trainerSignup");
     }
   }, [navigate]);
 
@@ -61,7 +61,7 @@ export default function OTPVerification() {
       await verifyTrainerOtp({ otp: otp.join(""), emailId });
 
       toast.success("Email verified successfully!");
-      navigate("/trainer/trainerDashboard");
+      navigate("/trainerSignin");
     }  catch (error) {
       if (error instanceof AxiosError) {
         console.error("OTP Verification Error:", error);

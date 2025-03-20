@@ -44,5 +44,31 @@ export const getTrainerById = async (id: string) => {
   const response = await axiosInstance.get(`/admin/getTrainer/${id}`);
   return response.data;
 };
+// Add Specialization
+export const addSpecialization = async (specializationData: { name: string; description: string }) => {
+  const response = await axiosInstance.post("/admin/addSpecialization", specializationData);
+  return response.data;
+};
+// Fetch All Specializations
+export const getAllSpecializations = async () => {
+  const response = await axiosInstance.get('/admin/getAllSpecializations');
+  return response.data;
+};
 
+// Toggle Specialization Status
+export const toggleSpecializationStatus = async (name: string, isBlock: boolean) => {
+  const response = await axiosInstance.put(`/admin/toggleSpecializationStatus`, { name,isBlock });
+  return response.data;
+};
 
+export const fetchApplicants = async () => {
+  try {
+    const response = await axiosInstance.get(`/admin/fetchApplicants`);
+    console.log("Response Data",response.data);
+    
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Trainer Applicants:", error);
+    throw error;
+  }
+};
