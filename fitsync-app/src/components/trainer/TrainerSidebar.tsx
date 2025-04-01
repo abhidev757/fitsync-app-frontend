@@ -25,7 +25,7 @@ const TrainerSidebar = () => {
     { path: '/trainer/sessions', label: 'Sessions', icon: Calendar },
     { path: '/trainer/chat', label: 'Chat', icon: MessageSquare },
     { path: '/trainer/bookings', label: 'Bookings', icon: BookOpen },
-    { path: '/trainer/schedules', label: 'Current Schedules', icon: Clock },
+    { path: '/trainer/timeSlots', label: 'Current Schedules', icon: Clock },
     { path: '/trainer/wallet', label: 'Wallet', icon: Wallet },
     { path: '/trainer/trainerProfile', label: 'Account', icon: User },
   ];

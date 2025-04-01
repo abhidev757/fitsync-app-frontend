@@ -15,6 +15,8 @@ import TrainerPrivateRoute from "../pages/trainer/TrainerPrivateRoutes";
 import BookingsPage from "../pages/trainer/Bookings";
 import BookingDetailsPage from "../pages/trainer/BookingDetails";
 import WalletPage from "../pages/trainer/Wallet";
+import VerificationStatus from "../pages/trainer/VerificationStatus";
+import TimeSlots from "../pages/trainer/TimeSlots";
 
 const trainerRoutes = (
   <Route path="/" element={<App />}>
@@ -26,13 +28,15 @@ const trainerRoutes = (
     <Route path="trainerReset-password/:token" element={<TrainerResetPassword />} />
     <Route path="trainerForgotPassword" element={<TrainerForgotPassword />} />
     <Route path="trainerotpVerification" element={<TrainerOTPVerificationPage />} />
+    <Route path="verificationStatus" element={<VerificationStatus />} />
     <Route element={<TrainerPrivateRoute/>} >
     <Route path="trainer" element={<TrainerLayout/>}>
     <Route path="trainerDashboard" element={<TrainerDashboard />} />
     <Route path="trainerProfile" element={<TrainerProfile />} />
     <Route path="bookings" element={<BookingsPage />} />
-    <Route path="bookingsDetails" element={<BookingDetailsPage />} />
+    <Route path="bookingsDetails/:bookingId" element={<BookingDetailsPage />} />
     <Route path="wallet" element={<WalletPage />} />
+    <Route path="timeSlots" element={<TimeSlots />} />
     </Route>
     </Route>
   </Route>

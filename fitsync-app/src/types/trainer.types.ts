@@ -5,6 +5,7 @@ export interface IRegisterData {
     password: string;
     specializations: string
     certificateUrl: string
+    profileImageUrl: string
   }
   
  export interface IRegisterResponse {
@@ -24,3 +25,12 @@ export interface IRegisterData {
     specialization: string
   }
  }
+
+ export interface ITimeSlotData {
+  sessionType: string;
+  startDate: string;
+  endDate: string;
+  time: string;
+  price: string;
+  numberOfSessions: string | null;
+}

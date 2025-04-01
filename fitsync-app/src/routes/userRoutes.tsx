@@ -20,6 +20,7 @@ import TrainersList from "../pages/user/TrainerList";
 import TrainerDetails from "../pages/user/TrainerDetailsPage";
 import BookingCheckout from "../pages/user/TrainerBookingCheckout";
 import PaymentSuccess from "../pages/user/BookingSuccess";
+import MySessions from "../pages/user/MySessions";
 
 const userRoutes = (
   <Route path="/" element={<App />}>
@@ -44,9 +45,10 @@ const userRoutes = (
     <Route path="userProfile" element={<UserProfile />} />
     <Route path="userProfileEdit" element={<UserProfileEdit />} />
     <Route path="trainersList" element={<TrainersList />} />
-    <Route path="trainerDetails" element={<TrainerDetails />} />
-    <Route path="bookingCheckout" element={<BookingCheckout />} />
+    <Route path="trainerDetails/:id" element={<TrainerDetails />} />
+    <Route path="bookingCheckout/:id" element={<BookingCheckout />} />
     <Route path="paymentSuccess" element={<PaymentSuccess />} />
+    <Route path="mySessions" element={<MySessions />} />
     </Route>
     </Route>
   </Route>

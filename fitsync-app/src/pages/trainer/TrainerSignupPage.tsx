@@ -1,20 +1,40 @@
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, useCallback } from "react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
-import { registerTrainer, trainerGoogleSignin, uploadCertificate } from "../../axios/trainerApi";
+import {
+  registerTrainer,
+  trainerGoogleSignin,
+  uploadCertificate,
+  uploadProfileImage,
+} from "../../axios/trainerApi";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
+import Cropper from "react-easy-crop";
+import { getCroppedImg } from "../../util/cropImage"; // Utility function to crop the image
+interface Area {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+}
 
 function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [specializations, setSpecializations] = useState("");
-  const [certificate, setCertificate] = useState<File | null>(null); // State for certificate file
+  const [certificate, setCertificate] = useState<File | null>(null);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string>("");
+  const [croppedImage, setCroppedImage] = useState<File | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,7 +48,9 @@ function SignupPage() {
     setShowPassword(!showPassword);
   };
 
-  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+  const handleGoogleSuccess = async (
+    credentialResponse: CredentialResponse
+  ) => {
     if (!credentialResponse.credential) {
       toast.error("Google authentication failed. No credentials received.");
       return;
@@ -56,46 +78,76 @@ function SignupPage() {
     }
   };
 
-  const [isUploading, setIsUploading] = useState(false);
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setProfileImage(file);
+      setProfileImageUrl(URL.createObjectURL(file));
+    }
+  };
 
-const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setErrors([]);
-  
-  if (!certificate) {
-    toast.error("Please upload a certificate.");
-    return;
-  }
+  const onCropComplete = useCallback(
+    (croppedArea: Area, croppedAreaPixels: Area) => {
+      setCroppedAreaPixels(croppedAreaPixels);
+    },
+    []
+  );
 
-  if (isUploading) return;
-  setIsUploading(true);
+  const handleCrop = async () => {
+    if (!profileImageUrl || !croppedAreaPixels) return;
 
-  try {
-    const response = await uploadCertificate(certificate);
-    console.log("Upload response:", response);
-    const certificateUrl = response.fileUrl;
+    try {
+      const croppedImg = await getCroppedImg(
+        profileImageUrl,
+        croppedAreaPixels
+      );
+      setCroppedImage(croppedImg);
+    } catch (error) {
+      console.error("Failed to crop the image:", error);
+      toast.error("Error cropping the image.");
+    }
+  };
 
-    const data = await registerTrainer({
-      name,
-      email,
-      password,
-      specializations,
-      certificateUrl,
-    });
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setErrors([]);
 
-    localStorage.setItem("trainerId", data._id);
-    localStorage.setItem("trainerEmailId", data.email);
+    if (!certificate || !croppedImage) {
+      toast.error("Please upload all required files.");
+      return;
+    }
 
-    toast.success("Registration successful! Please verify your email.");
-    navigate("/trainerOtpVerification");
-  } catch (err) {
-    console.error("Registration Error:", err);
-    toast.error("An error occurred.");
-  } finally {
-    setIsUploading(false);
-  }
-};
+    if (isUploading) return;
+    setIsUploading(true);
 
+    try {
+      const certificateResponse = await uploadCertificate(certificate);
+      const certificateUrl = certificateResponse.fileUrl;
+
+      const profileResponse = await uploadProfileImage(croppedImage);
+      const profileUrl = profileResponse.fileUrl;
+
+      const data = await registerTrainer({
+        name,
+        email,
+        password,
+        specializations,
+        certificateUrl,
+        profileImageUrl: profileUrl,
+      });
+
+      localStorage.setItem("trainerId", data._id);
+      localStorage.setItem("trainerEmailId", data.email);
+
+      toast.success("Registration successful! Please verify your email.");
+      navigate("/trainerOtpVerification");
+    } catch (err) {
+      console.error("Registration Error:", err);
+      toast.error("An error occurred.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -118,7 +170,10 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl mx-auto w-full">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6 max-w-4xl mx-auto w-full"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label htmlFor="name" className="block text-sm font-medium">
@@ -136,7 +191,10 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="specialization" className="block text-sm font-medium">
+              <label
+                htmlFor="specialization"
+                className="block text-sm font-medium"
+              >
                 Specialization
               </label>
               <input
@@ -188,9 +246,11 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
               </div>
             </div>
 
-            {/* Certificate Upload Field */}
             <div className="space-y-2">
-              <label htmlFor="certificate" className="block text-sm font-medium">
+              <label
+                htmlFor="certificate"
+                className="block text-sm font-medium"
+              >
                 Certificate
               </label>
               <input
@@ -205,6 +265,72 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
                   }
                 }}
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label
+                htmlFor="profileImage"
+                className="block text-sm font-medium"
+              >
+                Profile Picture
+              </label>
+              <input
+                id="profileImage"
+                type="file"
+                accept="image/*"
+                className="w-full p-3 rounded bg-gray-800 border border-gray-700"
+                onChange={handleImageChange}
+              />
+              {profileImageUrl && (
+  <div className="mt-4">
+    {/* Flex container for side-by-side layout */}
+    <div className="flex flex-row gap-4">
+      {/* Cropping Container */}
+      <div
+        className="crop-container"
+        style={{
+          width: "300px",
+          height: "300px",
+          position: "relative",
+        }}
+      >
+        <Cropper
+          image={profileImageUrl}
+          crop={crop}
+          zoom={zoom}
+          aspect={1}
+          onCropChange={setCrop}
+          onZoomChange={setZoom}
+          onCropComplete={onCropComplete}
+        />
+      </div>
+
+      {/* Cropped Preview (smaller and aside the original image) */}
+      {croppedImage && (
+        <div className="flex flex-col items-center">
+          <h3 className="text-sm font-medium mb-2">Cropped Preview:</h3>
+          <img
+            src={URL.createObjectURL(croppedImage)}
+            alt="Cropped"
+            className="border border-gray-500 rounded-md"
+            style={{ width: "150px", height: "150px" }} // Adjust size here
+          />
+        </div>
+      )}
+    </div>
+
+    {/* Crop Button (placed below the side-by-side layout) */}
+    <button
+      type="button"
+      onClick={handleCrop}
+      className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200"
+    >
+      Crop Image
+    </button>
+  </div>
+)}
             </div>
           </div>
 
@@ -226,7 +352,10 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
           <div className="text-center pt-4">
             <p className="text-gray-400">
               Have an account?
-              <Link to="/trainerSignin" className="ml-1 text-white hover:underline">
+              <Link
+                to="/trainerSignin"
+                className="ml-1 text-white hover:underline"
+              >
                 Login Now
               </Link>
             </p>

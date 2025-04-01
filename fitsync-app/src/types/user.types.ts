@@ -36,3 +36,22 @@ export interface IProfileEditData {
     activity?: "Little or No Activity" | "Lightly Active" | "Moderately Active" | "Very Active";
   };
 }
+
+export interface PaymentIntentRequest {
+  amount: number;
+  userId: string
+  trainerId: string;
+  sessionTime: string;
+  startDate: string;
+  isPackage: boolean;
+}
+
+export interface BookingRequest {
+  user: string
+  trainer: string;
+  sessionTime: string;
+  startDate: string;
+  isPackage: boolean;
+  paymentId: string;
+  amount: number;
+}

@@ -1,20 +1,48 @@
 "use client"
 
 import type React from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { CheckCircle } from "lucide-react"
+
+interface BookingData {
+  trainer: {
+    name: string;
+    // Add other trainer properties if available
+  };
+  time: string;
+  startDate: string;
+  isPackage: boolean;
+  total: number;
+}
 
 const PaymentSuccess: React.FC = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+  
+  // Get booking data from navigation state
+  const bookingData = location.state?.booking as BookingData | undefined
+  console.log('Booking Data:',bookingData);
+  
 
-  // Mock payment data
+  // Mock payment data (fallback if no booking data)
   const paymentData = {
     transactionId: "1234567890",
-    amount: 150.0,
-    date: "October 5, 2023",
-    name: "John Doe",
-    email: "john.doe@example.com",
-    address: "123 Main Street, Anytown, USA",
+    date: new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    }),
+    ...(bookingData ? {
+      amount: bookingData.total,
+      name: "Your Name", // You might want to get this from user data
+      email: "user@example.com", // You might want to get this from user data
+      address: "User Address", // You might want to get this from user data
+    } : {
+      amount: 150.0,
+      name: "John Doe",
+      email: "john.doe@example.com",
+      address: "123 Main Street, Anytown, USA",
+    })
   }
 
   return (
@@ -49,6 +77,28 @@ const PaymentSuccess: React.FC = () => {
             </div>
           </div>
 
+          {/* Booking Information */}
+          {bookingData && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-[#d9ff00] mb-2">Booking Details</h2>
+              <div className="bg-[#2a2a2a] rounded-lg p-4">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <span className="text-gray-400">Trainer:</span>
+                  <span>{bookingData.trainer.name}</span>
+
+                  <span className="text-gray-400">Session Time:</span>
+                  <span>{bookingData.time}</span>
+
+                  <span className="text-gray-400">Start Date:</span>
+                  <span>{bookingData.startDate}</span>
+
+                  <span className="text-gray-400">Type:</span>
+                  <span>{bookingData.isPackage ? "Package" : "Single Session"}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Billing Information */}
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-[#d9ff00] mb-2">Billing Information</h2>
@@ -69,7 +119,7 @@ const PaymentSuccess: React.FC = () => {
           {/* Back to home button */}
           <button
             className="w-full bg-[#d9ff00] hover:bg-[#c8e600] text-black font-medium py-3 rounded-lg"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/user/dashboard")}
           >
             Go to Home
           </button>
@@ -80,4 +130,3 @@ const PaymentSuccess: React.FC = () => {
 }
 
 export default PaymentSuccess
-

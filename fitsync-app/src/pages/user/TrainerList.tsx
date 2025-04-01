@@ -4,77 +4,26 @@ import type React from "react"
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { Star, ChevronLeft, ChevronRight } from "lucide-react"
+import { fetchTrainers } from "../../axios/userApi"
 
 interface Trainer {
-  id: number
+  _id: string
   name: string
-  role: string
-  image: string
+  specializations: string
+  profileImageUrl: string
   rating: number
   description: string
 }
 
-const trainers: Trainer[] = [
-  {
-    id: 1,
-    name: "Sarah M",
-    role: "Yoga Instructor",
-    image: "https://via.placeholder.com/80",
-    rating: 5,
-    description:
-      "Certified yoga instructor with 5 years of experience in diverse styles. Focuses on breath control and mindfulness.",
-  },
-  {
-    id: 2,
-    name: "Vibin",
-    role: "Personal Trainer",
-    image: "https://via.placeholder.com/80",
-    rating: 5,
-    description: "10 years of experience helping clients achieve their fitness goals through tailored programs.",
-  },
-  {
-    id: 3,
-    name: "Tomas",
-    role: "Meditation Coach",
-    image: "https://via.placeholder.com/80",
-    rating: 5,
-    description: "Mindfulness and meditation coach with a holistic approach to mental wellness.",
-  },
-  // Duplicated for demonstration purposes
-  {
-    id: 4,
-    name: "Vibin",
-    role: "Personal Trainer",
-    image: "https://via.placeholder.com/80",
-    rating: 5,
-    description: "10 years of experience helping clients achieve their fitness goals through tailored programs.",
-  },
-  {
-    id: 5,
-    name: "Sarah M",
-    role: "Yoga Instructor",
-    image: "https://via.placeholder.com/80",
-    rating: 5,
-    description:
-      "Certified yoga instructor with 5 years of experience in diverse styles. Focuses on breath control and mindfulness.",
-  },
-  {
-    id: 6,
-    name: "Tomas",
-    role: "Meditation Coach",
-    image: "https://via.placeholder.com/80",
-    rating: 5,
-    description: "Mindfulness and meditation coach with a holistic approach to mental wellness.",
-  },
-]
+const trainers: Trainer[] = await fetchTrainers();
 
 const TrainersList: React.FC = () => {
-  const [filters, setFilters] = useState({
-    specialization: "",
-    experienceLevel: "",
-    availability: "",
-    language: "",
-  })
+  // const [filters, setFilters] = useState({
+  //   specialization: "",
+  //   experienceLevel: "",
+  //   availability: "",
+  //   language: "",
+  // })
 
   const [sortOption, setSortOption] = useState("price-low")
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -98,17 +47,17 @@ const TrainersList: React.FC = () => {
           <div className="flex-1">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {trainers.map((trainer) => (
-                <div key={trainer.id} className="bg-[#1a1a1a] rounded-lg overflow-hidden relative">
+                <div key={trainer._id} className="bg-[#1a1a1a] rounded-lg overflow-hidden relative">
                   <div className="p-4">
                     <div className="flex items-center gap-3 mb-2">
                       <img
-                        src={trainer.image || "/placeholder.svg"}
+                        src={trainer.profileImageUrl || "/placeholder.svg"}
                         alt={trainer.name}
                         className="w-16 h-16 rounded-full object-cover"
                       />
                       <div>
                         <h3 className="text-[#d9ff00] font-bold">{trainer.name}</h3>
-                        <p className="text-sm text-gray-300">{trainer.role}</p>
+                        <p className="text-sm text-gray-300">{trainer.specializations}</p>
                       </div>
                     </div>
 
@@ -117,12 +66,12 @@ const TrainersList: React.FC = () => {
                     <p className="text-sm text-gray-300 mb-4 line-clamp-2">{trainer.description}</p>
 
                     <div className="flex justify-between items-center">
-                      <Link to={`/trainers/${trainer.id}`}>
+                      <Link to={`/user/trainerDetails/${trainer._id}`}>
                         <button className="bg-[#2a2a2a] hover:bg-[#333333] text-xs font-medium py-1 px-4 rounded-full">
                           Book Session
                         </button>
                       </Link>
-                      <Link to={`/user/trainerDetails`} className="text-[#d9ff00] text-xs">
+                      <Link to={`/user/trainerDetails/${trainer._id}`} className="text-[#d9ff00] text-xs">
                         View Profile
                       </Link>
                     </div>

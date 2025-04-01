@@ -15,6 +15,7 @@ interface TrainerDetails {
   sex: string;
   profileImage: string;
   certificateUrl: string;
+  profileImageUrl: string;
 }
 
 const TrainerDetails = () => {
@@ -59,7 +60,7 @@ const TrainerDetails = () => {
             {/* Profile Image */}
             <div className="mb-6">
               <img
-                src={trainerData.profileImage || "/placeholder.svg"}
+                src={trainerData.profileImageUrl || "/placeholder.svg"}
                 alt={trainerData.name}
                 className="w-48 h-48 rounded-lg object-cover"
               />

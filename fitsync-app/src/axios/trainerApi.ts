@@ -1,6 +1,6 @@
 import axiosInstance from "./axiosInstance";
 import { IforgotPasswordData, IGoogleLogin, ILoginData, IOtp, IResendOtpData, IresetPasswordData } from "../types/auth.types";
-import { IRegisterData, IRegisterResponse, ITrainerProfileEditData } from "../types/trainer.types";
+import { IRegisterData, IRegisterResponse, ITimeSlotData, ITrainerProfileEditData } from "../types/trainer.types";
 
 // Trainer Registration
 export const registerTrainer = async (data: IRegisterData|IRegisterResponse) => {
@@ -92,7 +92,52 @@ export const uploadCertificate = async (certificate: File) => {
     },
   });
 
-  return response.data; // Return the response data
+  return response.data;
 };
 
+export const uploadProfileImage = async (profileImage: File) => {
+  const formData = new FormData();
+  formData.append("profileImage", profileImage);
 
+  const response = await axiosInstance.post("/trainer/upload-profile", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data", 
+    },
+  });
+
+  return response.data;
+};
+
+// Trainer Registration
+export const addTimeSlot = async (data: ITimeSlotData) => {
+  const userId = localStorage.getItem("trainerId");
+
+  if (!userId) {
+    throw new Error("Trainer ID not found. Please register first.");
+  }
+
+  const requestBody = { userId, ...data };
+  const response = await axiosInstance.post("/trainer/addTimeSlot", requestBody);
+  return response.data;
+};
+
+export const getTimeSlots = async () => {
+  const response = await axiosInstance.get("/trainer/getTimeSlots");
+  return response
+};
+
+export const deleteTimeSlot = async (date: string, time: string) => {
+  const response = await axiosInstance.delete("/trainer/timeSlots", {
+    data: { date, time }
+  });
+  return response.data;
+};
+
+export const getTrainerBookings = async (trainerId:string) => {
+  const response = await axiosInstance.get(`/trainer/get-trainerBookings/${trainerId}`);
+  return response.data;
+}
+export const getBookingsDetails = async (bookingId:string) => {
+  const response = await axiosInstance.get(`/trainer/get-bookings-details/${bookingId}`);
+  return response.data;
+}

@@ -60,7 +60,7 @@ export const toggleSpecializationStatus = async (name: string, isBlock: boolean)
   const response = await axiosInstance.put(`/admin/toggleSpecializationStatus`, { name,isBlock });
   return response.data;
 };
-
+//Fetch applicants
 export const fetchApplicants = async () => {
   try {
     const response = await axiosInstance.get(`/admin/fetchApplicants`);
@@ -70,5 +70,24 @@ export const fetchApplicants = async () => {
   } catch (error) {
     console.error("Error fetching Trainer Applicants:", error);
     throw error;
+  }
+};
+//Approve Trainer
+export const approveTrainer = async (id: string) => {
+  try {
+      const response = await axiosInstance.put(`/admin/approveTrainer/${id}`);
+      return response;
+  } catch (error) {
+      console.error("Error in approveTrainer API call:", error);
+      throw error; 
+  }
+};
+export const rejectTrainer = async (id: string,data:{reason:string}) => {
+  try {
+      const response = await axiosInstance.put(`/admin/rejectTrainer/${id}`,data);
+      return response;
+  } catch (error) {
+      console.error("Error in rejectTrainer API call:", error);
+      throw error; 
   }
 };

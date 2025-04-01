@@ -1,6 +1,6 @@
 import axiosInstance from "./axiosInstance";
 import { IGoogleLogin, ILoginData, IOtp, IResendOtpData, IresetPasswordData,IforgotPasswordData } from "../types/auth.types";
-import { IProfileEditData, IRegisterData,IRegisterResponse, IUserFitnessData } from "../types/user.types";
+import { BookingRequest, IProfileEditData, IRegisterData,IRegisterResponse, IUserFitnessData, PaymentIntentRequest } from "../types/user.types";
 
 // User Registration
 export const registerUser = async (data: IRegisterData|IRegisterResponse) => {
@@ -94,3 +94,43 @@ export const profileEdit = async (data: IProfileEditData, userId: string) => {
     throw error;
   }
 };
+//Fetch Trainers
+export const fetchTrainers = async () => {
+  try {
+    const response = await axiosInstance.get(`/user/fetchTrainers`);
+    console.log("Response Data",response.data);
+    
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Traines:", error);
+    throw error;
+  }
+};
+
+//fetching trainer Info
+export const fetchTrainer = async (userId: string) => {
+  try {
+    const response = await axiosInstance.get(`/user/getTrainerDetails/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Trainer profile:", error);
+    throw error;
+  }
+};
+
+
+  export const createPaymentIntent = async (data: PaymentIntentRequest) => {
+    console.log('Create payment data:',data);
+    
+    const response = await axiosInstance.post('/user/create-payment-intent', data);
+    return response.data;
+  }
+  
+  export const createBooking = async (data: BookingRequest) => {
+    const response = await axiosInstance.post('/user/create-bookings', data);
+    return response.data;
+  }
+  export const getBookings = async (userId:string) => {
+    const response = await axiosInstance.get(`/user/get-bookings/${userId}`);
+    return response.data;
+  }

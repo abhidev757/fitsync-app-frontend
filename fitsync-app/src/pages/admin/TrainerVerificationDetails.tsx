@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getTrainerById } from '../../axios/adminApi';
+import { getTrainerById,approveTrainer, rejectTrainer } from '../../axios/adminApi';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { toast } from 'react-toastify';
@@ -13,12 +13,14 @@ interface TrainerVerification {
   specializations: string;
   yearsOfExperience: string;
   sex: string;
-  profileImage: string;
+  profileImageUrl: string;
   certificateUrl: string;
+  reason:string;
 }
 
 const TrainerVerificationDetails = () => {
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const navigate = useNavigate();
   const { adminInfo } = useSelector((state: RootState) => state.adminAuth);
@@ -28,6 +30,7 @@ const TrainerVerificationDetails = () => {
       navigate('/adminLogin');
     }
   }, [navigate, adminInfo]);
+
   const { id } = useParams<{ id: string }>() as { id: string };
   const [trainerData, setTrainerData] = useState<TrainerVerification | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,18 +56,52 @@ const TrainerVerificationDetails = () => {
   if (!trainerData) return <p className="text-white text-center">Trainer not found</p>;
 
   const handleApprove = () => {
-    // Handle approval logic
-    console.log('Approved');
+    setShowApproveModal(true);
+  };
+
+  const handleConfirmApprove = async () => {
+    try {
+      const response = await approveTrainer(id)
+      console.log("Response ",response);
+      
+
+      if (response.status === 200) {
+        toast.success("Trainer approved successfully");
+        navigate('/admin/trainerVerification'); // Example: navigate back to the trainers list
+      } else {
+        toast.error("Failed to approve trainer");
+      }
+    } catch (error) {
+      toast.error("An error occurred while approving the trainer");
+      console.error(error);
+    } finally {
+      setShowApproveModal(false);
+    }
   };
 
   const handleReject = () => {
     setShowRejectModal(true);
   };
 
-  const handleSubmitRejection = () => {
-    // Handle rejection logic with reason
+  const handleSubmitRejection = async() => {
     console.log('Rejected with reason:', rejectReason);
-    setShowRejectModal(false);
+    try {
+      const response = await rejectTrainer(id,{reason:rejectReason})
+      console.log("Response ",response);
+      
+
+      if (response.status === 200) {
+        toast.success("Trainer rejected successfully");
+        navigate('/admin/trainerVerification'); // Example: navigate back to the trainers list
+      } else {
+        toast.error("Failed to reject trainer");
+      }
+    } catch (error) {
+      toast.error("An error occurred while rejecting the trainer");
+      console.error(error);
+    } finally {
+      setShowRejectModal(false);
+    }
   };
 
   return (
@@ -76,7 +113,7 @@ const TrainerVerificationDetails = () => {
             {/* Profile Image */}
             <div className="mb-6">
               <img
-                src={trainerData.profileImage || "/placeholder.svg"}
+                src={trainerData.profileImageUrl || "/placeholder.svg"}
                 alt={trainerData.name}
                 className="w-48 h-48 rounded-lg object-cover"
               />
@@ -94,21 +131,20 @@ const TrainerVerificationDetails = () => {
           </div>
 
           {/* Right Column - Certificate */}
-            <div>
-              <h2 className="text-white text-xl font-semibold mb-4">Certificate</h2>
-              <div className="bg-white rounded-lg p-4">
-                {trainerData.certificateUrl ? (
-                  <iframe
-                    src={trainerData.certificateUrl}
-                    title="Trainer Certificate"
-                    className="w-full h-96 rounded-lg"
-                  />
-                ) : (
-                  <p className="text-gray-500 text-center">No certificate available</p>
-                )}
-              </div>
+          <div>
+            <h2 className="text-white text-xl font-semibold mb-4">Certificate</h2>
+            <div className="bg-white rounded-lg p-4">
+              {trainerData.certificateUrl ? (
+                <iframe
+                  src={trainerData.certificateUrl}
+                  title="Trainer Certificate"
+                  className="w-full h-96 rounded-lg"
+                />
+              ) : (
+                <p className="text-gray-500 text-center">No certificate available</p>
+              )}
             </div>
-
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -153,6 +189,32 @@ const TrainerVerificationDetails = () => {
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               >
                 Send
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approval Confirmation Modal */}
+      {showApproveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-lg w-full">
+            <h2 className="text-xl font-semibold text-white mb-4">
+              Confirm Approval
+            </h2>
+            <p className="text-white mb-6">Are you sure you want to approve this trainer?</p>
+            <div className="flex justify-end gap-4 mt-4">
+              <button
+                onClick={() => setShowApproveModal(false)}
+                className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmApprove}
+                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+              >
+                Yes, Approve
               </button>
             </div>
           </div>

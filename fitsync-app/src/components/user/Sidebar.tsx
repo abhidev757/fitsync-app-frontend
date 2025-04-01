@@ -32,15 +32,15 @@ const Sidebar = () => {
         </Link>
 
         <Link
-          to="/activities"
-          className={`p-3 rounded-lg ${isActive("/activities") ? "bg-[#2a2a2a]" : "hover:bg-[#2a2a2a]"}`}
+          to="/user/mySessions"
+          className={`p-3 rounded-lg ${isActive("/user/mySessions") ? "bg-[#2a2a2a]" : "hover:bg-[#2a2a2a]"}`}
         >
           <BarChart2 className="w-6 h-6 text-[#d9ff00]" />
         </Link>
 
         <Link
           to="/user/trainersList"
-          className={`p-3 rounded-lg ${isActive("/trainers") ? "bg-[#2a2a2a]" : "hover:bg-[#2a2a2a]"}`}
+          className={`p-3 rounded-lg ${isActive("/user/trainersList") ? "bg-[#2a2a2a]" : "hover:bg-[#2a2a2a]"}`}
         >
           <Users className="w-6 h-6 text-[#d9ff00]" />
         </Link>
