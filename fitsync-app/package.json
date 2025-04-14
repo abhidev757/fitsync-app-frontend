@@ -24,6 +24,7 @@
     "class-variance-authority": "^0.7.1",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
+    "framer-motion": "^12.6.3",
     "install": "^0.13.0",
     "lucide-react": "^0.476.0",
     "npm": "^11.1.0",
@@ -39,7 +40,8 @@
     "react-toastify": "^11.0.5",
     "tailwind-merge": "^3.0.2",
     "tailwindcss": "^4.0.8",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",

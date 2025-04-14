@@ -49,9 +49,16 @@ export interface PaymentIntentRequest {
 export interface BookingRequest {
   user: string
   trainer: string;
+  clientName: string;
+  clientEmail: string;
   sessionTime: string;
   startDate: string;
   isPackage: boolean;
   paymentId: string;
   amount: number;
+}
+
+export interface passReq {
+  currentPassword: string;
+  newPassword: string;
 }

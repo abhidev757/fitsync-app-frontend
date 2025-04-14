@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import AuthLayout from "./AuthLayout";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -22,6 +21,13 @@ const SigninPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { userInfo } = useSelector((state: RootState) => state.auth);
 
+  
+useEffect(() => {
+  if (userInfo) {
+    navigate("/user/dashboard");
+  }
+}, [userInfo, navigate]);
+
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) {
       toast.error("Google authentication failed. No credentials received.");
@@ -37,7 +43,7 @@ const SigninPage: React.FC = () => {
       localStorage.setItem("userId", data._id);
       dispatch(setCredentials(data));
 
-      navigate(data.isGoogleLogin ? "/dashboard" : "/");
+      navigate(data.isGoogleLogin ? "/user/dashboard" : "/");
     } catch (err: unknown) {
       console.error("Google Login Error:", err);
       const error = err as IApiError;
@@ -85,7 +91,7 @@ const SigninPage: React.FC = () => {
               type="email"
               autoComplete="email"
               required
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 focus:z-10 sm:text-sm"
+              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-white rounded-t-md focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 focus:z-10 sm:text-sm"
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -98,7 +104,7 @@ const SigninPage: React.FC = () => {
               type="password"
               autoComplete="current-password"
               required
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 focus:z-10 sm:text-sm"
+              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-white rounded-b-md focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 focus:z-10 sm:text-sm"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

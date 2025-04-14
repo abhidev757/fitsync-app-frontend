@@ -7,8 +7,9 @@ import { CheckCircle } from "lucide-react"
 interface BookingData {
   trainer: {
     name: string;
-    // Add other trainer properties if available
   };
+  clientName: string;
+  clientEmail: string;
   time: string;
   startDate: string;
   isPackage: boolean;
@@ -21,29 +22,26 @@ const PaymentSuccess: React.FC = () => {
   
   // Get booking data from navigation state
   const bookingData = location.state?.booking as BookingData | undefined
-  console.log('Booking Data:',bookingData);
-  
+  console.log('Booking Data:', bookingData);
+
+  // Get user info from localStorage
+  const userInfoString = localStorage.getItem('userInfo');
+  const userInfo = userInfoString ? JSON.parse(userInfoString) : null;
 
   // Mock payment data (fallback if no booking data)
-  const paymentData = {
-    transactionId: "1234567890",
-    date: new Date().toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    }),
-    ...(bookingData ? {
-      amount: bookingData.total,
-      name: "Your Name", // You might want to get this from user data
-      email: "user@example.com", // You might want to get this from user data
-      address: "User Address", // You might want to get this from user data
-    } : {
-      amount: 150.0,
-      name: "John Doe",
-      email: "john.doe@example.com",
-      address: "123 Main Street, Anytown, USA",
-    })
-  }
+  // const paymentData = {
+  //   transactionId: "1234567890",
+  //   date: new Date().toLocaleDateString('en-US', { 
+  //     year: 'numeric', 
+  //     month: 'long', 
+  //     day: 'numeric' 
+  //   }),
+  //   ...(bookingData ? {
+  //     amount: bookingData.total,
+  //   } : {
+  //     amount: 150.0,
+  //   })
+  // }
 
   return (
     <div className="min-h-screen bg-[#121212] text-white flex items-center justify-center">
@@ -61,7 +59,7 @@ const PaymentSuccess: React.FC = () => {
           </div>
 
           {/* Transaction Details */}
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <h2 className="text-lg font-semibold text-[#d9ff00] mb-2">Transaction Details</h2>
             <div className="bg-[#2a2a2a] rounded-lg p-4">
               <div className="grid grid-cols-2 gap-2 text-sm">
@@ -75,7 +73,7 @@ const PaymentSuccess: React.FC = () => {
                 <span>{paymentData.date}</span>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Booking Information */}
           {bookingData && (
@@ -99,19 +97,16 @@ const PaymentSuccess: React.FC = () => {
             </div>
           )}
 
-          {/* Billing Information */}
+          {/* Billing Information (Now using localStorage userInfo) */}
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-[#d9ff00] mb-2">Billing Information</h2>
             <div className="bg-[#2a2a2a] rounded-lg p-4">
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <span className="text-gray-400">Name:</span>
-                <span>{paymentData.name}</span>
+                <span>{userInfo?.name || "Not available"}</span>
 
                 <span className="text-gray-400">Email:</span>
-                <span>{paymentData.email}</span>
-
-                <span className="text-gray-400">Address:</span>
-                <span>{paymentData.address}</span>
+                <span className="truncate" >{userInfo?.email || "Not available"}</span>
               </div>
             </div>
           </div>

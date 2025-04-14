@@ -13,7 +13,7 @@ const Sidebar = () => {
     try {
       await LogoutAdmin()
       dispatch(logoutAdmin());
-      navigate('/admin/Login');
+      navigate('/adminLogin');
     } catch (err) {
       console.log(err);
     }

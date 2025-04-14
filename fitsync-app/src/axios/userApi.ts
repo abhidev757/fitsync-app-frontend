@@ -1,6 +1,6 @@
 import axiosInstance from "./axiosInstance";
 import { IGoogleLogin, ILoginData, IOtp, IResendOtpData, IresetPasswordData,IforgotPasswordData } from "../types/auth.types";
-import { BookingRequest, IProfileEditData, IRegisterData,IRegisterResponse, IUserFitnessData, PaymentIntentRequest } from "../types/user.types";
+import { BookingRequest, IProfileEditData, IRegisterData,IRegisterResponse, IUserFitnessData, passReq, PaymentIntentRequest } from "../types/user.types";
 
 // User Registration
 export const registerUser = async (data: IRegisterData|IRegisterResponse) => {
@@ -134,3 +134,36 @@ export const fetchTrainer = async (userId: string) => {
     const response = await axiosInstance.get(`/user/get-bookings/${userId}`);
     return response.data;
   }
+  export const getPayment = async (userId:string) => {
+    const response = await axiosInstance.get(`/user/get-bookings/${userId}`);
+    return response.data;
+  }
+
+  //Fetch Specializations
+export const fetchSpecialization = async () => {
+  try {
+    const response = await axiosInstance.get(`/user/fetchSpecializations`);
+    console.log("Specialization Data",response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Traines:", error);
+    throw error;
+  }
+};
+export const changePassword = async (userId:string,data: passReq) => {
+  const response = await axiosInstance.post(`/user/changePassword/${userId}`, data);
+  return response.data;
+}
+
+export const uploadUserProfilePicture = async (profileImage: File,userId:string) => {
+  const formData = new FormData();
+  formData.append("profileImage", profileImage);
+
+  const response = await axiosInstance.post(`/user/upload-profile/${userId}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data;
+};

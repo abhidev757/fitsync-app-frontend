@@ -141,3 +141,8 @@ export const getBookingsDetails = async (bookingId:string) => {
   const response = await axiosInstance.get(`/trainer/get-bookings-details/${bookingId}`);
   return response.data;
 }
+
+export const getWalletDetails = async (trainerId:string) => {
+  const response = await axiosInstance.get(`/trainer/wallet/${trainerId}`);
+  return response.data;
+};

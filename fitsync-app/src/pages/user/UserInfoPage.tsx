@@ -18,7 +18,7 @@ const UserInfo: React.FC = () => {
     try {
       const data = { sex, age, height, weight, targetWeight, activity };
       await submitUserFitnessData(data);
-      navigate('/user/dashboard')
+      navigate('/signin')
     } catch (error) {
       console.log("Failed to submit fitness data.",error);
       alert("Failed to submit fitness data.");

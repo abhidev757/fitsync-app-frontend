@@ -60,16 +60,22 @@ const CheckoutForm: React.FC<{
     e.preventDefault();
     setProcessing(true);
     setError(null);
-
+  
     if (!stripe || !elements) return;
-
+  
     try {
-
+      // 1. Get user data from localStorage
       const userId = localStorage.getItem('userId');
-      if (!userId) {
+      const userInfoString = localStorage.getItem('userInfo');
+  
+      if (!userId || !userInfoString) {
         throw new Error("User not authenticated");
       }
-      // 1. Create payment intent
+  
+      // Parse userInfo (since localStorage stores strings)
+      const userInfo = JSON.parse(userInfoString);
+  
+      // 2. Create payment intent
       const { clientSecret } = await createPaymentIntent({
         amount: total * 100,
         userId: userId,
@@ -78,32 +84,34 @@ const CheckoutForm: React.FC<{
         startDate: booking.startDate,
         isPackage: booking.isPackage
       });
-
-      // 2. Confirm payment
+  
+      // 3. Confirm payment
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: elements.getElement(CardElement)!,
           billing_details: {
-            name: "Customer Name", // Replace with actual user name
+            name: userInfo.name, // Now properly accessed from parsed userInfo
           },
         },
       });
-
+  
       if (stripeError) throw stripeError;
-
+  
       if (paymentIntent?.status === "succeeded") {
-        // 3. Create booking
+        // 4. Create booking
         await createBooking({
           user: userId,
           trainer: trainer._id,
+          clientName:userInfo.name,
+          clientEmail:userInfo.email,
           sessionTime: booking.time,
           startDate: booking.startDate,
           isPackage: booking.isPackage,
           paymentId: paymentIntent.id,
           amount: total
         });
-
-        // 4. Navigate to success
+  
+        // 5. Navigate to success
         onSuccess();
       }
     } catch (err: any) {

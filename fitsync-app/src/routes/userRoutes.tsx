@@ -21,6 +21,8 @@ import TrainerDetails from "../pages/user/TrainerDetailsPage";
 import BookingCheckout from "../pages/user/TrainerBookingCheckout";
 import PaymentSuccess from "../pages/user/BookingSuccess";
 import MySessions from "../pages/user/MySessions";
+import ChangePassword from "../pages/user/ChangePassword";
+import BlockedPage from "../components/BlockPage";
 
 const userRoutes = (
   <Route path="/" element={<App />}>
@@ -36,6 +38,7 @@ const userRoutes = (
     <Route path="reset-password/:token" element={<ResetPasswordPage />} />
     <Route path="OtpVerification" element={<UserOTPVerificationPage />} />
     <Route path="userInfo" element={<UserInfoPage />} />
+    <Route path="blocked" element={<BlockedPage />} />
     
     {/*Private Routes*/}
     <Route element={<PrivateRoute/>} >
@@ -49,6 +52,7 @@ const userRoutes = (
     <Route path="bookingCheckout/:id" element={<BookingCheckout />} />
     <Route path="paymentSuccess" element={<PaymentSuccess />} />
     <Route path="mySessions" element={<MySessions />} />
+    <Route path="changePassword" element={<ChangePassword />} />
     </Route>
     </Route>
   </Route>

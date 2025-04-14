@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useEffect, useState, useCallback } from "react";
-import axios,{AxiosError} from "axios";
+import {AxiosError} from "axios";
 import AuthLayout from "./AuthLayout";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +14,7 @@ const OTPVerificationPage: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState<number>(60);
   const [isOtpExpired, setIsOtpExpired] = useState<boolean>(false);
   const navigate = useNavigate();
+  console.log(isOtpExpired);
 
   useEffect(() => {
     const storedEmailId = localStorage.getItem("emailId")
@@ -71,8 +72,9 @@ const OTPVerificationPage: React.FC = () => {
       toast.success("Email verified successfully!");
       navigate("/userInfo");
     } catch (err) {
-      const error = err as AxiosError<{ message: string }>;
-      toast.error(error.response?.data?.message || "OTP verification failed.");
+      console.log(err);
+      // const error = err as AxiosError<{ message: string }>;
+      toast.error("OTP verification failed.");
     }
   };
   
