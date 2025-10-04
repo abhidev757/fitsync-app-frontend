@@ -23,7 +23,7 @@ const TrainerSidebar = () => {
   const menuItems = [
     { path: '/trainer/trainerDashboard', label: 'Home', icon: Home },
     { path: '/trainer/sessions', label: 'Sessions', icon: Calendar },
-    { path: '/trainer/chat', label: 'Chat', icon: MessageSquare },
+    { path: '/trainer/trainerChat', label: 'Chat', icon: MessageSquare },
     { path: '/trainer/bookings', label: 'Bookings', icon: BookOpen },
     { path: '/trainer/timeSlots', label: 'Current Schedules', icon: Clock },
     { path: '/trainer/wallet', label: 'Wallet', icon: Wallet },

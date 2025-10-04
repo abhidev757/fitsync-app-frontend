@@ -82,12 +82,10 @@ const UserManagement = () => {
     if (!selectedUser || !pendingAction) return;
   
     try {
-      // Block = true, Unblock = false
       const newStatus = pendingAction === "Block";
   
       await updateUserStatus(selectedUser._id, newStatus);
   
-      // Update local state to reflect new status
       setUsers((prev) =>
         prev.map((u) =>
           u._id === selectedUser._id ? { ...u, isBlocked: newStatus } : u
@@ -141,8 +139,8 @@ const UserManagement = () => {
         <span
           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
             user.isBlocked
-              ? "bg-yellow-100 text-yellow-800"  // when blocked
-              : "bg-green-100 text-green-800"     // when active
+              ? "bg-yellow-100 text-yellow-800"  
+              : "bg-green-100 text-green-800"     
           }`}
         >
           {user.isBlocked ? "Blocked" : "Active"}

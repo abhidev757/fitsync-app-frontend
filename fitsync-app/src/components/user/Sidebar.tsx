@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Home, Users, BarChart2, Heart, LogOut } from "lucide-react"
+import { Home, Users, BarChart2, Heart, LogOut, Wallet } from "lucide-react"
 import { logoutUser } from "../../axios/userApi"
 
 const Sidebar = () => {
@@ -50,6 +50,13 @@ const Sidebar = () => {
           className={`p-3 rounded-lg ${isActive("/favorites") ? "bg-[#2a2a2a]" : "hover:bg-[#2a2a2a]"}`}
         >
           <Heart className="w-6 h-6 text-[#d9ff00]" />
+        </Link>
+
+        <Link
+          to="/user/userWallet"
+          className={`p-3 rounded-lg ${isActive("/user/userWallet") ? "bg-[#2a2a2a]" : "hover:bg-[#2a2a2a]"}`}
+        >
+          <Wallet className="w-6 h-6 text-[#d9ff00]" />
         </Link>
       </nav>
 

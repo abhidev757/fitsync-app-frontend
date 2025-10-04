@@ -67,7 +67,7 @@ const TrainerVerificationDetails = () => {
 
       if (response.status === 200) {
         toast.success("Trainer approved successfully");
-        navigate('/admin/trainerVerification'); // Example: navigate back to the trainers list
+        navigate('/admin/trainerVerification'); 
       } else {
         toast.error("Failed to approve trainer");
       }
@@ -92,7 +92,7 @@ const TrainerVerificationDetails = () => {
 
       if (response.status === 200) {
         toast.success("Trainer rejected successfully");
-        navigate('/admin/trainerVerification'); // Example: navigate back to the trainers list
+        navigate('/admin/trainerVerification'); 
       } else {
         toast.error("Failed to reject trainer");
       }

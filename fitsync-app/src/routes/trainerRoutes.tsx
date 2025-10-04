@@ -17,6 +17,7 @@ import BookingDetailsPage from "../pages/trainer/BookingDetails";
 import WalletPage from "../pages/trainer/Wallet";
 import VerificationStatus from "../pages/trainer/VerificationStatus";
 import TimeSlots from "../pages/trainer/TimeSlots";
+import TrainerChat from "../pages/trainer/TrainerChat";
 
 const trainerRoutes = (
   <Route path="/" element={<App />}>
@@ -37,6 +38,7 @@ const trainerRoutes = (
     <Route path="bookingsDetails/:bookingId" element={<BookingDetailsPage />} />
     <Route path="wallet" element={<WalletPage />} />
     <Route path="timeSlots" element={<TimeSlots />} />
+    <Route path="trainerChat" element={<TrainerChat />} />
     </Route>
     </Route>
   </Route>

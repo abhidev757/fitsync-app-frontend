@@ -23,6 +23,9 @@ import PaymentSuccess from "../pages/user/BookingSuccess";
 import MySessions from "../pages/user/MySessions";
 import ChangePassword from "../pages/user/ChangePassword";
 import BlockedPage from "../components/BlockPage";
+import ChatPage from "../pages/user/Chat";
+import WalletPage from "../pages/user/UserWallet";
+import BookingDetails from "../pages/user/BookingDetails";
 
 const userRoutes = (
   <Route path="/" element={<App />}>
@@ -53,6 +56,9 @@ const userRoutes = (
     <Route path="paymentSuccess" element={<PaymentSuccess />} />
     <Route path="mySessions" element={<MySessions />} />
     <Route path="changePassword" element={<ChangePassword />} />
+    <Route path="chat/:id" element={<ChatPage />} />
+    <Route path="userWallet" element={<WalletPage />} />
+    <Route path="bookingDetails/:bookingId" element={<BookingDetails />} />
     </Route>
     </Route>
   </Route>

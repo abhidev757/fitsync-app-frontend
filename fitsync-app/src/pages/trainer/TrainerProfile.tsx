@@ -35,14 +35,15 @@ const TrainerProfile = () => {
 
   const [formData, setFormData] = useState({
     name: "",
-    yearsOfExperience: 0, // Change to number
+    yearsOfExperience: 0, 
     sex: null as "Male" | "Female" | null | undefined,
     specialization: "",
     email: "",
     phone: "",
+    avatar: "",
   });
 
-  // Fetch trainer profile data on component mount
+
   useEffect(() => {
     const fetchProfileData = async () => {
       if (!trainerId) {
@@ -57,11 +58,12 @@ const TrainerProfile = () => {
         if (profile) {
           setFormData({
             name: profile.name || "",
-            yearsOfExperience: profile.yearsOfExperience || 0, // Ensure it's a number
+            yearsOfExperience: profile.yearsOfExperience || 0,
             sex: profile.sex || null,
             specialization: profile.specialization || "",
             email: profile.email || "",
             phone: profile.phone || "",
+            avatar: profile.profileImageUrl || "",
           });
         }
       } catch (error) {
@@ -75,11 +77,11 @@ const TrainerProfile = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
-    // Handle the "yearsOfExperience" field separately to convert it to a number
+ 
     if (name === "yearsOfExperience") {
       setFormData((prev) => ({
         ...prev,
-        [name]: Number(value), // Convert to number
+        [name]: Number(value), 
       }));
     } else {
       setFormData((prev) => ({
@@ -92,17 +94,17 @@ const TrainerProfile = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Guard clause: Ensure trainerId is defined
+  
     if (!trainerId) {
       console.error("Trainer ID is not available. Please log in.");
       return;
     }
 
     try {
-      // Prepare the data for the API call
+     
       const userData = {
         name: formData.name,
-        yearsOfExperience: formData.yearsOfExperience, // Already a number
+        yearsOfExperience: formData.yearsOfExperience, 
         sex: formData.sex,
         specialization: formData.specialization,
         email: formData.email,
@@ -111,15 +113,15 @@ const TrainerProfile = () => {
       console.log("Data to be sent:",userData);
       
 
-      // Make the API call to update the trainer profile
+     
       const response = await updateTrainerProfile({userData}, trainerId);
 
-      // Handle the response (e.g., show a success message)
+  
       console.log("Profile updated successfully:", response);
 
-      // Optionally, navigate to another page or show a success notification
+      
     } catch (error) {
-      // Handle errors (e.g., show an error message)
+      
       console.error("Failed to update profile:", error);
     }
   };
@@ -180,7 +182,7 @@ const TrainerProfile = () => {
           <div className="bg-gray-800 rounded-lg p-6 text-center">
             <div className="relative inline-block">
               <img
-                src="/placeholder.svg?height=120&width=120"
+                src={formData.avatar}
                 alt="Trainer Profile"
                 className="w-24 h-24 rounded-full mx-auto mb-4"
               />

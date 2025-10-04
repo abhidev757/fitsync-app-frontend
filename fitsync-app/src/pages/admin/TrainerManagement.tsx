@@ -103,7 +103,6 @@ const TrainerManagement = () => {
     }
   };
 
-  // Filter trainers based on search term
   const filteredTrainers = trainers.filter((trainer) => 
     trainer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (Array.isArray(trainer.specializations) &&
@@ -113,13 +112,11 @@ const TrainerManagement = () => {
     )
   );
 
-  // Calculate pagination
   const paginatedTrainers = filteredTrainers.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
-  // Update total pages when search term changes
   useEffect(() => {
     const newTotalPages = Math.max(1, Math.ceil(filteredTrainers.length / ITEMS_PER_PAGE));
     setTotalPages(newTotalPages);
@@ -166,7 +163,7 @@ const TrainerManagement = () => {
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         trainer.isBlocked ? "bg-red-500 text-white" : "bg-green-500 text-white"
                       }`}>
-                        {trainer.isBlocked}
+                        {trainer.isBlocked ? 'Blocked' : 'Active'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">

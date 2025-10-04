@@ -28,20 +28,7 @@ const PaymentSuccess: React.FC = () => {
   const userInfoString = localStorage.getItem('userInfo');
   const userInfo = userInfoString ? JSON.parse(userInfoString) : null;
 
-  // Mock payment data (fallback if no booking data)
-  // const paymentData = {
-  //   transactionId: "1234567890",
-  //   date: new Date().toLocaleDateString('en-US', { 
-  //     year: 'numeric', 
-  //     month: 'long', 
-  //     day: 'numeric' 
-  //   }),
-  //   ...(bookingData ? {
-  //     amount: bookingData.total,
-  //   } : {
-  //     amount: 150.0,
-  //   })
-  // }
+ 
 
   return (
     <div className="min-h-screen bg-[#121212] text-white flex items-center justify-center">
@@ -58,22 +45,7 @@ const PaymentSuccess: React.FC = () => {
             </p>
           </div>
 
-          {/* Transaction Details */}
-          {/* <div className="mb-6">
-            <h2 className="text-lg font-semibold text-[#d9ff00] mb-2">Transaction Details</h2>
-            <div className="bg-[#2a2a2a] rounded-lg p-4">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <span className="text-gray-400">Transaction ID:</span>
-                <span>{paymentData.transactionId}</span>
-
-                <span className="text-gray-400">Amount Paid:</span>
-                <span>${paymentData.amount.toFixed(2)}</span>
-
-                <span className="text-gray-400">Date:</span>
-                <span>{paymentData.date}</span>
-              </div>
-            </div>
-          </div> */}
+         
 
           {/* Booking Information */}
           {bookingData && (

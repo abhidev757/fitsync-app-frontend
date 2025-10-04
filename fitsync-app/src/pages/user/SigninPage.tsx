@@ -66,7 +66,7 @@ useEffect(() => {
     } catch (err: unknown) {
       const error = err as IApiError;
       console.error("Login Error:", error);
-      toast.error(error?.data?.message || "Login failed. Please try again.");
+      toast.error(error?.data?.message || "Incorrect password or email.");
     } finally {
       setIsLoading(false);
     }

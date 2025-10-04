@@ -59,7 +59,7 @@ const Profile = () => {
 
   // Crop modal related state
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
-  const [imageSrc, setImageSrc] = useState<string>(""); // Data URL of uploaded image
+  const [imageSrc, setImageSrc] = useState<string>(""); 
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
@@ -102,19 +102,19 @@ const Profile = () => {
   }, []);
 
   const handleEditAvatar = () => {
-    // Open crop modal and reset imageSrc so user can choose a new file
+ 
     setImageSrc("");
     setIsCropModalOpen(true);
   };
 
-  // Trigger file input click
+  
   const triggerFileSelectPopup = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
-  // When a file is selected, read it as Data URL for cropping
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
@@ -141,17 +141,17 @@ const Profile = () => {
         throw new Error("Could not crop image");
       }
   
-      // Convert Blob to File so that our API function accepts it
+   
       const file = new File([croppedBlob], "profile.jpg", { type: croppedBlob.type });
   
       const userId = localStorage.getItem("userId");
       if (!userId) throw new Error("No token found. Please log in.");
   
-      // Call the API helper function to upload the profile image
+   
       const response = await uploadUserProfilePicture(file,userId);
   
       if (response.success) {
-        // Update the state with new avatar URL or do other processing
+     
         setUser((prev) => ({ ...prev, avatar: response.avatarUrl }));
       } else {
         throw new Error(response.message || "Failed to update avatar");

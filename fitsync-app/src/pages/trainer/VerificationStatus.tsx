@@ -9,22 +9,11 @@ export default function VerificationStatus() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Simulate API call to check verification status
     const checkStatus = async () => {
       try {
         setLoading(true);
-        // Replace with actual API call
-        // const response = await fetch('/api/verification-status');
-        // const data = await response.json();
-        // setStatus(data.status);
-        
-        // For demo purposes, we'll use a timeout to simulate API call
-        // and randomly set a status
         setTimeout(() => {
-          // Uncomment one of these to test different states
           setStatus('pending');
-          // setStatus('rejected');
-          // setStatus('approved');
           setLoading(false);
         }, 1000);
       } catch (error) {
@@ -37,7 +26,6 @@ export default function VerificationStatus() {
   }, []);
 
   useEffect(() => {
-    // If status is approved, redirect to trainer dashboard
     if (status === 'approved' && !loading) {
       navigate('/trainer-dashboard');
     }

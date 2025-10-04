@@ -32,7 +32,6 @@ const TitleUpdater = () => {
       '/trainer/timeSlots': 'Manage Time Slots | FitSync',
     };
 
-    // Dynamic route patterns (basic detection)
     const dynamicTitles: { pattern: RegExp; title: string }[] = [
       { pattern: /^\/reset-password\/.+$/, title: 'Reset Password | FitSync' },
       { pattern: /^\/trainerReset-password\/.+$/, title: 'Trainer Reset Password | FitSync' },

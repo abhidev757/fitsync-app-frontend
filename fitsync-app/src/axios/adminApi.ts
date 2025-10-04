@@ -82,6 +82,7 @@ export const approveTrainer = async (id: string) => {
       throw error; 
   }
 };
+//Reject Trainer
 export const rejectTrainer = async (id: string,data:{reason:string}) => {
   try {
       const response = await axiosInstance.put(`/admin/rejectTrainer/${id}`,data);

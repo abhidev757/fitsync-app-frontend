@@ -62,7 +62,6 @@ const TrainerDetails: React.FC = () => {
     fetchTrainerData();
   }, [id]);
 
-  // Generate stars based on rating
   const renderStars = (rating: number, interactive = false) => {
     return Array(5)
       .fill(0)

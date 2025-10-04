@@ -64,7 +64,6 @@ const CheckoutForm: React.FC<{
     if (!stripe || !elements) return;
   
     try {
-      // 1. Get user data from localStorage
       const userId = localStorage.getItem('userId');
       const userInfoString = localStorage.getItem('userInfo');
   
@@ -72,7 +71,6 @@ const CheckoutForm: React.FC<{
         throw new Error("User not authenticated");
       }
   
-      // Parse userInfo (since localStorage stores strings)
       const userInfo = JSON.parse(userInfoString);
   
       // 2. Create payment intent
@@ -90,7 +88,7 @@ const CheckoutForm: React.FC<{
         payment_method: {
           card: elements.getElement(CardElement)!,
           billing_details: {
-            name: userInfo.name, // Now properly accessed from parsed userInfo
+            name: userInfo.name, 
           },
         },
       });
@@ -111,7 +109,6 @@ const CheckoutForm: React.FC<{
           amount: total
         });
   
-        // 5. Navigate to success
         onSuccess();
       }
     } catch (err: any) {

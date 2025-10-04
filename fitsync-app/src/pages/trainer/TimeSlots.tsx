@@ -83,10 +83,10 @@ export default function TimeSlots() {
 
 
   interface DaySchedule {
-    date: string;       // Formatted as "16 July 2024"
+    date: string;       
     slots: {
-      time: string;     // e.g. "9:00 AM to 10:00 AM"
-      type: string;     // "Single Session" or "Package"
+      time: string;     
+      type: string;     
     }[];
   }
 
@@ -94,13 +94,13 @@ export default function TimeSlots() {
   const [timeSlots, setTimeSlots] = useState<DaySchedule[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(true);
 
-  // Fetch time slots on component mount
+
   useEffect(() => {
     const fetchTimeSlots = async () => {
       try {
         const { data } = await getTimeSlots();
-        console.log('API Response:', data); // Assuming this returns { data: DaySchedule[] }
-        setTimeSlots(data); // No transformation needed if backend matches DaySchedule
+        console.log('API Response:', data); 
+        setTimeSlots(data); 
       } catch (error) {
         toast.error("Failed to load time slots");
         console.error(error);
@@ -134,13 +134,13 @@ export default function TimeSlots() {
     }
   };
 
-  // Converts DD/MM/YYYY to YYYY-MM-DD (for date input)
+  
   const toInputFormat = (displayDate: string) => {
     const [day, month, year] = displayDate.split("/");
     return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
   };
 
-  // Converts YYYY-MM-DD back to DD/MM/YYYY (for display)
+ 
   const toDisplayFormat = (inputDate: string) => {
     const [year, month, day] = inputDate.split("-");
     return `${day}/${month}/${year}`;

@@ -63,12 +63,10 @@ const TrainersList: React.FC = () => {
     loadTrainers();
   }, []);
 
-  // State to hold fetched specializations
   const [specializationsList, setSpecializationsList] = useState<
     { _id: string; name: string; description: string; isBlock: boolean }[]
   >([]);
 
-  // Fetch specializations when component mounts
   useEffect(() => {
     const getSpecializations = async () => {
       try {
@@ -94,12 +92,12 @@ const TrainersList: React.FC = () => {
     // 2. Apply Specialization filter
   if (activeFilters.specializations.length > 0) {
     filteredTrainers = filteredTrainers.filter(trainer => {
-      // Normalize trainer.specializations to an array:
+
       const specs = Array.isArray(trainer.specializations)
         ? trainer.specializations
         : [trainer.specializations];
       
-      // Check if any of the trainer's specializations match a selected filter
+     
       return specs.some((specialization: string) =>
         activeFilters.specializations.some(
           (selectedSpec) => specialization.toLowerCase() === selectedSpec.toLowerCase()
@@ -146,7 +144,7 @@ if (activeFilters.experienceLevels.length > 0) {
         [filterType]: currentFilters,
       };
     });
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
   };
 
   const resetFilters = () => {

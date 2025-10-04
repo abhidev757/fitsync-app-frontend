@@ -65,7 +65,6 @@ export default function BookingsPage() {
     navigate(`/trainer/bookingsDetails/${bookingId}`);
   };
 
-  // Filter bookings based on selected filter and search term
   const filteredBookings = bookings.filter(booking => {
     const matchesFilter = filter === 'All' || 
                          (filter === 'Pending' && booking.status === 'confirmed') ||

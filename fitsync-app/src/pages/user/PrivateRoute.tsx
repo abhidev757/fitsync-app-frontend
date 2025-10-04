@@ -26,7 +26,7 @@ const PrivateRoute: React.FC = () => {
     };
 
     verifyToken();
-    const intervalId = setInterval(verifyToken, 14 * 60 * 1000); // Refresh every 14 minutes
+    const intervalId = setInterval(verifyToken, 14 * 60 * 1000); 
 
     return () => clearInterval(intervalId);
   }, [userInfo, dispatch]);

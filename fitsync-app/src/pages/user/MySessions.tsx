@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { getBookings } from "../../axios/userApi"; // Adjust the import path as needed
+import { Link, useNavigate } from "react-router-dom";
+import { getBookings } from "../../axios/userApi"; 
+
 
 interface Booking {
   _id: string;
@@ -12,13 +13,15 @@ interface Booking {
   sessionTime: string;
   startDate: string;
   status: "confirmed" | "completed" | "cancelled";
-  // Add other fields as needed
+ 
 }
+
 
 const MySessions: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -28,6 +31,7 @@ const MySessions: React.FC = () => {
           throw new Error("User not authenticated");
         }
         const data = await getBookings(currentUserId);
+        
         setBookings(data);
       } catch (err) {
         setError("Failed to fetch bookings");
@@ -40,13 +44,14 @@ const MySessions: React.FC = () => {
     fetchBookings();
   }, []);
 
-  // Transform API data to match your UI structure
+ 
   const sessions = bookings.map((booking) => ({
     id: booking._id,
-    trainerName: booking.trainerId.name,
+    trainerName: booking.trainerId?.name,
+    trainerId: booking.trainerId?._id,
     trainerImage:
       booking.trainerId.profileImageUrl || "https://via.placeholder.com/80",
-    sessionType: "Training Session", // You might want to add session type to your API
+    sessionType: "Training Session", 
     date: new Date(booking.startDate).toLocaleDateString(),
     time: booking.sessionTime,
     status:
@@ -57,7 +62,6 @@ const MySessions: React.FC = () => {
         : "cancelled",
   }));
 
-  // Mock data for upcoming sessions (you can replace this with actual data if available)
   const upcomingSessions = bookings
     .filter((booking) => booking.status === "confirmed")
     .map((booking) => ({
@@ -67,7 +71,6 @@ const MySessions: React.FC = () => {
       time: booking.sessionTime,
     }));
 
-  // Mock data for recent activities (you can enhance this with actual data)
   const recentActivities = bookings.map((booking) => ({
     id: booking._id,
     description: `Session with ${booking.trainerId.name}`,
@@ -89,6 +92,10 @@ const MySessions: React.FC = () => {
   if (error) {
     return <div className="p-6 text-red-500">{error}</div>;
   }
+  
+  const handleChat = (trainerId:string)=>{
+    navigate(`/user/chat/${trainerId}`)
+  }
 
   return (
     <div className="p-6">
@@ -99,9 +106,11 @@ const MySessions: React.FC = () => {
         {hasSessions ? (
           <div className="space-y-4">
             {sessions.map((session) => (
+              
               <div
                 key={session.id}
-                className="bg-[#222222] rounded-lg p-4 flex items-center justify-between"
+                onClick={() => navigate(`/user/bookingDetails/${session.id}`)}
+                className="bg-[#222222] rounded-lg p-4 flex items-center justify-between transform transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-pointer"
               >
                 <div className="flex items-center gap-4">
                   <img
@@ -128,7 +137,7 @@ const MySessions: React.FC = () => {
                     </span>
                   ) : (
                     <>
-                      <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded-full text-sm">
+                      <button onClick={()=>handleChat(session.trainerId)} className="bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded-full text-sm">
                         Chat
                       </button>
                       {session.status === "upcoming" && (

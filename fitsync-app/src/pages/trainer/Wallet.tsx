@@ -29,9 +29,9 @@ export default function WalletPage() {
         console.error('Error fetching wallet data:', err);
       }
     };
-
+ 
     fetchWalletData();
-  }, []); // ✅ no trainerId dependency needed now
+  }, []); 
 
   return (
     <div className="flex-1 p-6 space-y-6 text-white">
