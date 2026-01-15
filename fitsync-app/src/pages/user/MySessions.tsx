@@ -137,7 +137,7 @@ const MySessions: React.FC = () => {
                     </span>
                   ) : (
                     <>
-                      <button onClick={()=>handleChat(session.trainerId)} className="bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded-full text-sm">
+                      <button onClick={(e)=>{e.stopPropagation(); handleChat(session.trainerId)}} className="bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded-full text-sm">
                         Chat
                       </button>
                       {session.status === "upcoming" && (

@@ -148,6 +148,11 @@ const SignupPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            {strength && (
+              <p className={`text-sm mt-1 ${strength === "Strong" ? "text-green-400" : strength === "Medium" ? "text-yellow-400" : "text-red-400"}`}>
+                Password Strength: {strength}
+              </p>
+            )}
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
@@ -155,11 +160,6 @@ const SignupPage = () => {
             >
               {showPassword ? "Hide" : "Show"}
             </button>
-            {strength && (
-              <p className={`text-sm mt-1 ${strength === "Strong" ? "text-green-400" : strength === "Medium" ? "text-yellow-400" : "text-red-400"}`}>
-                Password Strength: {strength}
-              </p>
-            )}
           </div>
 
           <div className="relative">

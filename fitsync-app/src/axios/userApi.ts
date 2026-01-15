@@ -278,8 +278,8 @@ export const updateTodayWater = async (userId: string, waterGlasses: number) => 
 export const getTodayHealthData = async (userId: string) => {
   const { data } = await axiosInstance.get<{
     steps: number
-    calories: number
-    sleepMinutes: number
+    caloriesBurned: number
+    sleepHours: number
   }>(`/user/auth/google-fit/health-today`, {
     params: { userId },
   })

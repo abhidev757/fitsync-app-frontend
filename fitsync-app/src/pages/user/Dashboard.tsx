@@ -1,6 +1,6 @@
 import React, { useState, useEffect, ReactNode } from "react";
 import { useGoogleLogin } from "@react-oauth/google";
-import { ChevronRight, Flame, Footprints, Droplets } from "lucide-react";
+import { ChevronRight, Flame, Footprints, Droplets, Moon } from "lucide-react";
 import { Button } from "../../components/user/ui/button";
 import { Card, CardContent } from "../../components/user/ui/card";
 import ProgressCircle from "../../components/user/Progress-circle";
@@ -218,7 +218,7 @@ const Dashboard: React.FC = () => {
               <Card className="bg-[#1a1a1a] border-none">
                 <CardContent>
                   <div className="flex items-center mb-2">
-                    <Droplets className="text-[#d9ff00] mr-2" />
+                    <Moon className="text-[#d9ff00] mr-2" />
                     <span>Sleep (hrs)</span>
                   </div>
                   <ProgressCircle
