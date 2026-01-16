@@ -225,3 +225,8 @@ export const cancelBooking = async (bookingId:string) => {
   const response = await axiosInstance.patch(`/trainer/cancel-booking/${bookingId}`);
   return response;
 };
+
+export const startVideoSession = async (sessionId: string) => {
+  const response = await axiosInstance.post('/video/start', { sessionId });
+  return response.data;
+};

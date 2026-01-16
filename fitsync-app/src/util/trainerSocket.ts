@@ -18,16 +18,17 @@ export const connectTrainerSocket = (trainerId: string) => {
       console.log("❌ Trainer socket disconnected");
     });
   }
+  return socket
 };
 
-export const sendMessageToTrainerSocket = (toUserId: string, message: any) => {
+export const sendMessageToTrainerSocket = (toUserId: string, message: unknown) => {
   if (socket) {
     socket.emit("private-message", { toUserId, message });
     console.log("📤 Sending message from trainer:", message);
   }
 };
 
-export const subscribeToTrainerMessages = (cb: (message: any) => void) => {
+export const subscribeToTrainerMessages = (cb: (message: unknown) => void) => {
   if (socket) {
     socket.off("receive-message"); 
     socket.on("receive-message", (message) => {

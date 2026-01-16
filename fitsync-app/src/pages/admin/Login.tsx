@@ -74,7 +74,7 @@ function Login() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-medium">
-                Email
+                Email (admin@gmail.com)
               </label>
               <input
                 type="email"
@@ -90,7 +90,7 @@ function Login() {
 
             <div className="space-y-2">
               <label htmlFor="password" className="block text-sm font-medium">
-                Password
+                Password (admin123)
               </label>
               <div className="relative">
                 <input
