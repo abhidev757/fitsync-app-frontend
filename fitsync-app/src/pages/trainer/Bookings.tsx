@@ -18,13 +18,14 @@ interface Booking {
   paymentId: string;
   amount: number;
 }
+type FilterStatus = 'All' | 'Pending' | 'Completed' | 'Cancelled';
 
 export default function BookingsPage() {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'All' | 'Pending' | 'Completed' | 'Cancelled'>('All');
+  const [filter, setFilter] = useState<FilterStatus>('All');
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -126,7 +127,7 @@ export default function BookingsPage() {
                 className={`px-4 py-2 rounded-lg transition-colors text-white ${
                   filter === tab ? 'bg-gray-600' : 'bg-gray-700 hover:bg-gray-600'
                 }`}
-                onClick={() => setFilter(tab as any)}
+                onClick={() => setFilter(tab as FilterStatus)}
               >
                 {tab}
               </button>

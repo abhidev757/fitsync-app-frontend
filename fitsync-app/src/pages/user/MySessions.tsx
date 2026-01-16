@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getBookings } from "../../axios/userApi"; 
+import { toast } from "react-toastify";
 
 
 interface Booking {
   _id: string;
+  meetingId: string;       // Added from backend
+  meetingStatus: string;   // Added from backend
   trainerId: {
     _id: string;
     name: string;
@@ -47,6 +50,8 @@ const MySessions: React.FC = () => {
  
   const sessions = bookings.map((booking) => ({
     id: booking._id,
+    meetingId: booking.meetingId,        // Map this
+    meetingStatus: booking.meetingStatus, // Map this
     trainerName: booking.trainerId?.name,
     trainerId: booking.trainerId?._id,
     trainerImage:
@@ -141,8 +146,21 @@ const MySessions: React.FC = () => {
                         Chat
                       </button>
                       {session.status === "upcoming" && (
-                        <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded-full text-sm">
-                          Join now
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Ensure meeting is live before allowing join
+                            if (session.meetingStatus === 'live') {
+                              navigate(`/video-call/${session.meetingId}`);
+                            } else {
+                              toast.info("Waiting for trainer to start the session...");
+                            }
+                          }} 
+                          className={`${
+                            session.meetingStatus === 'live' ? 'bg-blue-500' : 'bg-gray-500 cursor-not-allowed'
+                          } text-white px-4 py-1 rounded-full text-sm`}
+                        >
+                          {session.meetingStatus === 'live' ? 'Join now' : 'Waiting...'}
                         </button>
                       )}
                     </>

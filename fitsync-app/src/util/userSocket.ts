@@ -21,16 +21,17 @@ export const connectUserSocket = (userId: string) => {
       console.log("❌ User socket disconnected");
     });
   }
+  return socket
 };
 
-export const sendMessageToUserSocket = (toUserId: string, message: any) => {
+export const sendMessageToUserSocket = (toUserId: string, message: unknown) => {
   if (socket) {
     socket.emit("private-message", { toUserId, message });
     console.log("📤 Sending message from user:", message);
   }
 };
 
-export const subscribeToUserMessages = (cb: (message: any) => void) => {
+export const subscribeToUserMessages = (cb: (message: unknown) => void) => {
   if (socket) {
     socket.off("receive-message"); 
     socket.on("receive-message", (message) => {
