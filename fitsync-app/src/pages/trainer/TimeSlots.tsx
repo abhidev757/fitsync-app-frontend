@@ -3,17 +3,14 @@ import { Calendar, Plus, X } from "lucide-react";
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
 import { addTimeSlot, deleteTimeSlot, getTimeSlots } from "../../axios/trainerApi";
-import { isAxiosError } from "axios";
 
-interface TimeSlot {
-  time: string;
-  type: "Single Session" | "Package";
-}
 
-interface DaySchedule {
-  date: string;
-  slots: TimeSlot[];
-}
+// interface TimeSlot {
+//   time: string;
+//   type: "Single Session" | "Package";
+// }
+
+
 
 interface Testimonial {
   id: number;
@@ -86,7 +83,8 @@ export default function TimeSlots() {
     date: string;       
     slots: {
       time: string;     
-      type: string;     
+      type: string;
+      id: string;     
     }[];
   }
 
@@ -114,25 +112,37 @@ export default function TimeSlots() {
   
 
     // Handle slot deletion
-  const handleDeleteSlot = async (date: string, time: string) => {
-    try {
-      await deleteTimeSlot(date, time);
-      setTimeSlots(prev => prev.map(day => {
-        if (day.date === date) {
-          return {
-            ...day,
-            slots: day.slots.filter(slot => slot.time !== time)
-          };
-        }
-        return day;
-      }));
-      toast.success("Time slot deleted successfully");
-    } catch (error) {
-      console.log('Error deleting slot',error);
-      
-      toast.error("Failed to delete time slot");
-    }
-  };
+  const handleDeleteSlot = async (slotId: string) => {
+  // 1. Create a loading toast
+  const id = toast.loading("Deleting time slot...");
+
+  try {
+    await deleteTimeSlot(slotId);
+
+    // 2. Update state
+    setTimeSlots(prev => prev.map(day => ({
+      ...day,
+      slots: day.slots.filter(s => s.id !== slotId)
+    })).filter(day => day.slots.length > 0));
+
+    // 3. Update the toast to Success
+    toast.update(id, {
+      render: "Time slot deleted successfully",
+      type: "success",
+      isLoading: false,
+      autoClose: 3000,
+    });
+  } catch (error) {
+    console.log(error)
+    // 4. Update the toast to Error
+    toast.update(id, {
+      render: "Failed to delete slot",
+      type: "error",
+      isLoading: false,
+      autoClose: 3000,
+    });
+  }
+};
 
   
   const toInputFormat = (displayDate: string) => {
@@ -168,6 +178,36 @@ export default function TimeSlots() {
     });
     setShowTimeDropdown(false);
   };
+
+  const confirmDelete = (slotId: string) => {
+  const toastId = toast.info(
+    <div>
+      <p className="mb-2 font-semibold">Delete this time slot?</p>
+      <div className="flex gap-2">
+        <button
+          onClick={() => {
+            handleDeleteSlot(slotId);
+            toast.dismiss(toastId); // Close the confirmation toast
+          }}
+          className="bg-red-600 text-white px-3 py-1 rounded text-xs"
+        >
+          Confirm
+        </button>
+        <button
+          onClick={() => toast.dismiss(toastId)}
+          className="bg-gray-500 text-white px-3 py-1 rounded text-xs"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>,
+    {
+      autoClose: false, // Don't close until user interacts
+      closeOnClick: false,
+      draggable: false,
+    }
+  );
+};
 
   const handleSubmit = async () => {
     // Validate form
@@ -257,7 +297,7 @@ const renderTimeSlots = () => {
             {day.slots.map((slot) => (
               <div key={`${day.date}-${slot.time}`} className="bg-blue-500/90 p-3 rounded-lg relative group">
                 <button 
-                  onClick={() => handleDeleteSlot(day.date, slot.time)}
+                  onClick={() => confirmDelete(slot.id)}
                   className="absolute top-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity"
                   title="Delete slot"
                 >
