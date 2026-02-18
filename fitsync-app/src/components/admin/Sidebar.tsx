@@ -28,7 +28,7 @@ const Sidebar = () => {
     { path: '/admin/trainerManagement', label: 'Trainers', icon: UserCog },
     { path: '/admin/userManagement', label: 'Users', icon: Users },
     { path: '/reviews', label: 'Reviews', icon: Star },
-    { path: '/payments', label: 'Payments', icon: CreditCard },
+    { path: '/admin/payments', label: 'Payments', icon: CreditCard },
   ];
 
   return (

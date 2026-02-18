@@ -92,3 +92,21 @@ export const rejectTrainer = async (id: string,data:{reason:string}) => {
       throw error; 
   }
 };
+
+// Get Payout Requests
+export const getPayoutRequests = async () => {
+    const response = await axiosInstance.get('/admin/payout-requests');
+    return response.data;
+};
+
+// Approve Payout Request
+export const approvePayoutRequest = async (requestId: string) => {
+    const response = await axiosInstance.put(`/admin/payout-request/${requestId}/approve`);
+    return response.data;
+};
+
+// Reject Payout Request
+export const rejectPayoutRequest = async (requestId: string) => {
+    const response = await axiosInstance.put(`/admin/payout-request/${requestId}/reject`);
+    return response.data;
+};

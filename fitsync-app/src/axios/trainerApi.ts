@@ -228,3 +228,8 @@ export const startVideoSession = async (sessionId: string) => {
   const response = await axiosInstance.post('/video/start', { sessionId });
   return response.data;
 };
+
+export const requestPayout = async (trainerId: string, amount: number) => {
+  const response = await axiosInstance.post('/trainer/request-payout', { trainerId, amount });
+  return response.data;
+};
