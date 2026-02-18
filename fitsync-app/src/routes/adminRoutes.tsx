@@ -13,6 +13,7 @@ import UserDetails from '../pages/admin/UserDetails'
 import TrainerVerification from "../pages/admin/TrainerVerification"
 import TrainerVerificationDetails from "../pages/admin/TrainerVerificationDetails"
 import Specialization from "../pages/admin/Specilization";
+import Payments from "../pages/admin/Payments";
 
 const adminRoutes = (
   <Route path="/" element={<App />}>
@@ -31,6 +32,7 @@ const adminRoutes = (
     <Route path="trainerVerification" element={<TrainerVerification />} />
     <Route path="trainerVerificationDetails/:id" element={<TrainerVerificationDetails />} />
     <Route path="specialization" element={<Specialization />} />
+    <Route path="payments" element={<Payments />} />
     </Route>
     
   </Route>
