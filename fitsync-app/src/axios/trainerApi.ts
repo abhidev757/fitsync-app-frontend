@@ -175,10 +175,8 @@ export const getTimeSlots = async () => {
   return response;
 };
 
-export const deleteTimeSlot = async (date: string, time: string) => {
-  const response = await axiosInstance.delete("/trainer/timeSlots", {
-    data: { date, time },
-  });
+export const deleteTimeSlot = async (id: string) => {
+  const response = await axiosInstance.delete(`/trainer/deleteTimeSlot/${id}`);
   return response.data;
 };
 
