@@ -1,7 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "../../components/admin/Pagination";
-import { getPayoutRequests, approvePayoutRequest, rejectPayoutRequest } from "../../axios/adminApi";
+import { 
+  getPayoutRequests, 
+  approvePayoutRequest, 
+  rejectPayoutRequest,
+  getAllUserPayoutRequests, 
+  approveUserPayoutRequest, 
+  rejectUserPayoutRequest 
+} from "../../axios/adminApi";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
@@ -9,10 +16,15 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface PayoutRequest {
   _id: string;
-  trainerId: {
+  trainerId?: {
     _id: string;
     name: string;
     email: string;
+  };
+  userId?: {
+      _id: string;
+      name: string;
+      email: string;
   };
   amount: number;
   status: 'pending' | 'approved' | 'rejected';
@@ -31,6 +43,7 @@ const Payments = () => {
     }
   }, [navigate, adminInfo]);
 
+  const [activeTab, setActiveTab] = useState<'trainer' | 'user'>('trainer');
   const [requests, setRequests] = useState<PayoutRequest[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -40,14 +53,20 @@ const Payments = () => {
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [activeTab]);
 
   const fetchRequests = async () => {
     setLoading(true);
     try {
-      const data = await getPayoutRequests();
+      let data;
+      if (activeTab === 'trainer') {
+          data = await getPayoutRequests();
+      } else {
+          data = await getAllUserPayoutRequests();
+      }
       setRequests(data);
       setTotalPages(Math.ceil(data.length / ITEMS_PER_PAGE));
+      setCurrentPage(1); 
     } catch (error) {
       console.error("Error fetching payout requests:", error);
       toast.error("Failed to fetch payout requests");
@@ -74,12 +93,22 @@ const Payments = () => {
   const handleAction = async () => {
     if (!selectedRequest || !modalType) return;
     try {
-      if (modalType === 'approve') {
-        await approvePayoutRequest(selectedRequest._id);
-        toast.success("Payout request approved");
+      if (activeTab === 'trainer') {
+        if (modalType === 'approve') {
+            await approvePayoutRequest(selectedRequest._id);
+            toast.success("Trainer payout approved");
+        } else {
+            await rejectPayoutRequest(selectedRequest._id);
+            toast.success("Trainer payout rejected");
+        }
       } else {
-        await rejectPayoutRequest(selectedRequest._id);
-        toast.success("Payout request rejected");
+        if (modalType === 'approve') {
+            await approveUserPayoutRequest(selectedRequest._id);
+            toast.success("User payout approved");
+        } else {
+            await rejectUserPayoutRequest(selectedRequest._id);
+            toast.success("User payout rejected");
+        }
       }
       fetchRequests(); // Refresh list
     } catch (error) {
@@ -99,6 +128,30 @@ const Payments = () => {
     <div className="p-4">
       <h1 className="text-2xl font-bold text-white mb-6">Payout Requests</h1>
 
+      {/* Tabs */}
+      <div className="flex space-x-4 mb-6 border-b border-gray-700">
+          <button
+              onClick={() => setActiveTab('trainer')}
+              className={`pb-2 px-4 font-medium transition-colors ${
+                  activeTab === 'trainer' 
+                      ? "text-[#d9ff00] border-b-2 border-[#d9ff00]" 
+                      : "text-gray-400 hover:text-white"
+              }`}
+          >
+              Trainer Payouts
+          </button>
+          <button
+              onClick={() => setActiveTab('user')}
+              className={`pb-2 px-4 font-medium transition-colors ${
+                  activeTab === 'user' 
+                      ? "text-[#d9ff00] border-b-2 border-[#d9ff00]" 
+                      : "text-gray-400 hover:text-white"
+              }`}
+          >
+              User Payouts
+          </button>
+      </div>
+
       <div className="bg-gray-800 rounded-lg overflow-hidden mt-4">
         {loading ? (
           <div className="text-center py-12">
@@ -114,7 +167,9 @@ const Payments = () => {
             <table className="min-w-full divide-y divide-gray-700">
               <thead className="bg-gray-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Trainer</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      {activeTab === 'trainer' ? "Trainer" : "User"}
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Amount</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
@@ -125,8 +180,12 @@ const Payments = () => {
                 {paginatedRequests.map((request) => (
                   <tr key={request._id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                        <div className="font-bold">{request.trainerId?.name || "Unknown"}</div>
-                        <div className="text-gray-400 text-xs">{request.trainerId?.email}</div>
+                        <div className="font-bold">
+                            {activeTab === 'trainer' ? request.trainerId?.name : request.userId?.name || "Unknown"}
+                        </div>
+                        <div className="text-gray-400 text-xs">
+                            {activeTab === 'trainer' ? request.trainerId?.email : request.userId?.email}
+                        </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white font-mono">
                       ₹{request.amount}
@@ -194,7 +253,7 @@ const Payments = () => {
                     {modalType === 'approve' ? "Approve Payout" : "Reject Payout"}
                     </h2>
                     <p className="mb-6 text-center text-gray-300">
-                    Are you sure you want to {modalType} the payout request of <span className="font-bold text-white">₹{selectedRequest.amount}</span> for <strong>{selectedRequest.trainerId?.name}</strong>?
+                    Are you sure you want to {modalType} the payout request of <span className="font-bold text-white">₹{selectedRequest.amount}</span> for <strong>{activeTab === 'trainer' ? selectedRequest.trainerId?.name : selectedRequest.userId?.name}</strong>?
                     </p>
                     <div className="flex justify-center space-x-4">
                     <button

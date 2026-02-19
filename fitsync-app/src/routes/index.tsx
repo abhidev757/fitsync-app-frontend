@@ -3,7 +3,6 @@ import userRoutes from './userRoutes';
 import trainerRoutes from './trainerRoutes';
 import adminRoutes from './adminRoutes'
 import VideoCall from '../pages/VideoCall';
-import NotFound from '../pages/NotFound';
 
 const appRoutes = createRoutesFromElements(
   <>
@@ -14,9 +13,6 @@ const appRoutes = createRoutesFromElements(
     {userRoutes}
     {trainerRoutes}
     {adminRoutes}
-    
-    {/* 404 Route - Must be last */}
-    <Route path="*" element={<NotFound />} />
   </>
 );
 
