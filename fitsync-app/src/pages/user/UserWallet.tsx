@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { getWalletDetails } from "../../axios/userApi";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { getWalletDetails, requestPayout } from "../../axios/userApi";
+import { toast } from "react-toastify";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Transaction {
   amount: number;
@@ -14,6 +16,11 @@ export default function UserWalletPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balance, setBalance] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState(1);
+  
+  // Withdrawal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState<number | ''>('');
+  const [loading, setLoading] = useState(false);
 
   const transactionsPerPage = 5;
   const totalPages = Math.ceil(transactions.length / transactionsPerPage);
@@ -34,7 +41,35 @@ export default function UserWalletPage() {
       }
     };
     fetchWalletData();
-  }, []);
+  }, [loading]); // Reload data after payout request
+
+  const handleWithdraw = async () => {
+      const userId = localStorage.getItem("userId");
+      if (!userId) return;
+
+      if (!withdrawAmount || Number(withdrawAmount) <= 0) {
+          toast.error("Please enter a valid amount");
+          return;
+      }
+
+      if (Number(withdrawAmount) > balance) {
+          toast.error("Insufficient balance");
+          return;
+      }
+
+      setLoading(true);
+      try {
+          await requestPayout(userId, Number(withdrawAmount));
+          toast.success("Payout request submitted successfully!");
+          setIsModalOpen(false);
+          setWithdrawAmount('');
+      } catch (error: any) {
+          console.error("Withdrawal error:", error);
+          toast.error(error.response?.data?.message || "Failed to request payout");
+      } finally {
+          setLoading(false);
+      }
+  };
 
   // Pagination
   const idxLast = currentPage * transactionsPerPage;
@@ -45,19 +80,22 @@ export default function UserWalletPage() {
   const goNext = () => setCurrentPage((p) => Math.min(totalPages, p + 1));
 
   return (
-    <div className="flex-1 p-6 space-y-6 text-white">
+    <div className="flex-1 p-6 space-y-6 text-white text-black">
       {/* Balance Card */}
       <div className="bg-gray-800 p-6 rounded-lg flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">
+        <h2 className="text-2xl font-semibold text-white">
           Balance: <span className="text-[#d9ff00]">${balance.toFixed(2)}</span>
         </h2>
-        <button className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-900 transition-colors">
-          Withdraw
+        <button 
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#d9ff00] text-black px-6 py-2 rounded-lg hover:bg-[#c8e600] transition-colors font-bold"
+        >
+          Request Payout
         </button>
       </div>
 
-      {/* Wallet History */}
-      <div className="bg-gray-800 p-6 rounded-lg">
+     {/* Wallet History */}
+      <div className="bg-gray-800 p-6 rounded-lg text-white">
         <h3 className="text-xl font-semibold mb-4">Wallet History</h3>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -90,7 +128,6 @@ export default function UserWalletPage() {
           </table>
         </div>
 
-        {/* Pagination Controls */}
         <div className="flex justify-between items-center mt-6">
           <button
             onClick={goPrev}
@@ -119,6 +156,65 @@ export default function UserWalletPage() {
           </button>
         </div>
       </div>
+
+       {/* Withdrawal Modal */}
+       <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="bg-gray-800 rounded-xl p-6 w-full max-w-md text-white border border-gray-700 shadow-2xl relative"
+            >
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+              >
+                  <X size={24} />
+              </button>
+
+              <h2 className="text-2xl font-bold mb-6 text-[#d9ff00]">Request Payout</h2>
+              
+              <div className="space-y-4">
+                  <div>
+                      <label className="block text-gray-400 text-sm mb-1">Available Balance</label>
+                      <div className="text-xl font-bold text-white">${balance.toFixed(2)}</div>
+                  </div>
+
+                  <div>
+                      <label className="block text-gray-400 text-sm mb-1">Amount to Withdraw ($)</label>
+                      <input 
+                          type="number" 
+                          value={withdrawAmount}
+                          onChange={(e) => setWithdrawAmount(Number(e.target.value))}
+                          className="w-full bg-gray-700 text-white p-3 rounded-lg border border-gray-600 focus:outline-none focus:border-[#d9ff00] transition-colors"
+                          placeholder="0.00"
+                          min="1"
+                      />
+                  </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-8">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleWithdraw}
+                  disabled={loading}
+                  className="px-5 py-2.5 bg-[#d9ff00] hover:bg-[#c8e600] text-black rounded-lg text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  {loading ? "Processing..." : "Confirm Request"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

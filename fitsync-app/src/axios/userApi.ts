@@ -247,6 +247,11 @@ export const getWalletDetails = async (userId: string) => {
   return response.data;
 };
 
+export const requestPayout = async (userId: string, amount: number) => {
+  const response = await axiosInstance.post(`/user/request-payout`, { userId, amount });
+  return response.data;
+};
+
 export const getBookingsDetails = async (bookingId: string) => {
   const response = await axiosInstance.get(
     `/user/get-bookings-details/${bookingId}`

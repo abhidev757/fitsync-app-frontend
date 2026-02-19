@@ -110,3 +110,21 @@ export const rejectPayoutRequest = async (requestId: string) => {
     const response = await axiosInstance.put(`/admin/payout-request/${requestId}/reject`);
     return response.data;
 };
+
+// Get All User Payout Requests
+export const getAllUserPayoutRequests = async () => {
+  const response = await axiosInstance.get(`/admin/user-payout-requests`);
+  return response.data;
+};
+
+// Approve User Payout Request
+export const approveUserPayoutRequest = async (requestId: string) => {
+  const response = await axiosInstance.put(`/admin/user-payout-request/${requestId}/approve`);
+  return response.data;
+};
+
+// Reject User Payout Request
+export const rejectUserPayoutRequest = async (requestId: string) => {
+  const response = await axiosInstance.put(`/admin/user-payout-request/${requestId}/reject`);
+  return response.data;
+};
