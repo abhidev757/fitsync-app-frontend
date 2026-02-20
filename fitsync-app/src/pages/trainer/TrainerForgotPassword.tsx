@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import { useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { trainerForgotPasswordRequesting } from "../../axios/trainerApi";
@@ -21,7 +21,7 @@ export default function ForgotPassword() {
     }
   }, [location.state]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     setIsLoading(true);

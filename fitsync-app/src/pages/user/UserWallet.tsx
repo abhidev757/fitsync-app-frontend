@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { getWalletDetails, requestPayout } from "../../axios/userApi";
 import { toast } from "react-toastify";
