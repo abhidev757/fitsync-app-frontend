@@ -1,10 +1,22 @@
 // src/components/trainer/TrainerHeader.tsx
-import { useState } from 'react';
-import { Search, Bell } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import NotificationDropdown from '../common/NotificationDropdown';
+import { getTrainerSocket, connectTrainerSocket } from '../../util/trainerSocket';
 
 const TrainerHeader = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [notifications, setNotifications] = useState(3);
+  const trainerInfo = useSelector((state: RootState) => state.trainerAuth.trainerInfo);
+  const [socketReady, setSocketReady] = useState(false);
+
+  useEffect(() => {
+    if (trainerInfo?._id) {
+      connectTrainerSocket(trainerInfo._id);
+      setSocketReady(true);
+    }
+  }, [trainerInfo]);
 
   return (
     <header className="bg-gray-800 border-b border-gray-700 p-4">
@@ -22,14 +34,13 @@ const TrainerHeader = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button className="relative">
-            <Bell className="h-6 w-6 text-gray-400" />
-            {notifications > 0 && (
-              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                {notifications}
-              </span>
-            )}
-          </button>
+          {trainerInfo && socketReady && (
+            <NotificationDropdown 
+              userId={trainerInfo._id} 
+              userType="trainer" 
+              getSocket={getTrainerSocket} 
+            />
+          )}
           <img
             src="/placeholder.svg?height=40&width=40"
             alt="Profile"

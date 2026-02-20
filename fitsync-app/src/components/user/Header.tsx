@@ -1,15 +1,20 @@
 import { useLocation, Link } from "react-router-dom";
-import { Search, Bell } from "lucide-react";
+import { Search } from "lucide-react";
 import { Avatar } from "./ui/avatar";
-import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useTrainerSearchStore } from "../../util/useSearchTrainer";
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store";
+import NotificationDropdown from "../common/NotificationDropdown";
+import { getUserSocket, connectUserSocket } from "../../util/userSocket";
 
 const Header = () => {
   const location = useLocation();
   const { setSearchQuery } = useTrainerSearchStore();
   const [inputValue, setInputValue] = useState("");
+  const userInfo = useSelector((state: RootState) => state.auth.userInfo);
+  const [socketReady, setSocketReady] = useState(false);
   
   // New state for the profile image URL.
   // This can come from local storage, a global context, or any user state.
@@ -23,6 +28,13 @@ const Header = () => {
       setProfilePic(storedPic);
     }
   }, []);
+
+  useEffect(() => {
+    if (userInfo?._id) {
+      connectUserSocket(userInfo._id);
+      setSocketReady(true);
+    }
+  }, [userInfo]);
 
   const isTrainerListPage = location.pathname === "/user/trainersList";
 
@@ -69,12 +81,13 @@ const Header = () => {
             />
           </div>
 
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#d9ff00] text-xs text-black">
-              1
-            </span>
-          </Button>
+          {userInfo && socketReady && (
+            <NotificationDropdown 
+              userId={userInfo._id} 
+              userType="user" 
+              getSocket={getUserSocket} 
+            />
+          )}
 
           <Link to="/user/userProfile" className="relative group">
             <Avatar className="cursor-pointer transition-transform hover:scale-105">

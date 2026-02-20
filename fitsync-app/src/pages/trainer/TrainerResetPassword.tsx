@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FiEye, FiEyeOff } from "react-icons/fi";
@@ -21,7 +21,7 @@ export default function ResetPassword() {
       return passwordRegex.test(password);
     };
   
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
       e.preventDefault();
   
       setPasswordError("");
