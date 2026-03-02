@@ -233,3 +233,8 @@ export const requestPayout = async (trainerId: string, amount: number) => {
   const response = await axiosInstance.post('/trainer/request-payout', { trainerId, amount });
   return response.data;
 };
+
+export const completeSession = async (bookingId: string) => {
+  const response = await axiosInstance.patch(`/trainer/complete-session/${bookingId}`);
+  return response.data;
+};

@@ -13,7 +13,8 @@ interface Trainer {
   _id: string;
   name: string;
   specializations: string[];
-  isBlocked: boolean
+  isBlocked: boolean;
+  verificationStatus: boolean;
   createdAt: string;
 }
 
@@ -103,14 +104,16 @@ const TrainerManagement = () => {
     }
   };
 
-  const filteredTrainers = trainers.filter((trainer) => 
-    trainer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (Array.isArray(trainer.specializations) &&
-      trainer.specializations.some((spec) =>
-        spec.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTrainers = trainers
+    .filter((trainer) => trainer.verificationStatus === true)
+    .filter((trainer) =>
+      trainer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (Array.isArray(trainer.specializations) &&
+        trainer.specializations.some((spec) =>
+          spec.toLowerCase().includes(searchTerm.toLowerCase())
+        )
       )
-    )
-  );
+    );
 
   const paginatedTrainers = filteredTrainers.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,

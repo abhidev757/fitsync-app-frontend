@@ -17,6 +17,8 @@ export default function WalletPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState<number | ''>('');
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const fetchWalletData = async () => {
       const trainerId = localStorage.getItem('trainerId');
@@ -69,6 +71,15 @@ export default function WalletPage() {
       }
   };
 
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentTransactions = transactions.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(transactions.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <div className="flex-1 p-6 space-y-6 text-white">
       <div className="bg-gray-800 p-6 rounded-lg flex justify-between items-center">
@@ -94,8 +105,9 @@ export default function WalletPage() {
               </tr>
             </thead>
             <tbody>
-              {transactions.map((tx, index) => (
-                <tr key={index} className="border-b border-gray-700">
+              {currentTransactions.length > 0 ? (
+                currentTransactions.map((tx, index) => (
+                  <tr key={index} className="border-b border-gray-700">
                   <td className="py-4 px-4">${tx.amount}</td>
                   <td className="py-4 px-4">{tx.reason}</td>
                   <td
@@ -109,10 +121,53 @@ export default function WalletPage() {
                     {new Date(tx.createdAt).toLocaleDateString()}
                   </td>
                 </tr>
-              ))}
+              ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="p-4 text-center text-gray-400">
+                    No transactions found
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center mt-6">
+            <button 
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            
+            <div className="flex space-x-2">
+              {[...Array(totalPages)].map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => handlePageChange(index + 1)}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                    currentPage === index + 1
+                      ? "bg-[#d9ff00] text-black font-bold"
+                      : "bg-gray-700 text-white hover:bg-gray-600"
+                  }`}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </div>
+
+            <button 
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-black rounded-lg hover:bg-gray-900 transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       <AnimatePresence>

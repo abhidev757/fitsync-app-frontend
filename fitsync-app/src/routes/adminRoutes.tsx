@@ -1,4 +1,4 @@
-import { Route } from "react-router-dom";
+import { Route, Navigate } from "react-router-dom";
 import App from "../App";
 import Layout from "../components/admin/Layout";
 
@@ -23,6 +23,7 @@ const adminRoutes = (
     <Route path="adminLogin" element={<AdminLogin />} />
 
     <Route path="admin" element={<Layout/>}>
+    <Route index element={<Navigate to="adminDashboard" replace />} />
     <Route path="adminDashboard" element={<AdminLDashboard />} />
     <Route path="userManagement" element={<AdminUserManagement />} />
     <Route path="trainerManagement" element={<AdminTrainerManagement />} />

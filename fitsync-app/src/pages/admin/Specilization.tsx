@@ -23,6 +23,8 @@ const Specialization = () => {
   const [specializationName, setSpecializationName] = useState('');
   const [specializationDescription, setSpecializationDescription] = useState('');
 
+  const ITEMS_PER_PAGE = 5;
+
   useEffect(() => {
     const fetchSpecializations = async () => {
       try {
@@ -92,6 +94,15 @@ const Specialization = () => {
     }
   };
 
+  const filteredSpecializations = specializations.filter((spec) =>
+    spec.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const totalPages = Math.max(1, Math.ceil(filteredSpecializations.length / ITEMS_PER_PAGE));
+  const currentSpecializations = filteredSpecializations.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -132,7 +143,7 @@ const Specialization = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
-            {specializations.map((spec) => (
+            {currentSpecializations.map((spec) => (
               <tr key={spec._id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                   {spec.name}
@@ -163,23 +174,41 @@ const Specialization = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-between items-center mt-6">
-        <button
-          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-          className="flex items-center px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Previous
-        </button>
-        <span className="text-white">Page {currentPage} of 3</span>
-        <button
-          onClick={() => setCurrentPage(p => Math.min(3, p + 1))}
-          className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-        >
-          Next
-          <ChevronRight className="h-4 w-4 ml-1" />
-        </button>
-      </div>
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center mt-6">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="flex items-center px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Previous
+          </button>
+          <div className="flex space-x-2">
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                  currentPage === i + 1
+                    ? 'bg-blue-500 text-white font-bold'
+                    : 'bg-gray-700 text-white hover:bg-gray-600'
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </button>
+        </div>
+      )}
 
       {/* Add Specialization Modal */}
       {showAddModal && (

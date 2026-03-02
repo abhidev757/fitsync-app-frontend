@@ -5,6 +5,7 @@ interface Trainer {
   name: string;
   email: string;
   isGoogleLogin?: boolean;
+  profileImageUrl?: string;
 }
 
 interface TrainerAuthState {

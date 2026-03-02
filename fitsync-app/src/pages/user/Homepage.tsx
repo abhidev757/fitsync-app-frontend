@@ -81,7 +81,7 @@ const Homepage = () => {
         <section className="flex items-center space-x-8 mb-20">
           <div className="w-1/2">
             <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-ZcTJbHGjri2w1psge4sNjE13EaoTiS.png"
+              src="../public/images/Hero_Image1.jpg"
               alt="People exercising in a gym"
               className="rounded-lg"
             />
