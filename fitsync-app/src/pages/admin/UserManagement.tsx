@@ -110,6 +110,13 @@ const UserManagement = () => {
       user.specialization.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const ITEMS_PER_PAGE = 5;
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / ITEMS_PER_PAGE));
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-white mb-6">Users List</h1>
@@ -131,7 +138,7 @@ const UserManagement = () => {
               </tr>
             </thead>
             <tbody className="bg-gray-800 divide-y divide-gray-700">
-  {filteredUsers.map((user) => (
+  {paginatedUsers.map((user) => (
     <tr key={user._id}>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{user.name}</td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{user.email}</td>
@@ -168,7 +175,7 @@ const UserManagement = () => {
         )}
       </div>
 
-      <Pagination currentPage={currentPage} totalPages={3} onPageChange={handlePageChange} />
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
 
       {/* Confirmation Modal */}
       {showConfirmModal && selectedUser && (

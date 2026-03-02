@@ -5,18 +5,36 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import NotificationDropdown from '../common/NotificationDropdown';
 import { getTrainerSocket, connectTrainerSocket } from '../../util/trainerSocket';
+import { useNavigate } from 'react-router-dom';
+import { fetchTrainerProfile } from '../../axios/trainerApi';
 
 const TrainerHeader = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const trainerInfo = useSelector((state: RootState) => state.trainerAuth.trainerInfo);
   const [socketReady, setSocketReady] = useState(false);
+  const [profileImage, setProfileImage] = useState<string>('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (trainerInfo?._id) {
       connectTrainerSocket(trainerInfo._id);
       setSocketReady(true);
+
+      // Fetch profile to get the latest profileImageUrl
+      fetchTrainerProfile(trainerInfo._id)
+        .then((profile) => {
+          if (profile?.profileImageUrl) {
+            setProfileImage(profile.profileImageUrl);
+          }
+        })
+        .catch((err) => console.error('Failed to fetch trainer profile image:', err));
     }
   }, [trainerInfo]);
+
+  const avatarSrc =
+    profileImage ||
+    trainerInfo?.profileImageUrl ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(trainerInfo?.name || 'T')}&background=d9ff00&color=000&size=40`;
 
   return (
     <header className="bg-gray-800 border-b border-gray-700 p-4">
@@ -35,16 +53,17 @@ const TrainerHeader = () => {
         </div>
         <div className="flex items-center gap-4">
           {trainerInfo && socketReady && (
-            <NotificationDropdown 
-              userId={trainerInfo._id} 
-              userType="trainer" 
-              getSocket={getTrainerSocket} 
+            <NotificationDropdown
+              userId={trainerInfo._id}
+              userType="trainer"
+              getSocket={getTrainerSocket}
             />
           )}
           <img
-            src="/placeholder.svg?height=40&width=40"
+            src={avatarSrc}
             alt="Profile"
-            className="h-10 w-10 rounded-full"
+            className="h-10 w-10 rounded-full cursor-pointer object-cover ring-2 ring-transparent hover:ring-[#d9ff00] transition-all"
+            onClick={() => navigate('/trainer/trainerProfile')}
           />
         </div>
       </div>

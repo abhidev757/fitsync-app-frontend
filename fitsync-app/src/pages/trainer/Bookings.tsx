@@ -27,6 +27,8 @@ export default function BookingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterStatus>('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -78,6 +80,16 @@ export default function BookingsPage() {
     
     return matchesFilter && matchesSearch;
   });
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBookings = filteredBookings.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
 
   if (loading) {
     return (
@@ -148,8 +160,8 @@ export default function BookingsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredBookings.length > 0 ? (
-                filteredBookings.map((booking) => (
+              {currentBookings.length > 0 ? (
+                currentBookings.map((booking) => (
                   <tr key={booking._id} className="border-b border-gray-700">
                     <td className="p-4">{booking.userId.name}</td>
                     <td className="p-4">{new Date(booking.startDate).toLocaleDateString()}</td>
@@ -181,15 +193,41 @@ export default function BookingsPage() {
           </table>
         </div>
 
-        <div className="flex justify-between items-center mt-4">
-          <button className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors text-white">
-            Previous
-          </button>
-          <span className="text-gray-400">Page 1 of 1</span>
-          <button className="px-4 py-2 bg-black rounded-lg hover:bg-gray-900 transition-colors text-white">
-            Next
-          </button>
-        </div>
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center mt-6">
+            <button 
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            
+            <div className="flex space-x-2">
+              {[...Array(totalPages)].map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => handlePageChange(index + 1)}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                    currentPage === index + 1
+                      ? "bg-[#d9ff00] text-black font-bold"
+                      : "bg-gray-700 text-white hover:bg-gray-600"
+                  }`}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </div>
+
+            <button 
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-black rounded-lg hover:bg-gray-900 transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

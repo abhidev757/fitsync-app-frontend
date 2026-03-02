@@ -24,6 +24,7 @@ const MySessions: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -74,7 +75,8 @@ const MySessions: React.FC = () => {
       trainer: booking.trainerId.name,
       type: "Training Session",
       time: booking.sessionTime,
-    }));
+    }))
+    .slice(0, 4);
 
   const recentActivities = bookings.map((booking) => ({
     id: booking._id,
@@ -86,7 +88,18 @@ const MySessions: React.FC = () => {
         : booking.status === "completed"
         ? "completion"
         : "payment",
-  }));
+  }))
+  .slice(0, 4);
+
+  const sessionsPerPage = 5;
+  const indexOfLastSession = currentPage * sessionsPerPage;
+  const indexOfFirstSession = indexOfLastSession - sessionsPerPage;
+  const currentSessions = sessions.slice(indexOfFirstSession, indexOfLastSession);
+  const totalPages = Math.ceil(sessions.length / sessionsPerPage);
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
 
   const hasSessions = sessions.length > 0;
 
@@ -110,7 +123,7 @@ const MySessions: React.FC = () => {
 
         {hasSessions ? (
           <div className="space-y-4">
-            {sessions.map((session) => (
+            {currentSessions.map((session) => (
               
               <div
                 key={session.id}
@@ -168,6 +181,40 @@ const MySessions: React.FC = () => {
                 </div>
               </div>
             ))}
+
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center space-x-2 mt-6">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 bg-[#222222] text-[#d9ff00] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#333333] transition-colors"
+                >
+                  Previous
+                </button>
+                
+                {[...Array(totalPages)].map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handlePageChange(index + 1)}
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                      currentPage === index + 1
+                        ? "bg-[#d9ff00] text-black font-bold"
+                        : "bg-[#222222] text-white hover:bg-[#333333]"
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 bg-[#222222] text-[#d9ff00] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#333333] transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="bg-[#222222] rounded-lg p-16 flex flex-col items-center justify-center">

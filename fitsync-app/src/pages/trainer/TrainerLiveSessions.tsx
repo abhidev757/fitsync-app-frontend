@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { Play, Video } from 'lucide-react';
-import { getTrainerBookings, startVideoSession } from '../../axios/trainerApi'; // You'll need to add startVideoSession to your API file
+import { Play, Square, Video } from 'lucide-react';
+import { getTrainerBookings, startVideoSession, completeSession } from '../../axios/trainerApi';
 
 interface Booking {
   _id: string;
@@ -22,6 +22,9 @@ export default function TrainerLiveSessions() {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const [confirmingEnd, setConfirmingEnd] = useState<string | null>(null); // bookingId being ended
 
   useEffect(() => {
     fetchLiveBookings();
@@ -59,6 +62,29 @@ export default function TrainerLiveSessions() {
     }
   };
 
+  const handleEndSession = async (bookingId: string) => {
+    try {
+      await completeSession(bookingId);
+      toast.success("Session ended and marked as completed.");
+      // Remove it from the list
+      setBookings(prev => prev.filter(b => b._id !== bookingId));
+    } catch (err) {
+      console.log('error ending session', err);
+      toast.error("Could not end session. Please try again.");
+    } finally {
+      setConfirmingEnd(null);
+    }
+  };
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBookings = bookings.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(bookings.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   if (loading) return <div className="p-6 text-white">Loading live sessions...</div>;
 
   return (
@@ -72,8 +98,8 @@ export default function TrainerLiveSessions() {
         </header>
 
         <div className="grid grid-cols-1 gap-6">
-          {bookings.length > 0 ? (
-            bookings.map((session) => (
+          {currentBookings.length > 0 ? (
+            currentBookings.map((session) => (
               <div key={session._id} className="bg-gray-900 border border-gray-800 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between hover:border-[#d9ff00] transition-colors">
                 <div className="flex items-center space-x-6">
                   <div className="bg-gray-800 p-4 rounded-full">
@@ -105,6 +131,16 @@ export default function TrainerLiveSessions() {
                     <Play size={18} fill="currentColor" />
                     <span>{session.meetingStatus === 'live' ? 'Re-join Call' : 'Start Session'}</span>
                   </button>
+
+                  {session.meetingStatus === 'live' && (
+                    <button
+                      onClick={() => setConfirmingEnd(session._id)}
+                      className="flex items-center space-x-2 px-6 py-3 rounded-full font-bold bg-red-600 hover:bg-red-700 transition-all active:scale-95"
+                    >
+                      <Square size={18} fill="currentColor" />
+                      <span>End Session</span>
+                    </button>
+                  )}
                 </div>
               </div>
             ))
@@ -114,7 +150,72 @@ export default function TrainerLiveSessions() {
             </div>
           )}
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center mt-8">
+            <button 
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed border border-gray-800"
+            >
+              Previous
+            </button>
+            
+            <div className="flex space-x-2">
+              {[...Array(totalPages)].map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => handlePageChange(index + 1)}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                    currentPage === index + 1
+                      ? "bg-[#d9ff00] text-black font-bold"
+                      : "bg-gray-900 border border-gray-800 text-white hover:bg-gray-800"
+                  }`}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </div>
+
+            <button 
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed border border-gray-800"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* End Session Confirmation Modal */}
+      {confirmingEnd && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-8 w-full max-w-md text-center">
+            <div className="bg-red-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Square size={28} fill="white" className="text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">End Session?</h2>
+            <p className="text-gray-400 mb-8">
+              This will permanently mark the session as <span className="text-white font-semibold">Completed</span> and remove it from your live sessions. This action cannot be undone.
+            </p>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setConfirmingEnd(null)}
+                className="flex-1 px-6 py-3 rounded-full font-bold bg-gray-700 hover:bg-gray-600 text-white transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleEndSession(confirmingEnd)}
+                className="flex-1 px-6 py-3 rounded-full font-bold bg-red-600 hover:bg-red-700 text-white transition-all"
+              >
+                End Session
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

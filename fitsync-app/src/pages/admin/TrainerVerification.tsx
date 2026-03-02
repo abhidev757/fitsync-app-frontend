@@ -16,6 +16,8 @@ const TrainerVerification = () => {
   const navigate = useNavigate()
   const [currentPage, setCurrentPage] = useState(1);
   const [applicants, setApplicants] = useState<VerificationRequest[]>([]);
+
+  const ITEMS_PER_PAGE = 5;
   
   useEffect(() => {
           const fetchAllApplicants = async () => {
@@ -34,7 +36,11 @@ const TrainerVerification = () => {
         navigate(`/admin/trainerVerificationDetails/${id}`);
       };
 
-      console.log("Trainer Data:",applicants);
+  const totalPages = Math.max(1, Math.ceil(applicants.length / ITEMS_PER_PAGE));
+  const currentApplicants = applicants.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="p-6">
@@ -62,7 +68,7 @@ const TrainerVerification = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
-            {applicants.map((request) => (
+            {currentApplicants.map((request) => (
               <tr key={request._id} className="bg-gray-800">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                   {request.name}
@@ -91,29 +97,43 @@ const TrainerVerification = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-between items-center mt-6">
-        <button
-          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-          className="flex items-center px-4 py-2 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600"
-          disabled={currentPage === 1}
-        >
-          <ChevronLeft className="w-4 h-4 mr-1" />
-          Previous
-        </button>
-        
-        <span className="text-white">
-          Page {currentPage} of 3
-        </span>
-        
-        <button
-          onClick={() => setCurrentPage(p => Math.min(3, p + 1))}
-          className="flex items-center px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600"
-          disabled={currentPage === 3}
-        >
-          Next
-          <ChevronRight className="w-4 h-4 ml-1" />
-        </button>
-      </div>
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center mt-6">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            className="flex items-center px-4 py-2 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600"
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Previous
+          </button>
+
+          <div className="flex space-x-2">
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                  currentPage === i + 1
+                    ? 'bg-blue-500 text-white font-bold'
+                    : 'bg-gray-700 text-white hover:bg-gray-600'
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+          
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            className="flex items-center px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600"
+            disabled={currentPage === totalPages}
+          >
+            Next
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
