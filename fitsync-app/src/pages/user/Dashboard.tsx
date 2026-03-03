@@ -1,6 +1,6 @@
 import React, { useState, useEffect, ReactNode } from "react";
 import { useGoogleLogin } from "@react-oauth/google";
-import { ChevronRight, Flame, Footprints, Droplets, Moon } from "lucide-react";
+import { ChevronRight, Flame, Footprints, Droplets, Moon, User } from "lucide-react";
 import { Button } from "../../components/user/ui/button";
 import { Card, CardContent } from "../../components/user/ui/card";
 import ProgressCircle from "../../components/user/Progress-circle";
@@ -8,40 +8,78 @@ import {
   getTodayHealthData,
   syncGoogleFitData,
   exchangeGoogleFitCode,
+  getDashboardData,
+  fetchTodayWater,
+  updateTodayWater,
 } from "../../axios/userApi";
-import { fetchTodayWater, updateTodayWater } from "../../axios/userApi";
 
 interface HealthData {
   steps: number;
   caloriesBurned: number;
   sleepHours: number;
 }
+
+interface FitnessInfo {
+  age: number;
+  sex: string;
+  weight: number;
+  height: number;
+  targetWeight: number;
+  activity: string;
+}
+
+interface DashboardInfo {
+  user: { name: string; profileImageUrl: string | null };
+  fitness: FitnessInfo | null;
+  appointmentDays: number[];
+}
+
 interface BlurSectionProps {
   active: boolean;
   children: ReactNode;
 }
 
+const DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+
 const Dashboard: React.FC = () => {
   const userId = localStorage.getItem("userId") || "";
 
-  // Water state
+  // ── Water
   const [waterGlasses, setWaterGlasses] = useState(0);
   const totalGlasses = 9;
   const waterPct = (waterGlasses / totalGlasses) * 100;
 
-  // Google Fit state
+  // ── Google Fit
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [fitConnected, setFitConnected] = useState(false);
   const [loadingFit, setLoadingFit] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
 
-  // Set initial connection status from localStorage
+  // ── Real dashboard data
+  const [dashInfo, setDashInfo] = useState<DashboardInfo | null>(null);
+
+  // ── Calendar navigation
+  const now = new Date();
+  const [calYear, setCalYear] = useState(now.getFullYear());
+  const [calMonth, setCalMonth] = useState(now.getMonth()); // 0-indexed
+  const todayDate = now.getDate();
+  const todayMonth = now.getMonth();
+  const todayYear = now.getFullYear();
+
+  // Fetch dashboard data whenever month changes
   useEffect(() => {
-    const isConnected = localStorage.getItem("googleFitConnected") === "true";
-    setFitConnected(isConnected);
+    if (!userId) return;
+    getDashboardData(calYear, calMonth + 1)
+      .then((data: DashboardInfo) => setDashInfo(data))
+      .catch(console.error);
+  }, [userId, calYear, calMonth]);
+
+  // Google Fit connection status
+  useEffect(() => {
+    setFitConnected(localStorage.getItem("googleFitConnected") === "true");
   }, []);
 
-  // Fetch water on mount
+  // Water log
   useEffect(() => {
     if (!userId) return;
     fetchTodayWater(userId)
@@ -49,48 +87,28 @@ const Dashboard: React.FC = () => {
       .catch(console.error);
   }, [userId]);
 
-  // Fetch today's health data with auto-sync for connected users
+  // Health data auto-sync
   useEffect(() => {
     if (!userId || !initialLoad) return;
-    
-    const fetchHealthData = async () => {
+    const run = async () => {
       const isConnected = localStorage.getItem("googleFitConnected") === "true";
       setLoadingFit(true);
-      
       try {
-        // Sync for connected users
         if (isConnected) {
-          try {
-            await syncGoogleFitData();
-          } catch (syncError) {
-            console.error("Sync failed", syncError);
-            localStorage.removeItem("googleFitConnected");
-            setFitConnected(false);
-          }
+          try { await syncGoogleFitData(); }
+          catch { localStorage.removeItem("googleFitConnected"); setFitConnected(false); }
         }
-        
-        // Fetch updated health data
-        const data = await getTodayHealthData(userId);
-        setHealthData(data);
-      } catch (error) {
-        console.error("Failed to get health data", error);
-        setFitConnected(false);
-      } finally {
-        setLoadingFit(false);
-        setInitialLoad(false);
-      }
+        setHealthData(await getTodayHealthData(userId));
+      } catch { setFitConnected(false); }
+      finally { setLoadingFit(false); setInitialLoad(false); }
     };
-
-    fetchHealthData();
+    run();
   }, [userId, initialLoad]);
 
-  // Google Fit connect & sync
   const connectGoogleFit = useGoogleLogin({
     flow: "auth-code",
     scope: [
-      "openid",
-      "profile",
-      "email",
+      "openid", "profile", "email",
       "https://www.googleapis.com/auth/fitness.activity.read",
       "https://www.googleapis.com/auth/fitness.sleep.read",
       "https://www.googleapis.com/auth/fitness.body.read",
@@ -99,32 +117,22 @@ const Dashboard: React.FC = () => {
     onSuccess: async ({ code }) => {
       setLoadingFit(true);
       try {
-        // 1) Exchange code for tokens
         await exchangeGoogleFitCode(code, window.location.origin, userId);
-        // 2) Sync Fit data
         await syncGoogleFitData();
-        // 3) Store connection status
         localStorage.setItem("googleFitConnected", "true");
-        // 4) Re-fetch today's health
-        const fresh = await getTodayHealthData(userId);
-        setHealthData(fresh);
+        setHealthData(await getTodayHealthData(userId));
         setFitConnected(true);
-      } catch (err) {
-        console.error("Fit sync failed", err);
-      } finally {
-        setLoadingFit(false);
-      }
+      } catch (err) { console.error("Fit sync failed", err); }
+      finally { setLoadingFit(false); }
     },
     onError: () => alert("Google Fit authorization failed"),
   });
 
-  // Water change handler
-  const handleWaterChange = (newVal: number) => {
-    setWaterGlasses(newVal);
-    updateTodayWater(userId, newVal).catch(console.error);
+  const handleWaterChange = (v: number) => {
+    setWaterGlasses(v);
+    updateTodayWater(userId, v).catch(console.error);
   };
 
-  // Blur wrapper
   const BlurSection = ({ active, children }: BlurSectionProps) => (
     <div className="relative">
       <div className={active ? "filter blur-md" : ""}>{children}</div>
@@ -138,71 +146,56 @@ const Dashboard: React.FC = () => {
     </div>
   );
 
-  // Calendar mock data
-  const days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-  const dates = Array.from({ length: 31 }, (_, i) => i + 1);
-  const todayDate = new Date().getDate();
+  // ── Calendar
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const firstDow = (new Date(calYear, calMonth, 1).getDay() + 6) % 7; // Mon=0
+  const apptDays = new Set(dashInfo?.appointmentDays ?? []);
+  const monthName = new Date(calYear, calMonth, 1).toLocaleString("default", { month: "long" });
+
+  const prevMonth = () => calMonth === 0 ? (setCalYear(y => y - 1), setCalMonth(11)) : setCalMonth(m => m - 1);
+  const nextMonth = () => calMonth === 11 ? (setCalYear(y => y + 1), setCalMonth(0)) : setCalMonth(m => m + 1);
+
+  const fitness = dashInfo?.fitness;
 
   return (
     <div className="p-4 space-y-6">
       <h1 className="text-2xl font-bold">Dashboard Overview</h1>
 
-      {/* Welcome Card */}
+      {/* Welcome */}
       <Card className="bg-[#1a1a1a] border-none">
         <CardContent className="flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold">Hello!</h2>
-            <p className="text-gray-400">
-              Stay healthy by connecting your Google Fit account.
-            </p>
+            <h2 className="text-2xl font-bold">Hello, {dashInfo?.user.name ?? "there"}!</h2>
+            <p className="text-gray-400">Stay healthy by connecting your Google Fit account.</p>
           </div>
           <ChevronRight className="h-8 w-8 text-[#d9ff00]" />
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left Column - Fit-powered */}
+
+        {/* Left – Google Fit metrics */}
         <div className="md:col-span-2 space-y-6">
           <BlurSection active={!fitConnected}>
             <div className="grid grid-cols-2 gap-4">
-              {/* Calories */}
               <Card className="bg-[#1a1a1a] border-none">
                 <CardContent>
-                  <div className="flex items-center mb-2">
-                    <Flame className="text-[#d9ff00] mr-2" />
-                    <span>Total Calories</span>
-                  </div>
-                  <ProgressCircle
-                    percentage={((healthData?.caloriesBurned ?? 0) / 2000) * 100}
-                    size={100}
-                    strokeWidth={10}
-                  >
+                  <div className="flex items-center mb-2"><Flame className="text-[#d9ff00] mr-2" /><span>Total Calories</span></div>
+                  <ProgressCircle percentage={((healthData?.caloriesBurned ?? 0) / 2000) * 100} size={100} strokeWidth={10}>
                     <div className="text-center">
-                      <p className="text-xl font-bold">
-                        {Math.round(healthData?.caloriesBurned ?? 0)}
-                      </p>
+                      <p className="text-xl font-bold">{Math.round(healthData?.caloriesBurned ?? 0)}</p>
                       <p className="text-xs text-gray-400">kcal</p>
                     </div>
                   </ProgressCircle>
                 </CardContent>
               </Card>
 
-              {/* Steps */}
               <Card className="bg-[#1a1a1a] border-none">
                 <CardContent>
-                  <div className="flex items-center mb-2">
-                    <Footprints className="text-[#d9ff00] mr-2" />
-                    <span>Steps</span>
-                  </div>
-                  <ProgressCircle
-                    percentage={((healthData?.steps ?? 0) / 5000) * 100}
-                    size={100}
-                    strokeWidth={10}
-                  >
+                  <div className="flex items-center mb-2"><Footprints className="text-[#d9ff00] mr-2" /><span>Steps</span></div>
+                  <ProgressCircle percentage={((healthData?.steps ?? 0) / 5000) * 100} size={100} strokeWidth={10}>
                     <div className="text-center">
-                      <p className="text-xl font-bold">
-                        {healthData?.steps ?? 0}
-                      </p>
+                      <p className="text-xl font-bold">{healthData?.steps ?? 0}</p>
                       <p className="text-xs text-gray-400">steps</p>
                     </div>
                   </ProgressCircle>
@@ -213,113 +206,121 @@ const Dashboard: React.FC = () => {
 
           {/* Sleep & Water */}
           <div className="grid grid-cols-3 gap-4">
-            {/* Sleep */}
             <BlurSection active={!fitConnected}>
               <Card className="bg-[#1a1a1a] border-none">
                 <CardContent>
-                  <div className="flex items-center mb-2">
-                    <Moon className="text-[#d9ff00] mr-2" />
-                    <span>Sleep (hrs)</span>
-                  </div>
-                  <ProgressCircle
-                    percentage={((healthData?.sleepHours ?? 0) / 8) * 100}
-                    size={80}
-                    strokeWidth={8}
-                  >
-                    <div className="text-center">
-                      <p>{Math.round(healthData?.sleepHours ?? 0)}</p>
-                    </div>
+                  <div className="flex items-center mb-2"><Moon className="text-[#d9ff00] mr-2" /><span>Sleep (hrs)</span></div>
+                  <ProgressCircle percentage={((healthData?.sleepHours ?? 0) / 8) * 100} size={80} strokeWidth={8}>
+                    <div className="text-center"><p>{Math.round(healthData?.sleepHours ?? 0)}</p></div>
                   </ProgressCircle>
                 </CardContent>
               </Card>
             </BlurSection>
 
-            {/* Water */}
             <Card className="bg-[#1a1a1a] border-none">
               <CardContent>
-                <div className="flex items-center mb-2">
-                  <Droplets className="text-[#d9ff00] mr-2" />
-                  <span>Water</span>
-                </div>
-                <ProgressCircle
-                  percentage={waterPct}
-                  size={80}
-                  strokeWidth={8}
-                >
+                <div className="flex items-center mb-2"><Droplets className="text-[#d9ff00] mr-2" /><span>Water</span></div>
+                <ProgressCircle percentage={waterPct} size={80} strokeWidth={8}>
                   <div className="text-center">
-                    <p>
-                      {waterGlasses}/{totalGlasses}
-                    </p>
+                    <p>{waterGlasses}/{totalGlasses}</p>
                     <p className="text-xs text-gray-400">glasses</p>
                   </div>
                 </ProgressCircle>
                 <div className="flex justify-center gap-2 mt-2">
-                  <button
-                    onClick={() =>
-                      handleWaterChange(Math.max(0, waterGlasses - 1))
-                    }
-                    className="w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center"
-                  >
-                    −
-                  </button>
-                  <button
-                    onClick={() =>
-                      handleWaterChange(
-                        Math.min(totalGlasses, waterGlasses + 1)
-                      )
-                    }
-                    className="w-6 h-6 bg-[#d9ff00] rounded-full flex items-center justify-center"
-                  >
-                    +
-                  </button>
+                  <button onClick={() => handleWaterChange(Math.max(0, waterGlasses - 1))}
+                    className="w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center">−</button>
+                  <button onClick={() => handleWaterChange(Math.min(totalGlasses, waterGlasses + 1))}
+                    className="w-6 h-6 bg-[#d9ff00] rounded-full flex items-center justify-center text-black font-bold">+</button>
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Right Column - Profile & Calendar */}
+        {/* Right – Profile & Calendar */}
         <div className="space-y-6">
-          {/* Profile */}
+
+          {/* Profile Card */}
           <Card className="bg-[#1a1a1a] border-none">
             <CardContent className="text-center">
-              <div className="h-24 w-24 rounded-full overflow-hidden mx-auto mb-2">
-                <img
-                  src="https://via.placeholder.com/100"
-                  alt="User"
-                  className="object-cover w-full h-full"
-                />
+              <div className="h-24 w-24 rounded-full overflow-hidden mx-auto mb-3 bg-gray-700 flex items-center justify-center">
+                {dashInfo?.user.profileImageUrl
+                  ? <img src={dashInfo.user.profileImageUrl} alt="Profile" className="object-cover w-full h-full" />
+                  : <User size={40} className="text-gray-400" />
+                }
               </div>
-              <h3 className="text-xl font-bold">Tassy Omah</h3>
-              <p className="text-gray-400">
-                25 • New York, USA
-              </p>
+              <h3 className="text-xl font-bold">{dashInfo?.user.name ?? "—"}</h3>
+
+              {fitness && (
+                <p className="text-gray-400 text-sm mt-1">
+                  {fitness.age} yrs · {fitness.sex} · {fitness.activity}
+                </p>
+              )}
+
+              {fitness && (
+                <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+                  <div className="bg-gray-800 rounded-lg p-2">
+                    <p className="text-[#d9ff00] font-bold text-sm">{fitness.weight}<span className="text-xs text-gray-400"> kg</span></p>
+                    <p className="text-xs text-gray-500">Weight</p>
+                  </div>
+                  <div className="bg-gray-800 rounded-lg p-2">
+                    <p className="text-[#d9ff00] font-bold text-sm">{fitness.height}<span className="text-xs text-gray-400"> cm</span></p>
+                    <p className="text-xs text-gray-500">Height</p>
+                  </div>
+                  <div className="bg-gray-800 rounded-lg p-2">
+                    <p className="text-[#d9ff00] font-bold text-sm">{fitness.targetWeight}<span className="text-xs text-gray-400"> kg</span></p>
+                    <p className="text-xs text-gray-500">Goal</p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Calendar */}
+          {/* Appointment Calendar */}
           <Card className="bg-[#1a1a1a] border-none">
             <CardContent>
-              <h4 className="mb-2 font-medium">Trainer's Appointment</h4>
-              <div className="grid grid-cols-7 gap-1 text-center text-sm mb-2">
-                {days.map((d) => (
-                  <div key={d}>{d}</div>
-                ))}
+              <div className="flex items-center justify-between mb-3">
+                <button onClick={prevMonth} className="text-gray-400 hover:text-white px-1 text-lg">‹</button>
+                <h4 className="font-medium text-sm">{monthName} {calYear}</h4>
+                <button onClick={nextMonth} className="text-gray-400 hover:text-white px-1 text-lg">›</button>
               </div>
+
+              <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-500 mb-1">
+                {DAYS.map((d) => <div key={d}>{d}</div>)}
+              </div>
+
               <div className="grid grid-cols-7 gap-1 text-center">
-                {dates.map((d) => (
-                  <div
-                    key={d}
-                    className={`p-1 rounded-full ${
-                      d === todayDate
-                        ? "bg-[#d9ff00] text-black"
-                        : "hover:bg-[#2a2a2a]"
-                    }`}
-                  >
-                    {d}
-                  </div>
-                ))}
+                {Array.from({ length: firstDow }).map((_, i) => <div key={`blank-${i}`} />)}
+                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
+                  const isToday = d === todayDate && calMonth === todayMonth && calYear === todayYear;
+                  const hasAppt = apptDays.has(d);
+                  return (
+                    <div key={d}
+                      title={hasAppt ? "Session booked" : undefined}
+                      className={`p-1 rounded-full text-xs transition-colors ${
+                        isToday
+                          ? "bg-[#d9ff00] text-black font-bold"
+                          : hasAppt
+                          ? "bg-blue-600 text-white font-medium"
+                          : "hover:bg-[#2a2a2a] text-gray-300"
+                      }`}
+                    >
+                      {d}
+                    </div>
+                  );
+                })}
               </div>
+
+              <div className="flex gap-4 mt-3 text-xs text-gray-500 justify-center">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[#d9ff00] inline-block" />Today
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-blue-600 inline-block" />Session
+                </span>
+              </div>
+
+              <p className="text-center text-xs text-gray-600 mt-2">Trainer's Appointment</p>
             </CardContent>
           </Card>
         </div>

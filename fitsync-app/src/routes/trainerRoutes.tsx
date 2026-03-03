@@ -19,6 +19,7 @@ import VerificationStatus from "../pages/trainer/VerificationStatus";
 import TimeSlots from "../pages/trainer/TimeSlots";
 import TrainerChat from "../pages/trainer/TrainerChat";
 import TrainerLiveSessions from "../pages/trainer/TrainerLiveSessions";
+import TrainerReviews from "../pages/trainer/TrainerReviews";
 
 const trainerRoutes = (
   <Route path="/" element={<App />}>
@@ -41,6 +42,7 @@ const trainerRoutes = (
     <Route path="timeSlots" element={<TimeSlots />} />
     <Route path="trainerChat" element={<TrainerChat />} />
     <Route path="trainerLiveSessions" element={<TrainerLiveSessions />} />
+    <Route path="trainerReviews" element={<TrainerReviews />} />
     </Route>
     </Route>
   </Route>

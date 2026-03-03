@@ -128,3 +128,10 @@ export const rejectUserPayoutRequest = async (requestId: string) => {
   const response = await axiosInstance.put(`/admin/user-payout-request/${requestId}/reject`);
   return response.data;
 };
+
+// Get reviews for a trainer (admin route)
+export const getTrainerReviews = async (trainerId: string) => {
+  const response = await axiosInstance.get(`/admin/trainer-reviews/${trainerId}`);
+  return response.data;
+};
+

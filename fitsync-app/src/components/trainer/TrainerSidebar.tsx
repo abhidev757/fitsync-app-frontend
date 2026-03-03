@@ -1,6 +1,6 @@
 // src/components/trainer/TrainerSidebar.tsx
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, MessageSquare, BookOpen, Clock, Wallet, User, LogOut, Video } from 'lucide-react';
+import { Home, MessageSquare, BookOpen, Clock, Wallet, User, LogOut, Video, Star } from 'lucide-react';
 import { logoutTrainer } from '../../slices/trainerAuthSlice';
 import { LogoutTrainer } from '../../axios/trainerApi';
 import { AppDispatch } from '../../store';
@@ -27,6 +27,7 @@ const TrainerSidebar = () => {
     { path: '/trainer/bookings', label: 'Bookings', icon: BookOpen },
     { path: '/trainer/timeSlots', label: 'Current Schedules', icon: Clock },
     { path: '/trainer/wallet', label: 'Wallet', icon: Wallet },
+    { path: '/trainer/trainerReviews', label: 'Reviews', icon: Star },
     { path: '/trainer/trainerProfile', label: 'Account', icon: User },
   ];
 

@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import SearchBar from "../../components/admin/SearchBar";
 import ActionButton from "../../components/admin/ActionButton";
 import Pagination from "../../components/admin/Pagination";
-import { getAllTrainer, updateTrainerStatus } from "../../axios/adminApi";
+import { getAllTrainer, updateTrainerStatus, getTrainerReviews } from "../../axios/adminApi";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
 import { motion } from "framer-motion";
+import { Star } from "lucide-react";
 
 interface Trainer {
   _id: string;
@@ -16,6 +17,7 @@ interface Trainer {
   isBlocked: boolean;
   verificationStatus: boolean;
   createdAt: string;
+  avgRating?: number;
 }
 
 const ITEMS_PER_PAGE = 7;
@@ -25,9 +27,7 @@ const TrainerManagement = () => {
   const { adminInfo } = useSelector((state: RootState) => state.adminAuth);
 
   useEffect(() => {
-    if (!adminInfo) {
-      navigate("/adminLogin");
-    }
+    if (!adminInfo) navigate("/adminLogin");
   }, [navigate, adminInfo]);
 
   const [trainers, setTrainers] = useState<Trainer[]>([]);
@@ -45,12 +45,29 @@ const TrainerManagement = () => {
       setLoading(true);
       try {
         const data = await getAllTrainer();
-        const formattedTrainers = data.map((trainer: Trainer) => ({
+        const formatted: Trainer[] = data.map((trainer: Trainer) => ({
           ...trainer,
           status: trainer.isBlocked ? "Unblock" : "Block",
         }));
-        setTrainers(formattedTrainers);
-        setTotalPages(Math.ceil(formattedTrainers.length / ITEMS_PER_PAGE));
+
+        // Fetch average ratings for all verified trainers in parallel
+        const withRatings = await Promise.all(
+          formatted.map(async (trainer) => {
+            try {
+              const reviews = await getTrainerReviews(trainer._id);
+              if (Array.isArray(reviews) && reviews.length > 0) {
+                const avg = reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length;
+                return { ...trainer, avgRating: parseFloat(avg.toFixed(1)) };
+              }
+            } catch {
+              // no reviews – fine
+            }
+            return { ...trainer, avgRating: undefined };
+          })
+        );
+
+        setTrainers(withRatings);
+        setTotalPages(Math.ceil(withRatings.length / ITEMS_PER_PAGE));
       } catch (error) {
         console.error("Error fetching trainers:", error);
         toast.error("Failed to fetch trainers");
@@ -61,20 +78,9 @@ const TrainerManagement = () => {
     fetchTrainers();
   }, []);
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    setCurrentPage(1);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleViewTrainer = (id: string) => {
-    navigate(`/admin/trainerDetails/${id}`);
-  };
-
+  const handleSearch = (value: string) => { setSearchTerm(value); setCurrentPage(1); };
+  const handlePageChange = (page: number) => { setCurrentPage(page); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const handleViewTrainer = (id: string) => navigate(`/admin/trainerDetails/${id}`);
   const handleToggleStatus = (trainer: Trainer) => {
     setSelectedTrainer(trainer);
     setPendingAction(trainer.isBlocked ? "Unblock" : "Block");
@@ -85,17 +91,10 @@ const TrainerManagement = () => {
     if (!selectedTrainer || !pendingAction) return;
     try {
       const newStatus = pendingAction === "Block";
-
       await updateTrainerStatus(selectedTrainer._id, newStatus);
-
-      setTrainers((prev) =>
-        prev.map((t) =>
-          t._id === selectedTrainer._id ? { ...t, isBlocked: newStatus } : t
-        )
-      );
+      setTrainers((prev) => prev.map((t) => t._id === selectedTrainer._id ? { ...t, isBlocked: newStatus } : t));
       toast.success(`Trainer ${pendingAction === "Block" ? "blocked" : "unblocked"} successfully`);
-    } catch (error) {
-      console.error("Failed to update status:", error);
+    } catch {
       toast.error("Failed to update trainer status");
     } finally {
       setShowConfirmModal(false);
@@ -109,10 +108,7 @@ const TrainerManagement = () => {
     .filter((trainer) =>
       trainer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (Array.isArray(trainer.specializations) &&
-        trainer.specializations.some((spec) =>
-          spec.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      )
+        trainer.specializations.some((spec) => spec.toLowerCase().includes(searchTerm.toLowerCase())))
     );
 
   const paginatedTrainers = filteredTrainers.slice(
@@ -123,9 +119,7 @@ const TrainerManagement = () => {
   useEffect(() => {
     const newTotalPages = Math.max(1, Math.ceil(filteredTrainers.length / ITEMS_PER_PAGE));
     setTotalPages(newTotalPages);
-    if (currentPage > newTotalPages) {
-      setCurrentPage(1);
-    }
+    if (currentPage > newTotalPages) setCurrentPage(1);
   }, [filteredTrainers.length, currentPage]);
 
   return (
@@ -150,6 +144,7 @@ const TrainerManagement = () => {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Specializations</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Rating</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Action</th>
@@ -162,24 +157,29 @@ const TrainerManagement = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                       {trainer.specializations?.join(", ") || "N/A"}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {trainer.avgRating !== undefined ? (
+                        <div className="flex items-center gap-1">
+                          <Star size={14} className="text-yellow-400 fill-yellow-400" />
+                          <span className="text-white font-semibold">{trainer.avgRating}</span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-500">—</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         trainer.isBlocked ? "bg-red-500 text-white" : "bg-green-500 text-white"
                       }`}>
-                        {trainer.isBlocked ? 'Blocked' : 'Active'}
+                        {trainer.isBlocked ? "Blocked" : "Active"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                       {new Date(trainer.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <ActionButton variant="view" onClick={() => handleViewTrainer(trainer._id)}>
-                        View
-                      </ActionButton>
-                      <ActionButton
-                        variant={trainer.isBlocked ? "Unblock" : "Block"}
-                        onClick={() => handleToggleStatus(trainer)}
-                      >
+                      <ActionButton variant="view" onClick={() => handleViewTrainer(trainer._id)}>View</ActionButton>
+                      <ActionButton variant={trainer.isBlocked ? "Unblock" : "Block"} onClick={() => handleToggleStatus(trainer)}>
                         {trainer.isBlocked ? "Unblock" : "Block"}
                       </ActionButton>
                     </td>
@@ -190,11 +190,7 @@ const TrainerManagement = () => {
 
             {totalPages > 1 && (
               <div className="px-6 py-4 bg-gray-700">
-                <Pagination 
-                  currentPage={currentPage} 
-                  totalPages={totalPages} 
-                  onPageChange={handlePageChange} 
-                />
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
               </div>
             )}
           </>
@@ -205,10 +201,8 @@ const TrainerManagement = () => {
       {showConfirmModal && selectedTrainer && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }} transition={{ duration: 0.2 }}
             className="bg-gray-800 rounded-lg p-6 w-full max-w-md text-white"
           >
             <h2 className="text-lg font-semibold mb-4">
@@ -219,17 +213,10 @@ const TrainerManagement = () => {
               <strong>{selectedTrainer.name}</strong>?
             </p>
             <div className="flex justify-end space-x-4">
-              <button
-                onClick={() => setShowConfirmModal(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded"
-              >
-                Cancel
-              </button>
+              <button onClick={() => setShowConfirmModal(false)} className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded">Cancel</button>
               <button
                 onClick={confirmToggle}
-                className={`px-4 py-2 rounded ${
-                  pendingAction === "Block" ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"
-                }`}
+                className={`px-4 py-2 rounded ${pendingAction === "Block" ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}`}
               >
                 Confirm
               </button>
