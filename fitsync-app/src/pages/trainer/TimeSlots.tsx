@@ -1,565 +1,466 @@
-import { useEffect, useState } from "react";
-import { Calendar, Plus, X } from "lucide-react";
-import "react-datepicker/dist/react-datepicker.css";
+import { useEffect, useState, useMemo } from "react";
+import { Plus, X, Calendar, Clock, Zap, Layers } from "lucide-react";
 import { toast } from "react-toastify";
-import { addTimeSlot, deleteTimeSlot, getTimeSlots } from "../../axios/trainerApi";
+import { addTimeSlot, addBulkTimeSlots, deleteTimeSlot, getTimeSlots } from "../../axios/trainerApi";
 
+// ── Types ─────────────────────────────────────────────────────────
+interface Slot { time: string; type: string; id: string; }
+interface DaySchedule { date: string; slots: Slot[]; }
 
-// interface TimeSlot {
-//   time: string;
-//   type: "Single Session" | "Package";
-// }
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+const DURATIONS = [30, 45, 60, 90];
+const BUFFER_OPTIONS = [0, 5, 10, 15, 30];
+const LUNCH_OPTIONS = [
+  { label: "None", start: "", end: "" },
+  { label: "12:00 – 13:00", start: "12:00", end: "13:00" },
+  { label: "13:00 – 14:00", start: "13:00", end: "14:00" },
+];
 
+// Convert 24h "HH:MM" to "H:MM AM/PM"
+const fmt24to12 = (t: string): string => {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  const ampm = h < 12 ? "AM" : "PM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${m.toString().padStart(2, "0")} ${ampm}`;
+};
 
+const toMins = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 
-interface Testimonial {
-  id: number;
-  name: string;
-  image: string;
-  rating: number;
-  comment: string;
+// Generate preview of slots for Bulk Add
+function generatePreviewSlots(blockStart: string, blockEnd: string, durationMins: number, lunchStart: string, lunchEnd: string): string[] {
+  if (!blockStart || !blockEnd || !durationMins) return [];
+  const bStart = toMins(blockStart);
+  const bEnd = toMins(blockEnd);
+  const lStart = lunchStart ? toMins(lunchStart) : null;
+  const lEnd = lunchEnd ? toMins(lunchEnd) : null;
+  const slots: string[] = [];
+  let cur = bStart;
+  while (cur + durationMins <= bEnd) {
+    const end = cur + durationMins;
+    if (lStart !== null && lEnd !== null && cur < lEnd && end > lStart) {
+      cur = lEnd;
+      continue;
+    }
+    slots.push(`${fmt24to12(`${String(Math.floor(cur/60)).padStart(2,"0")}:${String(cur%60).padStart(2,"0")}`)} - ${fmt24to12(`${String(Math.floor(end/60)).padStart(2,"0")}:${String(end%60).padStart(2,"0")}`)}`);
+    cur = end;
+  }
+  return slots;
 }
 
+// ── Component ─────────────────────────────────────────────────────
 export default function TimeSlots() {
-  const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
-    sessionType: "Single Session",
-    startDate: "16/07/2024",
-    endDate: "16/07/2024",
-    timeSlot: "9:00 AM to 10:00 AM",
-    price: "",
-    numberOfSessions: "",
-  });
-  const [showTimeDropdown, setShowTimeDropdown] = useState(false);
-
-  
-
-  const testimonials: Testimonial[] = [
-    {
-      id: 1,
-      name: "Vibin",
-      image: "/placeholder.svg?height=80&width=80",
-      rating: 5,
-      comment:
-        '"The custom workout and nutrition plans were exactly what I needed. I\'ve never felt healthier!"',
-    },
-    {
-      id: 2,
-      name: "Vibin",
-      image: "/placeholder.svg?height=80&width=80",
-      rating: 5,
-      comment:
-        '"The custom workout and nutrition plans were exactly what I needed. I\'ve never felt healthier!"',
-    },
-    {
-      id: 3,
-      name: "Sarah M",
-      image: "/placeholder.svg?height=80&width=80",
-      rating: 5,
-      comment:
-        '"The custom workout and nutrition plans were exactly what I needed. I\'ve never felt healthier!"',
-    },
-    {
-      id: 4,
-      name: "Tomas",
-      image: "/placeholder.svg?height=80&width=80",
-      rating: 5,
-      comment:
-        '"The custom workout and nutrition plans were exactly what I needed. I\'ve never felt healthier!"',
-    },
-  ];
-
-  const timeOptions = [
-    "9:00 AM to 10:00 AM",
-    "10:00 AM to 11:00 AM",
-    "11:00 AM to 12:00 PM",
-    "1:00 PM to 2:00 PM",
-    "2:00 PM to 3:00 PM",
-    "3:00 PM to 4:00 PM",
-  ];
-
-
-  interface DaySchedule {
-    date: string;       
-    slots: {
-      time: string;     
-      type: string;
-      id: string;     
-    }[];
-  }
-
-  const [isLoading, setIsLoading] = useState(false);
   const [timeSlots, setTimeSlots] = useState<DaySchedule[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<"quick" | "bulk">("quick");
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Quick Add state
+  const [qa, setQa] = useState({
+    date: "",
+    startTime: "09:00",
+    endTime: "10:00",
+    bufferMinutes: 0,
+    price: "",
+  });
+
+  // Bulk Add state
+  const [ba, setBa] = useState({
+    days: [] as string[],
+    blockStart: "09:00",
+    blockEnd: "17:00",
+    durationMins: 60,
+    lunchIndex: 0,
+    price: "",
+  });
+
+  const todayStr = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
-    const fetchTimeSlots = async () => {
-      try {
-        const { data } = await getTimeSlots();
-        console.log('API Response:', data); 
-        setTimeSlots(data); 
-      } catch (error) {
-        toast.error("Failed to load time slots");
-        console.error(error);
-      } finally {
-        setIsLoadingSlots(false);
-      }
-    };
-    fetchTimeSlots();
+    fetchSlots();
   }, []);
 
-  
-
-    // Handle slot deletion
-  const handleDeleteSlot = async (slotId: string) => {
-  // 1. Create a loading toast
-  const id = toast.loading("Deleting time slot...");
-
-  try {
-    await deleteTimeSlot(slotId);
-
-    // 2. Update state
-    setTimeSlots(prev => prev.map(day => ({
-      ...day,
-      slots: day.slots.filter(s => s.id !== slotId)
-    })).filter(day => day.slots.length > 0));
-
-    // 3. Update the toast to Success
-    toast.update(id, {
-      render: "Time slot deleted successfully",
-      type: "success",
-      isLoading: false,
-      autoClose: 3000,
-    });
-  } catch (error) {
-    console.log(error)
-    // 4. Update the toast to Error
-    toast.update(id, {
-      render: "Failed to delete slot",
-      type: "error",
-      isLoading: false,
-      autoClose: 3000,
-    });
-  }
-};
-
-  
-  const toInputFormat = (displayDate: string) => {
-    const [day, month, year] = displayDate.split("/");
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  };
-
- 
-  const toDisplayFormat = (inputDate: string) => {
-    const [year, month, day] = inputDate.split("-");
-    return `${day}/${month}/${year}`;
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
-
-  const handleSessionTypeChange = (type: string) => {
-    setFormData({
-      ...formData,
-      sessionType: type,
-    });
-  };
-
-  const handleTimeSlotSelect = (time: string) => {
-    setFormData({
-      ...formData,
-      timeSlot: time,
-    });
-    setShowTimeDropdown(false);
-  };
-
-  const confirmDelete = (slotId: string) => {
-  const toastId = toast.info(
-    <div>
-      <p className="mb-2 font-semibold">Delete this time slot?</p>
-      <div className="flex gap-2">
-        <button
-          onClick={() => {
-            handleDeleteSlot(slotId);
-            toast.dismiss(toastId); // Close the confirmation toast
-          }}
-          className="bg-red-600 text-white px-3 py-1 rounded text-xs"
-        >
-          Confirm
-        </button>
-        <button
-          onClick={() => toast.dismiss(toastId)}
-          className="bg-gray-500 text-white px-3 py-1 rounded text-xs"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>,
-    {
-      autoClose: false, // Don't close until user interacts
-      closeOnClick: false,
-      draggable: false,
-    }
-  );
-};
-
-  const handleSubmit = async () => {
-    // Validate form
-    if (!formData.timeSlot) {
-      toast.error("Please select a time slot");
-      return;
-    }
-
-    if (!formData.price) {
-      toast.error("Please enter a price");
-      return;
-    }
-
-    if (formData.sessionType === "Package" && !formData.numberOfSessions) {
-      toast.error("Please specify number of sessions for packages");
-      return;
-    }
-    setIsLoading(true);
-
+  const fetchSlots = async () => {
+    setIsLoadingSlots(true);
     try {
-      const requestData = {
-        sessionType: formData.sessionType,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        time: formData.timeSlot,
-        price: formData.price,
-        numberOfSessions: formData.numberOfSessions || null,
-      };
-      
-
-      // Show loading state
-      await addTimeSlot(requestData);
-      toast.success("Time slot added successfully!");
-
       const { data } = await getTimeSlots();
       setTimeSlots(data);
+    } catch {
+      toast.error("Failed to load time slots");
+    } finally {
+      setIsLoadingSlots(false);
+    }
+  };
 
-      setShowModal(false);
-    } catch (error) {
-      console.error("Submission error:", error);
-      toast.error("Failed to add time slot");
+  // Bulk Add preview
+  const bulkLunch = LUNCH_OPTIONS[ba.lunchIndex];
+  const previewSlots = useMemo(
+    () => generatePreviewSlots(ba.blockStart, ba.blockEnd, ba.durationMins, bulkLunch.start, bulkLunch.end),
+    [ba.blockStart, ba.blockEnd, ba.durationMins, ba.lunchIndex]
+  );
+
+  const toggleDay = (d: string) =>
+    setBa((prev) => ({
+      ...prev,
+      days: prev.days.includes(d) ? prev.days.filter((x) => x !== d) : [...prev.days, d],
+    }));
+
+  const resetModal = () => {
+    setQa({ date: "", startTime: "09:00", endTime: "10:00", bufferMinutes: 0, price: "" });
+    setBa({ days: [], blockStart: "09:00", blockEnd: "17:00", durationMins: 60, lunchIndex: 0, price: "" });
+    setActiveTab("quick");
+    setShowModal(false);
+  };
+
+  // ── Quick Add submit ─────────────────────────────────────────────
+  const handleQuickSubmit = async () => {
+    if (!qa.date) { toast.error("Please select a date."); return; }
+    if (!qa.startTime || !qa.endTime) { toast.error("Please set start and end times."); return; }
+    if (qa.startTime >= qa.endTime) { toast.error("End time must be after start time."); return; }
+    if (!qa.price || parseFloat(qa.price) <= 0) { toast.error("Please enter a valid price."); return; }
+
+    const userId = localStorage.getItem("trainerId");
+    setIsLoading(true);
+    try {
+      const timeLabel = `${fmt24to12(qa.startTime)} - ${fmt24to12(qa.endTime)}`;
+      await addTimeSlot({
+        userId,
+        sessionType: "Quick Add",
+        startDate: qa.date,
+        endDate: qa.date,
+        time: timeLabel,
+        bufferMinutes: qa.bufferMinutes,
+        price: qa.price,
+      });
+      toast.success("Time slot added!");
+      resetModal();
+      fetchSlots();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to add time slot.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ── Bulk Add submit ──────────────────────────────────────────────
+  const handleBulkSubmit = async () => {
+    if (ba.days.length === 0) { toast.error("Select at least one day."); return; }
+    if (!ba.blockStart || !ba.blockEnd) { toast.error("Set a time block."); return; }
+    if (ba.blockStart >= ba.blockEnd) { toast.error("Block end must be after block start."); return; }
+    if (!ba.price || parseFloat(ba.price) <= 0) { toast.error("Please enter a valid price."); return; }
+    if (previewSlots.length === 0) { toast.error("No slots generated – adjust your settings."); return; }
 
-  // Render function
-const renderTimeSlots = () => {
-  if (isLoadingSlots) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    const userId = localStorage.getItem("trainerId");
+    setIsLoading(true);
+    try {
+      const result = await addBulkTimeSlots({
+        userId,
+        days: ba.days,
+        blockStart: ba.blockStart,
+        blockEnd: ba.blockEnd,
+        durationMinutes: ba.durationMins,
+        lunchStart: bulkLunch.start || undefined,
+        lunchEnd: bulkLunch.end || undefined,
+        price: ba.price,
+      });
+      toast.success(`${result.count || "All"} slots created successfully!`);
+      resetModal();
+      fetchSlots();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to create bulk slots.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ── Delete ───────────────────────────────────────────────────────
+  const handleDeleteSlot = async (slotId: string) => {
+    const id = toast.loading("Deleting...");
+    try {
+      await deleteTimeSlot(slotId);
+      setTimeSlots((prev) =>
+        prev.map((d) => ({ ...d, slots: d.slots.filter((s) => s.id !== slotId) })).filter((d) => d.slots.length > 0)
+      );
+      toast.update(id, { render: "Deleted!", type: "success", isLoading: false, autoClose: 2000 });
+    } catch {
+      toast.update(id, { render: "Failed to delete.", type: "error", isLoading: false, autoClose: 2000 });
+    }
+  };
+
+  const confirmDelete = (slotId: string) => {
+    const toastId = toast.info(
+      <div>
+        <p className="mb-2 font-semibold">Delete this time slot?</p>
+        <div className="flex gap-2">
+          <button onClick={() => { handleDeleteSlot(slotId); toast.dismiss(toastId); }} className="bg-red-600 text-white px-3 py-1 rounded text-xs">Confirm</button>
+          <button onClick={() => toast.dismiss(toastId)} className="bg-gray-500 text-white px-3 py-1 rounded text-xs">Cancel</button>
+        </div>
+      </div>,
+      { autoClose: false, closeOnClick: false, draggable: false }
+    );
+  };
+
+  // ── Render slots ─────────────────────────────────────────────────
+  const renderTimeSlots = () => {
+    if (isLoadingSlots) return (
+      <div className="flex justify-center items-center h-40">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-500" />
       </div>
     );
-  }
-
-  if (timeSlots.length === 0) {
-    return (
-      <div className="text-center py-10">
-        <p className="text-white text-lg">No time slots available</p>
-        <button 
-          onClick={() => setShowModal(true)}
-          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          Add First Time Slot
-        </button>
+    if (timeSlots.length === 0) return (
+      <div className="text-center py-16">
+        <Calendar className="mx-auto text-gray-600 mb-3" size={40} />
+        <p className="text-gray-400 text-lg mb-4">No time slots yet</p>
+        <button onClick={() => setShowModal(true)} className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition-colors">Add First Slot</button>
       </div>
     );
-  }
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {timeSlots.map((day) => (
-        <div key={day.date} className="bg-gray-900 p-4 rounded-lg">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-white">{day.date}</h3>
-            <button 
-              onClick={() => setShowModal(true)}
-              className="text-blue-400 hover:text-blue-300 text-sm"
-            >
-              + Add Slot
-            </button>
-          </div>
-          
-          <div className="space-y-3">
-            {day.slots.map((slot) => (
-              <div key={`${day.date}-${slot.time}`} className="bg-blue-500/90 p-3 rounded-lg relative group">
-                <button 
-                  onClick={() => confirmDelete(slot.id)}
-                  className="absolute top-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Delete slot"
-                >
-                  <X size={16} />
-                </button>
-                <div className="flex justify-between items-center">
-                  <span className="text-white font-medium">{slot.time}</span>
-                  <span className="text-white/90 text-sm bg-blue-600 px-2 py-1 rounded">
-                    {slot.type}
-                  </span>
-                </div>
-                {/* Additional slot info can go here */}
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-  return (
-    <div className="flex min-h-screen bg-gray">
-      {/* Main Content */}
-      <div className="flex-1">
-        {/* Time Slots Content */}
-        <div className="p-6">
-          <div className="bg-gray-800 p-6 rounded-lg">
-          <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-white">Time Slots</h2>
-          <div className="flex space-x-4">
-            {/* Date picker remains the same */}
-            <button
-              onClick={() => setShowModal(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center"
-            >
-              <Plus size={18} className="mr-1" />
-              Add New
-            </button>
-          </div>
-        </div>
-            
-            {renderTimeSlots()}
-      
-          </div>
-          
-
-          {/* Testimonials */}
-          <div className="mt-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {testimonials.map((testimonial) => (
-                <div
-                  key={testimonial.id}
-                  className="bg-gray-800 p-4 rounded-lg"
-                >
-                  <div className="flex flex-col items-center">
-                    <img
-                      src={testimonial.image || "/placeholder.svg"}
-                      alt={testimonial.name}
-                      className="w-16 h-16 rounded-full mb-2"
-                    />
-                    <h4 className="text-white font-medium">
-                      {testimonial.name}
-                    </h4>
-                    <div className="flex text-yellow-400 my-2">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <span key={i}>★</span>
-                      ))}
-                    </div>
-                    <p className="text-gray-300 text-sm text-center">
-                      {testimonial.comment}
-                    </p>
-                  </div>
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {timeSlots.map((day) => (
+          <div key={day.date} className="bg-gray-900 p-4 rounded-xl border border-gray-700">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-white font-semibold">{day.date}</h3>
+              <button onClick={() => setShowModal(true)} className="text-blue-400 hover:text-blue-300 text-xs">+ Add</button>
+            </div>
+            <div className="space-y-2">
+              {day.slots.map((slot) => (
+                <div key={slot.id} className="bg-blue-600/80 p-3 rounded-lg relative group">
+                  <button onClick={() => confirmDelete(slot.id)} className="absolute top-2 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity"><X size={14} /></button>
+                  <p className="text-white text-sm font-medium">{slot.time}</p>
+                  <span className="text-blue-200 text-xs">{slot.type}</span>
                 </div>
               ))}
             </div>
-            <div className="text-center mt-4">
-              <button className="text-white hover:underline">see more</button>
-            </div>
           </div>
+        ))}
+      </div>
+    );
+  };
+
+  // ── JSX ──────────────────────────────────────────────────────────
+  return (
+    <div className="p-6 bg-gray-900 min-h-screen">
+      <div className="bg-gray-800 p-6 rounded-xl">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-white">Current Schedules</h2>
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+          >
+            <Plus size={18} /> Add New
+          </button>
         </div>
+        {renderTimeSlots()}
       </div>
 
-      {/* Add New Time Slot Modal */}
+      {/* ── Modal ─────────────────────────────────────────────────── */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
-          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-white">
-                Add New Time Slot
-              </h3>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+            {/* Header */}
+            <div className="flex justify-between items-center p-6 border-b border-gray-700">
+              <h3 className="text-xl font-bold text-white">Add Time Slot</h3>
+              <button onClick={resetModal} className="text-gray-400 hover:text-white"><X size={22} /></button>
+            </div>
+
+            {/* Tab switcher */}
+            <div className="flex border-b border-gray-700">
               <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-400"
+                onClick={() => setActiveTab("quick")}
+                className={`flex-1 py-3 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${activeTab === "quick" ? "text-blue-400 border-b-2 border-blue-400" : "text-gray-400 hover:text-white"}`}
               >
-                <X size={20} />
+                <Zap size={16} /> Quick Add
+              </button>
+              <button
+                onClick={() => setActiveTab("bulk")}
+                className={`flex-1 py-3 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${activeTab === "bulk" ? "text-blue-400 border-b-2 border-blue-400" : "text-gray-400 hover:text-white"}`}
+              >
+                <Layers size={16} /> Bulk Add
               </button>
             </div>
 
-            <div className="space-y-4">
-              {/* Session Type */}
-              <div className="flex space-x-4">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="sessionType"
-                    checked={formData.sessionType === "Single Session"}
-                    onChange={() => handleSessionTypeChange("Single Session")}
-                    className="mr-2"
-                  />
-                  <span className="text-white">Single Session</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="sessionType"
-                    checked={formData.sessionType === "Package"}
-                    onChange={() => handleSessionTypeChange("Package")}
-                    className="mr-2"
-                  />
-                  <span className="text-white">Package</span>
-                </label>
-              </div>
+            <div className="p-6 space-y-5">
+              {/* ──── QUICK ADD ──── */}
+              {activeTab === "quick" && (
+                <>
+                  <p className="text-gray-400 text-sm">One-off session for a specific date and time.</p>
 
-              {/* Number of Sessions (only shown for Package) */}
-              {formData.sessionType === "Package" && (
-                <div className="flex items-center justify-between">
-                  <label className="text-white">No. of Sessions</label>
-                  <input
-                    type="number"
-                    name="numberOfSessions"
-                    value={formData.numberOfSessions}
-                    onChange={handleInputChange}
-                    className="bg-gray-700 text-white p-2 rounded-md w-40"
-                    min="1"
-                  />
-                </div>
-              )}
+                  {/* Date */}
+                  <div>
+                    <label className="text-gray-300 text-sm block mb-1">Date</label>
+                    <input
+                      type="date"
+                      min={todayStr}
+                      value={qa.date}
+                      onChange={(e) => setQa({ ...qa, date: e.target.value })}
+                      className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
 
-              {/* Start Date */}
-              <div className="flex items-center justify-between mb-4">
-                <label className="text-white">Start Date:</label>
-                <div className="relative">
-                  {/* Visible display input (read-only) */}
-                  <input
-                    type="text"
-                    value={formData.startDate}
-                    readOnly
-                    className="bg-gray-700 text-white p-2 rounded-md w-40"
-                  />
+                  {/* Time Range */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-gray-300 text-sm block mb-1"><Clock size={13} className="inline mr-1" />Start Time</label>
+                      <input
+                        type="time"
+                        value={qa.startTime}
+                        onChange={(e) => setQa({ ...qa, startTime: e.target.value })}
+                        className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-gray-300 text-sm block mb-1"><Clock size={13} className="inline mr-1" />End Time</label>
+                      <input
+                        type="time"
+                        value={qa.endTime}
+                        onChange={(e) => setQa({ ...qa, endTime: e.target.value })}
+                        className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
 
-                  {/* Hidden but clickable date input */}
-                  <input
-                    type="date"
-                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                    value={toInputFormat(formData.startDate)}
-                    onChange={(e) => {
-                      setFormData({
-                        ...formData,
-                        startDate: toDisplayFormat(e.target.value),
-                        // Auto-update end date if it's before start date
-                        endDate:
-                          e.target.value > toInputFormat(formData.endDate)
-                            ? formData.endDate
-                            : toDisplayFormat(e.target.value),
-                      });
-                    }}
-                  />
-
-                  <Calendar
-                    size={16}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
-                </div>
-              </div>
-
-              {/* End Date */}
-              <div className="flex items-center justify-between mb-4">
-                <label className="text-white">End Date:</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={formData.endDate}
-                    readOnly
-                    className="bg-gray-700 text-white p-2 rounded-md w-40"
-                  />
-                  <input
-                    type="date"
-                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                    value={toInputFormat(formData.endDate)}
-                    min={toInputFormat(formData.startDate)} // Can't be before start date
-                    onChange={(e) => {
-                      setFormData({
-                        ...formData,
-                        endDate: toDisplayFormat(e.target.value),
-                      });
-                    }}
-                  />
-                  <Calendar
-                    size={16}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
-                </div>
-              </div>
-
-              {/* Available Time Slots */}
-              <div className="flex items-center justify-between">
-                <label className="text-white">Available Time Slots</label>
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowTimeDropdown(!showTimeDropdown)}
-                    className="bg-gray-700 text-white p-2 rounded-md w-40 text-left"
-                  >
-                    {formData.timeSlot}
-                  </button>
-                  {showTimeDropdown && (
-                    <div className="absolute right-0 mt-1 w-48 bg-gray-700 rounded-md shadow-lg z-10">
-                      {timeOptions.map((time, index) => (
-                        <div
-                          key={index}
-                          className={`px-4 py-2 text-white hover:bg-gray-600 cursor-pointer ${
-                            time === formData.timeSlot ? "bg-red-500" : ""
-                          }`}
-                          onClick={() => handleTimeSlotSelect(time)}
-                        >
-                          {time}
-                        </div>
+                  {/* Buffer */}
+                  <div>
+                    <label className="text-gray-300 text-sm block mb-1">Buffer After Session</label>
+                    <select
+                      value={qa.bufferMinutes}
+                      onChange={(e) => setQa({ ...qa, bufferMinutes: Number(e.target.value) })}
+                      className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {BUFFER_OPTIONS.map((b) => (
+                        <option key={b} value={b}>{b === 0 ? "None" : `${b} minutes`}</option>
                       ))}
+                    </select>
+                    <p className="text-gray-500 text-xs mt-1">Adds a break after this session to prevent back-to-back bookings.</p>
+                  </div>
+
+                  {/* Price */}
+                  <div>
+                    <label className="text-gray-300 text-sm block mb-1">Price (₹)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="e.g. 500"
+                      value={qa.price}
+                      onChange={(e) => setQa({ ...qa, price: e.target.value })}
+                      className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Preview badge */}
+                  {qa.date && qa.startTime && qa.endTime && qa.startTime < qa.endTime && (
+                    <div className="bg-blue-900/40 border border-blue-700 rounded-lg p-3 text-sm text-blue-300">
+                      📅 {new Date(qa.date + "T00:00:00").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short", year: "numeric" })}
+                      &nbsp;·&nbsp;{fmt24to12(qa.startTime)} – {fmt24to12(qa.endTime)}
+                      {qa.bufferMinutes > 0 && ` + ${qa.bufferMinutes}m buffer`}
                     </div>
                   )}
-                </div>
-              </div>
 
-              {/* Price */}
-              <div className="flex items-center justify-between">
-                <label className="text-white">Price</label>
-                <input
-                  type="text"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  className="bg-gray-700 text-white p-2 rounded-md w-40"
-                />
-              </div>
+                  <div className="flex gap-3 pt-2">
+                    <button onClick={resetModal} className="flex-1 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors">Cancel</button>
+                    <button onClick={handleQuickSubmit} disabled={isLoading} className="flex-1 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-60 transition-colors">
+                      {isLoading ? "Saving..." : "Save Slot"}
+                    </button>
+                  </div>
+                </>
+              )}
 
-              {/* Buttons */}
-              <div className="flex justify-center space-x-4 mt-6">
-                <button
-                  onClick={handleSubmit}
-                  disabled={isLoading}
-                  className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors disabled:bg-blue-400"
-                >
-                  {isLoading ? "Submitting..." : "Submit"}
-                </button>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="bg-red-500 text-white px-6 py-2 rounded-md hover:bg-red-600 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
+              {/* ──── BULK ADD ──── */}
+              {activeTab === "bulk" && (
+                <>
+                  <p className="text-gray-400 text-sm">Generate recurring slots for your weekly routine.</p>
+
+                  {/* Day selection */}
+                  <div>
+                    <label className="text-gray-300 text-sm block mb-2">Days of the Week</label>
+                    <div className="flex gap-2 flex-wrap">
+                      {DAYS.map((d) => (
+                        <button
+                          key={d}
+                          onClick={() => toggleDay(d)}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${ba.days.includes(d) ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600"}`}
+                        >
+                          {d}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Time Block */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-gray-300 text-sm block mb-1">Block Start</label>
+                      <input type="time" value={ba.blockStart} onChange={(e) => setBa({ ...ba, blockStart: e.target.value })}
+                        className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="text-gray-300 text-sm block mb-1">Block End</label>
+                      <input type="time" value={ba.blockEnd} onChange={(e) => setBa({ ...ba, blockEnd: e.target.value })}
+                        className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                  </div>
+
+                  {/* Duration */}
+                  <div>
+                    <label className="text-gray-300 text-sm block mb-1">Session Duration</label>
+                    <div className="flex gap-2">
+                      {DURATIONS.map((d) => (
+                        <button key={d} onClick={() => setBa({ ...ba, durationMins: d })}
+                          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${ba.durationMins === d ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600"}`}>
+                          {d}m
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Lunch break */}
+                  <div>
+                    <label className="text-gray-300 text-sm block mb-1">Lunch Break (skip)</label>
+                    <select
+                      value={ba.lunchIndex}
+                      onChange={(e) => setBa({ ...ba, lunchIndex: Number(e.target.value) })}
+                      className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {LUNCH_OPTIONS.map((opt, i) => <option key={i} value={i}>{opt.label}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Price */}
+                  <div>
+                    <label className="text-gray-300 text-sm block mb-1">Price per Session (₹)</label>
+                    <input type="number" min="1" placeholder="e.g. 500" value={ba.price} onChange={(e) => setBa({ ...ba, price: e.target.value })}
+                      className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  </div>
+
+                  {/* Live Preview */}
+                  {previewSlots.length > 0 && (
+                    <div className="bg-gray-900 border border-gray-700 rounded-xl p-4">
+                      <p className="text-gray-400 text-xs font-semibold mb-2 uppercase tracking-wider">
+                        Preview · {previewSlots.length} slot{previewSlots.length !== 1 ? "s" : ""} per selected day
+                        {ba.days.length > 0 && ` · ${previewSlots.length * ba.days.length * 4} total`}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {previewSlots.map((s, i) => (
+                          <span key={i} className="bg-blue-800 text-blue-200 text-xs px-2 py-1 rounded-md">{s}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {previewSlots.length === 0 && ba.blockStart && ba.blockEnd && (
+                    <p className="text-amber-400 text-sm">⚠️ No slots fit within the current settings.</p>
+                  )}
+
+                  <div className="flex gap-3 pt-2">
+                    <button onClick={resetModal} className="flex-1 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors">Cancel</button>
+                    <button onClick={handleBulkSubmit} disabled={isLoading || previewSlots.length === 0}
+                      className="flex-1 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-60 transition-colors">
+                      {isLoading ? "Creating..." : `Create ${ba.days.length * previewSlots.length * 4 || ""} Slots`}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -10,7 +10,6 @@ import {
 import {
   IRegisterData,
   IRegisterResponse,
-  ITimeSlotData,
   ITrainerProfileEditData,
 } from "../types/trainer.types";
 import { connectTrainerSocket, disconnectTrainerSocket } from "../util/trainerSocket";
@@ -154,20 +153,9 @@ export const uploadProfileImage = async (profileImage: File) => {
   return response.data;
 };
 
-// Trainer Registration
-export const addTimeSlot = async (data: ITimeSlotData) => {
-  const userId = localStorage.getItem("trainerId");
-
-  if (!userId) {
-    throw new Error("Trainer ID not found. Please register first.");
-  }
-
-  const requestBody = { userId, ...data };
-  const response = await axiosInstance.post(
-    "/trainer/addTimeSlot",
-    requestBody
-  );
-  return response.data;
+export const addTimeSlot = async (data: object) => {
+  const response = await axiosInstance.post("/trainer/addTimeSlot", data);
+  return response;
 };
 
 export const getTimeSlots = async () => {
@@ -177,6 +165,11 @@ export const getTimeSlots = async () => {
 
 export const deleteTimeSlot = async (id: string) => {
   const response = await axiosInstance.delete(`/trainer/deleteTimeSlot/${id}`);
+  return response;
+};
+
+export const addBulkTimeSlots = async (data: object) => {
+  const response = await axiosInstance.post("/trainer/addBulkTimeSlots", data);
   return response.data;
 };
 
