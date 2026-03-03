@@ -85,7 +85,6 @@ const EditProfile = () => {
       
       const userData = {
         name: formData.fullName,
-        email: formData.email,
         phone: formData.phone,
       };
 
@@ -138,7 +137,7 @@ const EditProfile = () => {
                 />
               </div>
 
-              {/* Email */}
+              {/* Email – read-only */}
               <div className="space-y-2">
                 <label
                   htmlFor="email"
@@ -151,8 +150,8 @@ const EditProfile = () => {
                   name="email"
                   type="email"
                   value={formData.email}
-                  onChange={handleChange}
-                  className="bg-[#2a2a2a] border-none"
+                  readOnly
+                  className="bg-[#2a2a2a] border-none opacity-50 cursor-not-allowed"
                 />
               </div>
 
@@ -188,17 +187,10 @@ const EditProfile = () => {
                   }
                   placeholder="Select activity level"
                 >
-                  <SelectItem value="Little or No Activity">
-                    Little or No Activity
-                  </SelectItem>
-                  <SelectItem value="Light Activity">Light Activity</SelectItem>
-                  <SelectItem value="Moderate Activity">
-                    Moderate Activity
-                  </SelectItem>
-                  <SelectItem value="High Activity">High Activity</SelectItem>
-                  <SelectItem value="Very High Activity">
-                    Very High Activity
-                  </SelectItem>
+                  <SelectItem value="Little or No Activity">Little or No Activity</SelectItem>
+                  <SelectItem value="Lightly Active">Lightly Active</SelectItem>
+                  <SelectItem value="Moderately Active">Moderately Active</SelectItem>
+                  <SelectItem value="Very Active">Very Active</SelectItem>
                 </Select>
               </div>
 
@@ -235,7 +227,6 @@ const EditProfile = () => {
                 >
                   <SelectItem value="Male">Male</SelectItem>
                   <SelectItem value="Female">Female</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
                 </Select>
               </div>
 
