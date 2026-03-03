@@ -321,9 +321,10 @@ export const exchangeGoogleFitCode = async (code: string,redirectUri: string,use
   return data
 }
 
-
-
-
+export const getDashboardData = async (year: number, month: number) => {
+  const response = await axiosInstance.get(`/user/dashboard`, { params: { year, month } });
+  return response.data;
+};
 
 
 
