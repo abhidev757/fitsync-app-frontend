@@ -264,6 +264,22 @@ export const cancelBooking = async (bookingId:string) => {
   return response;
 };
 
+export const submitReview = async (data: {
+  bookingId: string;
+  userId: string;
+  trainerId: string;
+  rating: number;
+  review: string;
+}) => {
+  const response = await axiosInstance.post(`/user/submit-review`, data);
+  return response.data;
+};
+
+export const getReview = async (bookingId: string) => {
+  const response = await axiosInstance.get(`/user/review/${bookingId}`);
+  return response.data;
+};
+
 const today = new Date().toISOString().split("T")[0]
 
 export const fetchTodayWater = async (userId: string) => {
