@@ -239,7 +239,9 @@ const MySessions: React.FC = () => {
                           onClick={(e) => {
                             e.stopPropagation();
                             if (session.meetingStatus === "live") {
-                              navigate(`/video-call/${session.meetingId}`);
+                              const storedInfo = localStorage.getItem('userInfo');
+                              const userInfo = storedInfo ? JSON.parse(storedInfo) : null;
+                              navigate(`/video-call/${session.meetingId}`, { state: { role: 'user', name: userInfo?.name } });
                             } else {
                               toast.info("Waiting for trainer to start the session...");
                             }
