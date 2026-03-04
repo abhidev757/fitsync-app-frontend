@@ -21,8 +21,9 @@ export interface IRegisterData {
     email?: string;
     phone?: string;
     sex?: "Male" | "Female" | null;
-    yearsOfExperience: number
-    specialization: string
+    yearsOfExperience?: number;
+    specialization?: string;
+    specializations?: string[];
   }
  }
 

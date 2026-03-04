@@ -153,6 +153,17 @@ export const uploadProfileImage = async (profileImage: File) => {
   return response.data;
 };
 
+export const fetchTrainerSpecializations = async () => {
+  const response = await axiosInstance.get("/trainer/specializations");
+  return response.data;
+};
+
+export const getTrainerPerformanceStats = async () => {
+  const response = await axiosInstance.get("/trainer/performance-stats");
+  return response.data;
+};
+
+
 export const addTimeSlot = async (data: object) => {
   const response = await axiosInstance.post("/trainer/addTimeSlot", data);
   return response;
