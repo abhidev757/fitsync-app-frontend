@@ -74,9 +74,11 @@ export default function BookingsPage() {
                          (filter === 'Completed' && booking.status === 'completed') ||
                          (filter === 'Cancelled' && booking.status === 'cancelled');
     
-    const matchesSearch = booking.userId.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const clientName = booking.userId?.name ?? '';
+    const dateStr = new Date(booking.startDate).toLocaleDateString();
+    const matchesSearch = clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          booking.sessionTime.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         booking.startDate.toLowerCase().includes(searchTerm.toLowerCase());
+                         dateStr.toLowerCase().includes(searchTerm.toLowerCase());
     
     return matchesFilter && matchesSearch;
   });

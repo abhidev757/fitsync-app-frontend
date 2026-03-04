@@ -231,3 +231,8 @@ export const completeSession = async (bookingId: string) => {
   const response = await axiosInstance.patch(`/trainer/complete-session/${bookingId}`);
   return response.data;
 };
+
+export const getTrainerDashboardStats = async () => {
+  const response = await axiosInstance.get('/trainer/dashboard-stats');
+  return response.data;
+};
