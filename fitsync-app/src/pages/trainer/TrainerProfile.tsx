@@ -16,7 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   fetchTrainerProfile,
   updateTrainerProfile,
-  uploadProfileImage,
+  uploadAndSaveProfileImage,
   fetchTrainerSpecializations,
   getTrainerPerformanceStats,
 } from "../../axios/trainerApi";
@@ -133,7 +133,7 @@ const TrainerProfile = () => {
     try {
       // 1. Upload image if a new one was picked
       if (pendingImageFile) {
-        const { fileUrl } = await uploadProfileImage(pendingImageFile);
+        const { fileUrl } = await uploadAndSaveProfileImage(pendingImageFile);
         setAvatarUrl(fileUrl);
         setPendingImageFile(null);
       }

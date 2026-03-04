@@ -3,7 +3,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../store";
 import { refreshToken } from "../../axios/trainerApi";
-import { logoutTrainer } from "../../slices/trainerAuthSlice";
+import { logoutTrainer, setTrainerCredentials } from "../../slices/trainerAuthSlice";
 
 const PrivateRoute: React.FC = () => {
   const { trainerInfo } = useSelector((state: RootState) => state.trainerAuth);
@@ -15,7 +15,14 @@ const PrivateRoute: React.FC = () => {
       if (trainerInfo) {
         console.log("Private route checking the refresh token...");
         try {
-          await refreshToken();
+          const response = await refreshToken();
+          // The backend now sends the fresh trainer object via response.trainer
+          if (response?.trainer) {
+            // Update Redux if the updated info differs (like verificationStatus)
+            if (response.trainer.verificationStatus !== trainerInfo.verificationStatus) {
+              dispatch(setTrainerCredentials(response.trainer));
+            }
+          }
           setIsTokenValid(true);
         } catch (error) {
           console.error("Token refresh failed:", error);
@@ -36,6 +43,10 @@ const PrivateRoute: React.FC = () => {
     console.log('Trainer Info:',trainerInfo);
     
     return <Navigate to="/trainerSignin" replace />;
+  }
+
+  if (trainerInfo.verificationStatus === false) {
+    return <Navigate to="/verificationStatus" replace />;
   }
 
   return <Outlet />;

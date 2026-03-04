@@ -6,6 +6,7 @@ interface Trainer {
   email: string;
   isGoogleLogin?: boolean;
   profileImageUrl?: string;
+  verificationStatus?: boolean;
 }
 
 interface TrainerAuthState {

@@ -33,6 +33,7 @@ export const loginTrainer = async (data: ILoginData) => {
 //Google Login
 export const trainerGoogleSignin = async (data: {
   credential: string;
+  certificateUrl?: string;
 }): Promise<IGoogleLogin> => {
   const response = await axiosInstance.post<IGoogleLogin>(
     "/trainer/auth/google",
@@ -147,6 +148,24 @@ export const uploadProfileImage = async (profileImage: File) => {
       headers: {
         "Content-Type": "multipart/form-data",
       },
+    }
+  );
+
+  return response.data;
+};
+
+export const uploadAndSaveProfileImage = async (profileImage: File) => {
+  const formData = new FormData();
+  formData.append("profileImage", profileImage);
+
+  const response = await axiosInstance.post(
+    "/trainer/upload-and-save-profile",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      withCredentials: true,
     }
   );
 

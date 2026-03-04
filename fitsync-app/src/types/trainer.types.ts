@@ -3,7 +3,7 @@ export interface IRegisterData {
     name: string;
     email: string;
     password: string;
-    specializations: string
+    specializations: string[]
     certificateUrl: string
     profileImageUrl: string
   }
