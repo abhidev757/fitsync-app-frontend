@@ -123,6 +123,7 @@ export default function OTPVerification() {
               {otp.map((digit, index) => (
                 <input
                   key={index}
+                  id={`otp-input-${index}`}
                   type="text"
                   maxLength={1}
                   value={digit}

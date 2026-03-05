@@ -6,9 +6,13 @@ import {
   trainerGoogleSignin,
   uploadCertificate,
   uploadProfileImage,
+  fetchTrainerSpecializations,
 } from "../../axios/trainerApi";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "../../store";
+import { setTrainerCredentials } from "../../slices/trainerAuthSlice";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import Cropper from "react-easy-crop";
 import { getCroppedImg } from "../../util/cropImage"; // Utility function to crop the image
@@ -23,7 +27,8 @@ function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [specializations, setSpecializations] = useState("");
+  const [specializations, setSpecializations] = useState<string[]>([]);
+  const [availableSpecializations, setAvailableSpecializations] = useState<string[]>([]);
   const [certificate, setCertificate] = useState<File | null>(null);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string>("");
@@ -36,6 +41,7 @@ function SignupPage() {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     if (errors.length > 0) {
@@ -43,6 +49,18 @@ function SignupPage() {
       return () => clearTimeout(timer);
     }
   }, [errors]);
+
+  useEffect(() => {
+    const loadSpecializations = async () => {
+      try {
+        const data = await fetchTrainerSpecializations();
+        setAvailableSpecializations(data.map((s: any) => s.name || s));
+      } catch (err) {
+        console.error('Failed to fetch specializations:', err);
+      }
+    };
+    loadSpecializations();
+  }, []);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -56,24 +74,38 @@ function SignupPage() {
       return;
     }
 
+    if (!certificate) {
+      toast.error("Please select a certificate file before registering with Google.");
+      return;
+    }
+
+    if (isUploading) return;
+    setIsUploading(true);
     setIsLoading(true);
+
     try {
+      const certificateResponse = await uploadCertificate(certificate);
+      const certificateUrl = certificateResponse.fileUrl;
+
       const data = await trainerGoogleSignin({
         credential: credentialResponse.credential,
+        certificateUrl,
       });
 
-      localStorage.setItem("userId", data._id);
+      dispatch(setTrainerCredentials(data));
+      localStorage.setItem("trainerId", data._id);
       toast.success("Google Sign In successful!");
-      navigate(data.isGoogleLogin ? "/trainer/TrainerDashboard" : "/");
-    } catch (error) {
+      navigate(data.verificationStatus ? "/trainer/trainerDashboard" : "/verificationStatus");
+    } catch (error: any) {
       if (axios.isAxiosError(error)) {
         console.error("Google Login Error:", error);
         toast.error(error.response?.data?.message || "Google Sign In failed.");
       } else {
         console.error("Unexpected Error:", error);
-        toast.error("An unexpected error occurred.");
+        toast.error(error.message || "An unexpected error occurred.");
       }
     } finally {
+      setIsUploading(false);
       setIsLoading(false);
     }
   };
@@ -119,6 +151,7 @@ function SignupPage() {
 
     if (isUploading) return;
     setIsUploading(true);
+    setIsLoading(true);
 
     try {
       const certificateResponse = await uploadCertificate(certificate);
@@ -146,6 +179,7 @@ function SignupPage() {
       toast.error("An error occurred.");
     } finally {
       setIsUploading(false);
+      setIsLoading(false);
     }
   };
 
@@ -191,20 +225,46 @@ function SignupPage() {
             </div>
 
             <div className="space-y-2">
-              <label
-                htmlFor="specialization"
-                className="block text-sm font-medium"
-              >
+              <label htmlFor="specialization" className="block text-sm font-medium">
                 Specialization
               </label>
-              <input
-                type="text"
+              <select
                 id="specialization"
-                placeholder="Input your specialization here"
-                value={specializations}
-                onChange={(e) => setSpecializations(e.target.value.trim())}
-                className="w-full p-3 rounded bg-gray-800 border border-gray-700"
-              />
+                className="w-full p-3 rounded bg-gray-800 border border-gray-700 text-white"
+                value=""
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val && !specializations.includes(val)) {
+                    setSpecializations([...specializations, val]);
+                  }
+                }}
+              >
+                <option value="">-- Select Specialization --</option>
+                {availableSpecializations.map((spec) => (
+                  <option key={spec} value={spec} disabled={specializations.includes(spec)}>
+                    {spec}
+                  </option>
+                ))}
+              </select>
+              {specializations.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {specializations.map((spec) => (
+                    <span
+                      key={spec}
+                      className="flex items-center gap-1 bg-blue-600 text-white text-sm px-3 py-1 rounded-full"
+                    >
+                      {spec}
+                      <button
+                        type="button"
+                        onClick={() => setSpecializations(specializations.filter((s) => s !== spec))}
+                        className="ml-1 text-white hover:text-red-300 font-bold"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

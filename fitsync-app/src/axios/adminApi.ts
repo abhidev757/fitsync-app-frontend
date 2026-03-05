@@ -135,3 +135,8 @@ export const getTrainerReviews = async (trainerId: string) => {
   return response.data;
 };
 
+// Admin dashboard stats
+export const getAdminDashboardStats = async () => {
+  const response = await axiosInstance.get("/admin/dashboard-stats");
+  return response.data;
+};

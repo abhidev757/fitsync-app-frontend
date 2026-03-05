@@ -3,7 +3,7 @@ export interface IRegisterData {
     name: string;
     email: string;
     password: string;
-    specializations: string
+    specializations: string[]
     certificateUrl: string
     profileImageUrl: string
   }
@@ -21,8 +21,9 @@ export interface IRegisterData {
     email?: string;
     phone?: string;
     sex?: "Male" | "Female" | null;
-    yearsOfExperience: number
-    specialization: string
+    yearsOfExperience?: number;
+    specialization?: string;
+    specializations?: string[];
   }
  }
 

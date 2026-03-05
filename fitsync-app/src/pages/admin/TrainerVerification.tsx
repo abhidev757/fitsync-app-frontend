@@ -23,7 +23,10 @@ const TrainerVerification = () => {
           const fetchAllApplicants = async () => {
               try {
                   const data = await fetchApplicants();
-                  setApplicants(data);
+                  const sorted = [...data].sort(
+                    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                  );
+                  setApplicants(sorted);
               } catch (error) {
                   console.error('Failed to fetch Applicants:', error);
               }

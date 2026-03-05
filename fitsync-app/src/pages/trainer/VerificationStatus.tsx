@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { refreshToken } from '../../axios/trainerApi';
+import { setTrainerCredentials } from '../../slices/trainerAuthSlice';
 
 type VerificationStatus = 'pending' | 'rejected' | 'approved';
 
@@ -7,29 +11,47 @@ export default function VerificationStatus() {
   const [status, setStatus] = useState<VerificationStatus>('pending');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { trainerInfo } = useSelector((state: RootState) => state.trainerAuth);
 
   useEffect(() => {
+    // If they are already verified in Redux, just go to dashboard
+    if (trainerInfo?.verificationStatus) {
+      navigate('/trainer/trainerDashboard');
+      return;
+    }
+
     const checkStatus = async () => {
       try {
-        setLoading(true);
-        setTimeout(() => {
-          setStatus('pending');
-          setLoading(false);
-        }, 1000);
+        // Only show loading on initial check so it doesn't blink every 10 seconds
+        if (status === 'pending' && loading) {
+           setLoading(true);
+        }
+
+        const response = await refreshToken();
+        if (response?.trainer) {
+          if (response.trainer.verificationStatus) {
+            // Only update Redux when we have a new confirmed approval to break the infinite loop
+            dispatch(setTrainerCredentials(response.trainer));
+            setStatus('approved');
+            navigate('/trainer/trainerDashboard');
+            return;
+          }
+        }
+        setStatus('pending');
       } catch (error) {
         console.error('Error fetching verification status:', error);
+      } finally {
         setLoading(false);
       }
     };
 
     checkStatus();
-  }, []);
-
-  useEffect(() => {
-    if (status === 'approved' && !loading) {
-      navigate('/trainer-dashboard');
-    }
-  }, [status, loading, navigate]);
+    // Poll every 10 seconds while on this screen
+    const intervalId = setInterval(checkStatus, 10000);
+    return () => clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, dispatch]);
 
   if (loading) {
     return (

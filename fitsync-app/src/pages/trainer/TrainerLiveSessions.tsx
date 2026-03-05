@@ -54,8 +54,11 @@ export default function TrainerLiveSessions() {
       
       toast.success("Session started! Redirecting to call...");
       
+      const storedInfo = localStorage.getItem('trainerInfo');
+      const trainerInfo = storedInfo ? JSON.parse(storedInfo) : null;
+      
       // 2. Navigate to the video call page
-      navigate(`/video-call/${meetingId}`);
+      navigate(`/video-call/${meetingId}`, { state: { role: 'trainer', name: trainerInfo?.name } });
     } catch (err) {
         console.log('error starting session',err);
       toast.error("Could not start session. Ensure you are authorized.");

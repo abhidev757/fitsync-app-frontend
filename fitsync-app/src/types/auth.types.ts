@@ -9,6 +9,7 @@ export  interface ILogin {
     email: string;
     token: string;
     isGoogleLogin?: boolean;
+    verificationStatus?: boolean;
   }
   
 export  interface IforgotPasswordData {
@@ -31,6 +32,7 @@ export  interface IforgotPasswordData {
     name: string;
     email: string;
     isGoogleLogin: boolean;
+    verificationStatus?: boolean;
   }
 
   export  interface IforgotPasswordData {

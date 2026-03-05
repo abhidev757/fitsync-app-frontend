@@ -39,7 +39,7 @@ const TrainerVerificationDetails = () => {
     const fetchUserDetails = async () => {
       try {
         setLoading(true);
-        const data = await getTrainerById(id); 
+        const data = await getTrainerById(id);
         setTrainerData(data);
       } catch (error) {
         toast.error("Failed to fetch trainer details");
@@ -135,13 +135,36 @@ const TrainerVerificationDetails = () => {
             <h2 className="text-white text-xl font-semibold mb-4">Certificate</h2>
             <div className="bg-white rounded-lg p-4">
               {trainerData.certificateUrl ? (
-                <iframe
-                  src={trainerData.certificateUrl}
-                  title="Trainer Certificate"
-                  className="w-full h-96 rounded-lg"
-                />
+                <div className="flex flex-col items-center gap-4">
+                  {/* Show image preview if it's an image, otherwise show a PDF link */}
+                  {/\.(jpg|jpeg|png|webp)$/i.test(trainerData.certificateUrl) ? (
+                    <img
+                      src={trainerData.certificateUrl}
+                      alt="Trainer Certificate"
+                      className="w-full rounded-lg object-contain max-h-96"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 py-10">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      <p className="text-gray-600 font-medium">PDF Certificate</p>
+                    </div>
+                  )}
+                  <a
+                    href={trainerData.certificateUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-lg transition-colors font-medium"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    View Certificate
+                  </a>
+                </div>
               ) : (
-                <p className="text-gray-500 text-center">No certificate available</p>
+                <p className="text-gray-500 text-center py-10">No certificate available</p>
               )}
             </div>
           </div>

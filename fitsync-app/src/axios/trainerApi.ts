@@ -33,6 +33,7 @@ export const loginTrainer = async (data: ILoginData) => {
 //Google Login
 export const trainerGoogleSignin = async (data: {
   credential: string;
+  certificateUrl?: string;
 }): Promise<IGoogleLogin> => {
   const response = await axiosInstance.post<IGoogleLogin>(
     "/trainer/auth/google",
@@ -153,6 +154,35 @@ export const uploadProfileImage = async (profileImage: File) => {
   return response.data;
 };
 
+export const uploadAndSaveProfileImage = async (profileImage: File) => {
+  const formData = new FormData();
+  formData.append("profileImage", profileImage);
+
+  const response = await axiosInstance.post(
+    "/trainer/upload-and-save-profile",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      withCredentials: true,
+    }
+  );
+
+  return response.data;
+};
+
+export const fetchTrainerSpecializations = async () => {
+  const response = await axiosInstance.get("/trainer/specializations");
+  return response.data;
+};
+
+export const getTrainerPerformanceStats = async () => {
+  const response = await axiosInstance.get("/trainer/performance-stats");
+  return response.data;
+};
+
+
 export const addTimeSlot = async (data: object) => {
   const response = await axiosInstance.post("/trainer/addTimeSlot", data);
   return response;
@@ -229,5 +259,10 @@ export const requestPayout = async (trainerId: string, amount: number) => {
 
 export const completeSession = async (bookingId: string) => {
   const response = await axiosInstance.patch(`/trainer/complete-session/${bookingId}`);
+  return response.data;
+};
+
+export const getTrainerDashboardStats = async () => {
+  const response = await axiosInstance.get('/trainer/dashboard-stats');
   return response.data;
 };

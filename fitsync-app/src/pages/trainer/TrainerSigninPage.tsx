@@ -26,8 +26,8 @@ function SigninPage() {
 
 
   useEffect(() => {
-    if (trainerInfo && !trainerInfo.isGoogleLogin) {
-      navigate("/trainer/trainerDashboard");
+    if (trainerInfo) {
+      navigate(trainerInfo.verificationStatus ? "/trainer/trainerDashboard" : "/verificationStatus");
     }
   }, [navigate, trainerInfo]);
   // Handle Normal Login
@@ -41,7 +41,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       dispatch(setTrainerCredentials(data));
       localStorage.setItem("trainerId", data._id);
       toast.success("Successfully logged in!");
-      navigate("/trainer/trainerDashboard");
+      navigate(data.verificationStatus ? "/trainer/trainerDashboard" : "/verificationStatus");
     } catch (err: unknown) {
       const error = err as IApiError;
       console.error("Login Error:", error);
@@ -63,9 +63,10 @@ const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
       credential: credentialResponse.credential,
     });
 
+    dispatch(setTrainerCredentials(data));
     localStorage.setItem("trainerId", data._id);
     toast.success("Google Sign In successful!");
-    navigate(data.isGoogleLogin ? "/trainer/trainerDashboard" : "/");
+    navigate(data.verificationStatus ? "/trainer/trainerDashboard" : "/verificationStatus");
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error("Google Login Error:", error);
