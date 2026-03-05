@@ -79,36 +79,34 @@ const ChatPage: React.FC = () => {
 
   useEffect(() => {
     if (!myUserId || !trainerId) return;
+
     connectUserSocket(myUserId);
     const socket = getUserSocket();
     if (!socket) return;
+
     socket.on("user-status-change", ({ userId, isOnline }: StatusChangePayload) => {
       if (userId === trainerId) setIsOnline(isOnline);
     });
-    return () => {
-      socket.off("user-status-change");
-      disconnectUserSocket();
-    };
-  }, [myUserId, trainerId]);
 
-  useEffect(() => {
-    if (!myUserId) return;
-    connectUserSocket(myUserId);
     subscribeToUserMessages((message: unknown) => {
-      const socketMessage = message as { data: RawMessage };
-      const data = socketMessage.data;
+      const data = message as RawMessage;
       const formattedMessage: Message = {
         _id: data._id || crypto.randomUUID(),
         text: data.text || "",
         imageUrl: data.imageUrl ?? undefined,
         sender: data.senderId === myUserId ? "user" : "trainer",
         senderName: data.senderId === myUserId ? "You" : trainer.name,
-        timestamp: new Date(data.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        timestamp: new Date(data.createdAt || Date.now()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setMessages((prev) => [...prev, formattedMessage]);
     });
-    return () => disconnectUserSocket();
-  }, [myUserId, trainer.name]);
+
+    return () => {
+      socket.off("user-status-change");
+      socket.off("receive-message");
+      disconnectUserSocket();
+    };
+  }, [myUserId, trainerId, trainer.name]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -138,20 +136,28 @@ const ChatPage: React.FC = () => {
       form.append("text", newMessage);
       if (selectedImage) form.append("image", selectedImage);
 
-      const sent = await sendMessages(trainerId, form);
+      const sentResponse = await sendMessages(trainerId, form);
+      const sent = sentResponse.data || sentResponse; // Fallback in case backend changes
+
       const uiMessage: Message = {
         _id: sent._id,
         text: newMessage || "",
         imageUrl: sent.imageUrl || undefined,
         sender: "user",
         senderName: "You",
-        timestamp: new Date(sent.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        timestamp: new Date(sent.createdAt || Date.now()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
       setMessages((prev) => [...prev, uiMessage]);
       setNewMessage("");
       setSelectedImage(null);
-      sendMessageToUserSocket(trainerId, { text: newMessage, senderId: myUserId });
+      sendMessageToUserSocket(trainerId, {
+        ...sent,
+        sender: "user",
+        senderName: "You",
+        receiverId: trainerId,
+        senderId: myUserId,
+      });
     } catch (err) {
       console.error("Send failed", err);
     }

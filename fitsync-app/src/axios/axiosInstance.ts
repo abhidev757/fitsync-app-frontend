@@ -18,10 +18,18 @@ axiosInstance.interceptors.request.use(
       const userInfo = localStorage.getItem("userInfo");
       const trainerInfo = localStorage.getItem("trainerInfo");
 
-      const token =
-        userInfo ? JSON.parse(userInfo).token :
-        trainerInfo ? JSON.parse(trainerInfo).token :
-        null;
+      const isTrainerRoute = config.url?.startsWith('/trainer') || config.url?.startsWith('/chat');
+      
+      let token = null;
+      if (isTrainerRoute && trainerInfo) {
+        token = JSON.parse(trainerInfo).token;
+      } else if (!isTrainerRoute && userInfo) {
+        token = JSON.parse(userInfo).token;
+      } else if (trainerInfo) {
+         token = JSON.parse(trainerInfo).token;
+      } else if (userInfo) {
+         token = JSON.parse(userInfo).token;
+      }
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;

@@ -154,7 +154,8 @@ export default function TrainerChat() {
     if (selectedImage) form.append("image", selectedImage);
 
     sendMessages(selectedChatId, form)
-      .then((sent) => {
+      .then((sentResponse) => {
+        const sent = sentResponse.data || sentResponse;
         sendMessageToTrainerSocket(selectedChatId, {
           ...sent,
           sender: "trainer",
@@ -195,8 +196,8 @@ export default function TrainerChat() {
               <div
                 key={chat.id}
                 className={`flex items-center p-4 cursor-pointer transition-all border-l-2 ${chat.id === selectedChatId
-                    ? "bg-[#CCFF00]/5 border-[#CCFF00]"
-                    : "border-transparent hover:bg-gray-900"
+                  ? "bg-[#CCFF00]/5 border-[#CCFF00]"
+                  : "border-transparent hover:bg-gray-900"
                   }`}
                 onClick={() => setSelectedChatId(chat.id)}
               >
@@ -258,8 +259,8 @@ export default function TrainerChat() {
                   <div key={m.id} className={`flex ${m.sender === "trainer" ? "justify-end" : "justify-start"}`}>
                     <div className={`group relative max-w-[70%] ${m.sender === "trainer" ? "items-end" : "items-start"}`}>
                       <div className={`p-4 rounded-2xl transition-all ${m.sender === "trainer"
-                          ? "bg-[#CCFF00] text-black font-bold rounded-tr-none shadow-[0_0_20px_rgba(204,255,0,0.1)]"
-                          : "bg-gray-900 border border-gray-800 text-white rounded-tl-none"
+                        ? "bg-[#CCFF00] text-black font-bold rounded-tr-none shadow-[0_0_20px_rgba(204,255,0,0.1)]"
+                        : "bg-gray-900 border border-gray-800 text-white rounded-tl-none"
                         }`}>
                         {m.imageUrl ? (
                           <img src={m.imageUrl} className="rounded-xl border border-black/10 shadow-lg" alt="" />
@@ -314,8 +315,8 @@ export default function TrainerChat() {
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim() && !selectedImage}
                 className={`p-3 rounded-xl transition-all active:scale-95 ${newMessage || selectedImage
-                    ? "bg-[#CCFF00] text-black shadow-[0_0_15px_rgba(204,255,0,0.3)]"
-                    : "bg-gray-900 text-gray-700"
+                  ? "bg-[#CCFF00] text-black shadow-[0_0_15px_rgba(204,255,0,0.3)]"
+                  : "bg-gray-900 text-gray-700"
                   }`}
               >
                 <Send size={18} />
