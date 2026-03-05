@@ -9,13 +9,14 @@ import {
   fetchTrainerSpecializations,
 } from "../../axios/trainerApi";
 import { toast } from "react-toastify";
-import axios from "axios";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../store";
 import { setTrainerCredentials } from "../../slices/trainerAuthSlice";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import Cropper from "react-easy-crop";
-import { getCroppedImg } from "../../util/cropImage"; // Utility function to crop the image
+import { getCroppedImg } from "../../util/cropImage";
+import { ShieldCheck, FileText, Camera, User, Mail, Lock, Activity, ChevronRight, X } from "lucide-react";
+
 interface Area {
   width: number;
   height: number;
@@ -30,31 +31,22 @@ function SignupPage() {
   const [specializations, setSpecializations] = useState<string[]>([]);
   const [availableSpecializations, setAvailableSpecializations] = useState<string[]>([]);
   const [certificate, setCertificate] = useState<File | null>(null);
-  const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string>("");
   const [croppedImage, setCroppedImage] = useState<File | null>(null);
-  const [errors, setErrors] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-
-  useEffect(() => {
-    if (errors.length > 0) {
-      const timer = setTimeout(() => setErrors([]), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [errors]);
 
   useEffect(() => {
     const loadSpecializations = async () => {
       try {
         const data = await fetchTrainerSpecializations();
-        setAvailableSpecializations(data.map((s: any) => s.name || s));
+        setAvailableSpecializations(data.map((s: { name?: string } | string) => typeof s === 'string' ? s : (s.name || '')));
       } catch (err) {
         console.error('Failed to fetch specializations:', err);
       }
@@ -62,50 +54,31 @@ function SignupPage() {
     loadSpecializations();
   }, []);
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const handleGoogleSuccess = async (
-    credentialResponse: CredentialResponse
-  ) => {
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) {
-      toast.error("Google authentication failed. No credentials received.");
+      toast.error("Security mismatch. No credentials received.");
       return;
     }
-
     if (!certificate) {
-      toast.error("Please select a certificate file before registering with Google.");
+      toast.error("Protocol Error: Upload certification before Google verification.");
       return;
     }
 
-    if (isUploading) return;
-    setIsUploading(true);
     setIsLoading(true);
-
     try {
       const certificateResponse = await uploadCertificate(certificate);
-      const certificateUrl = certificateResponse.fileUrl;
-
       const data = await trainerGoogleSignin({
         credential: credentialResponse.credential,
-        certificateUrl,
+        certificateUrl: certificateResponse.fileUrl,
       });
 
       dispatch(setTrainerCredentials(data));
       localStorage.setItem("trainerId", data._id);
-      toast.success("Google Sign In successful!");
+      toast.success("Identity Verified: Google Access Granted");
       navigate(data.verificationStatus ? "/trainer/trainerDashboard" : "/verificationStatus");
-    } catch (error: any) {
-      if (axios.isAxiosError(error)) {
-        console.error("Google Login Error:", error);
-        toast.error(error.response?.data?.message || "Google Sign In failed.");
-      } else {
-        console.error("Unexpected Error:", error);
-        toast.error(error.message || "An unexpected error occurred.");
-      }
+    } catch {
+      toast.error("Authentication failed.");
     } finally {
-      setIsUploading(false);
       setIsLoading(false);
     }
   };
@@ -113,315 +86,242 @@ function SignupPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      setProfileImage(file);
       setProfileImageUrl(URL.createObjectURL(file));
+      setCroppedImage(null); // Reset preview
     }
   };
 
-  const onCropComplete = useCallback(
-    (croppedArea: Area, croppedAreaPixels: Area) => {
-      setCroppedAreaPixels(croppedAreaPixels);
-    },
-    []
-  );
+  const onCropComplete = useCallback((_: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   const handleCrop = async () => {
     if (!profileImageUrl || !croppedAreaPixels) return;
-
     try {
-      const croppedImg = await getCroppedImg(
-        profileImageUrl,
-        croppedAreaPixels
-      );
+      const croppedImg = await getCroppedImg(profileImageUrl, croppedAreaPixels);
       setCroppedImage(croppedImg);
-    } catch (error) {
-      console.error("Failed to crop the image:", error);
-      toast.error("Error cropping the image.");
+      toast.success("Image Calibrated");
+    } catch {
+      toast.error("Calibration error.");
     }
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setErrors([]);
-
     if (!certificate || !croppedImage) {
-      toast.error("Please upload all required files.");
+      toast.error("Required: Certification and Calibrated Profile Image.");
       return;
     }
 
-    if (isUploading) return;
-    setIsUploading(true);
     setIsLoading(true);
 
     try {
-      const certificateResponse = await uploadCertificate(certificate);
-      const certificateUrl = certificateResponse.fileUrl;
-
-      const profileResponse = await uploadProfileImage(croppedImage);
-      const profileUrl = profileResponse.fileUrl;
+      const [certRes, profRes] = await Promise.all([
+        uploadCertificate(certificate),
+        uploadProfileImage(croppedImage)
+      ]);
 
       const data = await registerTrainer({
         name,
         email,
         password,
         specializations,
-        certificateUrl,
-        profileImageUrl: profileUrl,
+        certificateUrl: certRes.fileUrl,
+        profileImageUrl: profRes.fileUrl,
       });
 
       localStorage.setItem("trainerId", data._id);
       localStorage.setItem("trainerEmailId", data.email);
-
-      toast.success("Registration successful! Please verify your email.");
+      toast.success("Dossier Created: Verify email to proceed.");
       navigate("/trainerOtpVerification");
-    } catch (err) {
-      console.error("Registration Error:", err);
-      toast.error("An error occurred.");
+    } catch {
+      toast.error("System Error: Registration failed.");
     } finally {
-      setIsUploading(false);
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
-      <div className="p-4">
-        <span className="text-gray-400">Register</span>
-      </div>
+    <div className="min-h-screen bg-black text-white font-sans p-6 lg:p-12 overflow-x-hidden">
+      <div className="max-w-6xl mx-auto">
 
-      <div className="flex-1 p-8 lg:p-16 flex flex-col">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold flex items-center">
-            <span className="text-white font-bold mr-1">FIT</span>
-            <span className="text-gray-400">SYNC</span>
-          </h1>
+        {/* Header Navigation */}
+        <div className="flex justify-between items-center mb-16">
+          <div className="flex flex-col">
+            <span className="text-[#CCFF00] font-black text-[10px] tracking-[0.4em] uppercase mb-1">Personnel Integration</span>
+            <h1 className="text-2xl font-black italic uppercase tracking-tighter">
+              FIT<span className="text-[#CCFF00]">SYNC</span> FOR EXPERTS
+            </h1>
+          </div>
+          <Link to="/trainerSignin" className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-[#CCFF00] transition-colors border-b border-gray-900 pb-1">
+            Already Registered? Login
+          </Link>
         </div>
 
-        <div className="mb-8">
-          <h2 className="text-4xl font-bold mb-2">Register Here</h2>
-          <p className="text-gray-400">
-            We can assign tasks, set deadlines, and track progress effortlessly.
-          </p>
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6 max-w-4xl mx-auto w-full"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label htmlFor="name" className="block text-sm font-medium">
-                Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                required
-                className="w-full p-3 rounded bg-gray-800 border border-gray-700"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value.trim())}
-              />
+          {/* Left Column: Context */}
+          <div className="lg:col-span-4 space-y-8">
+            <div className="bg-[#0B0B0B] border border-gray-900 p-8 rounded-[2rem] relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#CCFF00] opacity-5 blur-3xl"></div>
+              <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-4 leading-none text-white">Join the Elite Roster.</h2>
+              <p className="text-gray-500 text-sm leading-relaxed italic">
+                "Deploy your expertise through our high-performance infrastructure. Track metrics, manage deployments, and scale your influence."
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="specialization" className="block text-sm font-medium">
-                Specialization
-              </label>
-              <select
-                id="specialization"
-                className="w-full p-3 rounded bg-gray-800 border border-gray-700 text-white"
-                value=""
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val && !specializations.includes(val)) {
-                    setSpecializations([...specializations, val]);
-                  }
-                }}
-              >
-                <option value="">-- Select Specialization --</option>
-                {availableSpecializations.map((spec) => (
-                  <option key={spec} value={spec} disabled={specializations.includes(spec)}>
-                    {spec}
-                  </option>
-                ))}
-              </select>
-              {specializations.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {specializations.map((spec) => (
-                    <span
-                      key={spec}
-                      className="flex items-center gap-1 bg-blue-600 text-white text-sm px-3 py-1 rounded-full"
-                    >
-                      {spec}
-                      <button
-                        type="button"
-                        onClick={() => setSpecializations(specializations.filter((s) => s !== spec))}
-                        className="ml-1 text-white hover:text-red-300 font-bold"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
+            <div className="space-y-4 px-4">
+              {[
+                { icon: <ShieldCheck size={16} />, text: "Credential Verification" },
+                { icon: <Activity size={16} />, text: "Real-time Biometrics" },
+                { icon: <FileText size={16} />, text: "Automated Billing" }
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3 text-gray-700 font-bold uppercase text-[10px] tracking-widest">
+                  <span className="text-[#CCFF00]">{item.icon}</span> {item.text}
                 </div>
-              )}
+              ))}
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                className="w-full p-3 rounded bg-gray-800 border border-gray-700"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
+          {/* Right Column: Form */}
+          <div className="lg:col-span-8">
+            <form onSubmit={handleSubmit} className="space-y-10 bg-[#0B0B0B] border border-gray-900 rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative">
 
-            <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-medium">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  className="w-full p-3 rounded bg-gray-800 border border-gray-700"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400"
-                >
-                  {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
-                </button>
+              {/* Profile Calibration Section */}
+              <section className="space-y-6">
+                <div className="flex items-center gap-3 border-b border-gray-900 pb-4">
+                  <Camera size={18} className="text-[#CCFF00]" />
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">Visual Identification</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                  <div className="space-y-4">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400">Profile Source</label>
+                    <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="prof-input" />
+                    <label htmlFor="prof-input" className="flex items-center justify-center gap-3 w-full py-4 bg-black border border-gray-800 rounded-xl cursor-pointer hover:border-[#CCFF00] transition-all group">
+                      <Camera size={16} className="text-gray-600 group-hover:text-[#CCFF00]" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-600 group-hover:text-white">Upload Headshot</span>
+                    </label>
+                  </div>
+
+                  {profileImageUrl && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                      <div className="relative h-64 w-full bg-black border border-gray-800 rounded-2xl overflow-hidden shadow-inner">
+                        <Cropper image={profileImageUrl} crop={crop} zoom={zoom} aspect={1} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={onCropComplete} />
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <input type="range" min={1} max={3} step={0.1} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="flex-1 h-1 bg-gray-900 appearance-none accent-[#CCFF00] rounded-lg" />
+                        <button type="button" onClick={handleCrop} className="px-6 py-2 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-lg hover:bg-[#CCFF00] transition-all">Calibrate</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {croppedImage && (
+                    <div className="md:col-span-2 bg-black border border-[#CCFF00]/20 p-4 rounded-2xl flex items-center gap-6 animate-in zoom-in-95">
+                      <img src={URL.createObjectURL(croppedImage)} alt="Preview" className="w-20 h-20 rounded-xl object-cover grayscale border border-gray-800" />
+                      <div>
+                        <p className="text-[10px] font-black text-[#CCFF00] uppercase tracking-widest mb-1">Identity Locked</p>
+                        <p className="text-xs text-gray-500 italic">Visual profile has been calibrated to system standards.</p>
+                      </div>
+                      <button type="button" onClick={() => setCroppedImage(null)} className="ml-auto p-2 text-gray-700 hover:text-red-500 transition-colors"><X size={16} /></button>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* Identity & Credentials */}
+              <section className="space-y-8">
+                <div className="flex items-center gap-3 border-b border-gray-900 pb-4">
+                  <User size={18} className="text-[#CCFF00]" />
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">Service Credentials</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[#CCFF00] ml-1">Full Name</label>
+                    <div className="flex items-center bg-black border border-gray-800 rounded-xl p-4 focus-within:border-[#CCFF00] transition-all">
+                      <User size={16} className="text-gray-700 mr-3" />
+                      <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="bg-transparent w-full text-sm font-bold uppercase tracking-tight focus:outline-none placeholder-gray-800" placeholder="Agent Name" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[#CCFF00] ml-1">Secure Email</label>
+                    <div className="flex items-center bg-black border border-gray-800 rounded-xl p-4 focus-within:border-[#CCFF00] transition-all">
+                      <Mail size={16} className="text-gray-700 mr-3" />
+                      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="bg-transparent w-full text-sm font-bold uppercase tracking-tight focus:outline-none placeholder-gray-800" placeholder="Contact Protocol" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[#CCFF00] ml-1">Password</label>
+                    <div className="flex items-center bg-black border border-gray-800 rounded-xl p-4 focus-within:border-[#CCFF00] transition-all relative">
+                      <Lock size={16} className="text-gray-700 mr-3" />
+                      <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required className="bg-transparent w-full text-sm font-bold uppercase tracking-tight focus:outline-none placeholder-gray-800" placeholder="Secret Key" />
+                      <button type="button" onClick={togglePasswordVisibility} className="text-gray-700 hover:text-white transition-colors">{showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}</button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[#CCFF00] ml-1">Deployment Specialization</label>
+                    <div className="flex items-center bg-black border border-gray-800 rounded-xl p-4 focus-within:border-[#CCFF00] transition-all">
+                      <Activity size={16} className="text-gray-700 mr-3" />
+                      <select onChange={(e) => { const v = e.target.value; if (v && !specializations.includes(v)) setSpecializations([...specializations, v]); }} className="bg-transparent w-full text-[10px] font-black uppercase tracking-widest focus:outline-none text-white">
+                        <option value="">Select Domain</option>
+                        {availableSpecializations.map((spec) => (
+                          <option key={spec} value={spec} className="bg-black">{spec}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {specializations.map((spec) => (
+                        <span key={spec} className="flex items-center gap-2 bg-[#CCFF00]/10 border border-[#CCFF00]/20 text-[#CCFF00] text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest">
+                          {spec} <button type="button" onClick={() => setSpecializations(specializations.filter((s) => s !== spec))}><X size={10} /></button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Certificate Section */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[#CCFF00] ml-1">Expert Certification (PDF/DOC)</label>
+                  <div className="bg-black border border-gray-800 rounded-xl p-6 flex flex-col items-center justify-center border-dashed group hover:border-[#CCFF00]/50 transition-all cursor-pointer relative">
+                    <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => e.target.files && setCertificate(e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
+                    <FileText size={24} className={`mb-3 ${certificate ? 'text-[#CCFF00]' : 'text-gray-700 group-hover:text-white'}`} />
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">{certificate ? certificate.name : "Transmit Certification Files"}</p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Action Footer */}
+              <div className="pt-8 border-t border-gray-900">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <button type="submit" disabled={isLoading} className="flex-1 bg-[#CCFF00] text-black font-black uppercase text-xs tracking-[0.3em] py-5 rounded-2xl hover:shadow-[0_0_30px_rgba(204,255,0,0.4)] transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50">
+                    {isLoading ? "Synchronizing Dossier..." : "Initialize Registry"} <ChevronRight size={18} />
+                  </button>
+                  <div className="flex-1">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      theme="filled_black"
+                      shape="pill"
+                      text="signup_with"
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="certificate"
-                className="block text-sm font-medium"
-              >
-                Certificate
-              </label>
-              <input
-                id="certificate"
-                type="file"
-                required
-                accept=".pdf,.doc,.docx"
-                className="w-full p-3 rounded bg-gray-800 border border-gray-700"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    setCertificate(e.target.files[0]);
-                  }
-                }}
-              />
-            </div>
+            </form>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label
-                htmlFor="profileImage"
-                className="block text-sm font-medium"
-              >
-                Profile Picture
-              </label>
-              <input
-                id="profileImage"
-                type="file"
-                accept="image/*"
-                className="w-full p-3 rounded bg-gray-800 border border-gray-700"
-                onChange={handleImageChange}
-              />
-              {profileImageUrl && (
-  <div className="mt-4">
-    {/* Flex container for side-by-side layout */}
-    <div className="flex flex-row gap-4">
-      {/* Cropping Container */}
-      <div
-        className="crop-container"
-        style={{
-          width: "300px",
-          height: "300px",
-          position: "relative",
-        }}
-      >
-        <Cropper
-          image={profileImageUrl}
-          crop={crop}
-          zoom={zoom}
-          aspect={1}
-          onCropChange={setCrop}
-          onZoomChange={setZoom}
-          onCropComplete={onCropComplete}
-        />
-      </div>
-
-      {/* Cropped Preview (smaller and aside the original image) */}
-      {croppedImage && (
-        <div className="flex flex-col items-center">
-          <h3 className="text-sm font-medium mb-2">Cropped Preview:</h3>
-          <img
-            src={URL.createObjectURL(croppedImage)}
-            alt="Cropped"
-            className="border border-gray-500 rounded-md"
-            style={{ width: "150px", height: "150px" }} // Adjust size here
-          />
         </div>
-      )}
-    </div>
-
-    {/* Crop Button (placed below the side-by-side layout) */}
-    <button
-      type="button"
-      onClick={handleCrop}
-      className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200"
-    >
-      Crop Image
-    </button>
-  </div>
-)}
-            </div>
-          </div>
-
-          <div className="flex space-x-4 pt-4">
-            <button
-              type="submit"
-              className="flex-1 bg-gray-300 hover:bg-gray-400 text-black font-medium py-3 px-4 rounded transition duration-200"
-              disabled={isLoading}
-            >
-              {isLoading ? "Signing up..." : "Sign up"}
-            </button>
-
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => toast.error("Google Sign In was unsuccessful")}
-            />
-          </div>
-
-          <div className="text-center pt-4">
-            <p className="text-gray-400">
-              Have an account?
-              <Link
-                to="/trainerSignin"
-                className="ml-1 text-white hover:underline"
-              >
-                Login Now
-              </Link>
-            </p>
-          </div>
-        </form>
       </div>
+
+      <p className="text-center mt-20 text-gray-800 text-[10px] font-black uppercase tracking-[0.5em]">
+        End of Transmission // FITSYNC Registry 2026
+      </p>
     </div>
   );
 }
