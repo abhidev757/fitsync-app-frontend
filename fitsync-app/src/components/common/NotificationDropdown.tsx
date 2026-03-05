@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, Info, Activity, X } from 'lucide-react';
 import { Socket } from 'socket.io-client';
 import axiosInstance from '../../axios/axiosInstance';
 import { formatDistanceToNow } from 'date-fns';
@@ -26,7 +26,6 @@ const NotificationDropdown = ({ userId, userType, getSocket }: NotificationDropd
   useEffect(() => {
     if (!userId) return;
 
-    // Fetch initial notifications
     const fetchNotifications = async () => {
       try {
         const response = await axiosInstance.get(`/notifications/${userId}?userType=${userType}`);
@@ -38,7 +37,6 @@ const NotificationDropdown = ({ userId, userType, getSocket }: NotificationDropd
 
     fetchNotifications();
 
-    // Listen for new notifications
     const socket = getSocket();
     if (socket) {
       socket.on('new-notification', (notification: INotification) => {
@@ -51,19 +49,16 @@ const NotificationDropdown = ({ userId, userType, getSocket }: NotificationDropd
         socket.off('new-notification');
       }
     };
-  }, [userId, getSocket]);
+  }, [userId, getSocket, userType]);
 
   useEffect(() => {
-    // Click outside to close
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -78,52 +73,87 @@ const NotificationDropdown = ({ userId, userType, getSocket }: NotificationDropd
     }
   };
 
-  const handleToggle = () => {
-    setIsOpen(!isOpen);
-    // Optionally we can mark all as read here, but keeping it individual is fine
-  };
-
   return (
     <div className="relative" ref={dropdownRef}>
-      <button onClick={handleToggle} className="relative p-2 rounded-full hover:bg-gray-700/50 transition-colors">
-        <Bell className="h-5 w-5 text-gray-400 hover:text-white" />
+      {/* BELL BUTTON */}
+      <button 
+        onClick={() => setIsOpen(!isOpen)} 
+        className={`relative p-2.5 rounded-xl transition-all duration-300 ${isOpen ? 'bg-[#CCFF00]/10' : 'hover:bg-gray-900'}`}
+      >
+        <Bell className={`h-5 w-5 transition-colors ${unreadCount > 0 ? 'text-[#CCFF00]' : 'text-gray-500'}`} />
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+          <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#CCFF00] text-[9px] font-black text-black shadow-[0_0_10px_rgba(204,255,0,0.6)] animate-pulse">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
+      {/* DROPDOWN */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg shadow-xl overflow-hidden z-50">
-          <div className="p-4 border-b border-[#2a2a2a] flex justify-between items-center bg-[#242424]">
-            <h3 className="font-semibold text-white">Notifications</h3>
+        <div className="absolute right-0 mt-4 w-80 bg-[#0B0B0B] border border-gray-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] overflow-hidden z-[100] animate-in fade-in zoom-in-95 duration-200">
+          
+          {/* HEADER */}
+          <div className="px-5 py-4 border-b border-gray-900 flex justify-between items-center bg-black/60 backdrop-blur-md">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white">System Alerts</h3>
             {unreadCount > 0 && (
-              <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded-full">{unreadCount} New</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-black bg-[#CCFF00] px-2 py-0.5 rounded shadow-[0_0_10px_rgba(204,255,0,0.2)]">
+                {unreadCount} NEW
+              </span>
             )}
           </div>
           
-          <div className="max-h-96 overflow-y-auto">
+          {/* NOTIFICATION LIST - Scrollbar Hidden via CSS */}
+          <div className="max-h-[380px] overflow-y-auto scrollbar-hide">
+            <style>{`.scrollbar-hide::-webkit-scrollbar { display: none; } .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
+            
             {notifications.length === 0 ? (
-              <div className="p-6 text-center text-gray-400 text-sm">
-                No notifications yet
+              <div className="p-12 text-center">
+                <Activity className="text-gray-800 mx-auto mb-3" size={24} />
+                <p className="text-[9px] font-black uppercase tracking-widest text-gray-700 italic">No Active Transmissions</p>
               </div>
             ) : (
-              notifications.map((notification) => (
-                <div 
-                  key={notification._id} 
-                  onClick={() => handleMarkAsRead(notification._id, notification.isRead)}
-                  className={`p-4 border-b border-[#2a2a2a] last:border-0 cursor-pointer transition-colors ${notification.isRead ? 'bg-[#1a1a1a] hover:bg-[#242424]' : 'bg-[#2a2a35] hover:bg-[#323240]'}`}
-                >
-                  <p className={`text-sm ${notification.isRead ? 'text-gray-300' : 'text-white font-medium'}`}>
-                    {notification.message}
-                  </p>
-                  <span className="text-xs text-gray-500 block mt-2">
-                    {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                  </span>
-                </div>
-              ))
+              <div className="flex flex-col">
+                {notifications.map((n) => (
+                  <div 
+                    key={n._id} 
+                    onClick={() => handleMarkAsRead(n._id, n.isRead)}
+                    className={`px-5 py-5 cursor-pointer transition-all duration-300 border-b border-gray-900 last:border-0 relative group ${
+                      !n.isRead ? 'bg-[#CCFF00]/[0.03]' : 'opacity-40'
+                    }`}
+                  >
+                    {/* Unread Left Border */}
+                    {!n.isRead && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#CCFF00]"></div>}
+                    
+                    <div className="flex gap-4 items-start">
+                      <div className={`mt-0.5 p-2 rounded-lg border ${!n.isRead ? 'bg-black border-[#CCFF00]/30 text-[#CCFF00]' : 'bg-gray-900 border-gray-800 text-gray-700'}`}>
+                         <Info size={14} />
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-xs leading-relaxed uppercase tracking-tight italic ${!n.isRead ? 'text-white font-black' : 'text-gray-500 font-bold'}`}>
+                          {n.message}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest">
+                            {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
+                          </span>
+                          {!n.isRead && (
+                             <span className="w-1.5 h-1.5 rounded-full bg-[#CCFF00] shadow-[0_0_8px_rgba(204,255,0,0.8)]"></span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
+          </div>
+
+          {/* FOOTER */}
+          <div className="p-4 bg-black/60 border-t border-gray-900 text-center">
+             <button className="group flex items-center justify-center gap-2 mx-auto text-[9px] font-black uppercase tracking-[0.3em] text-gray-600 hover:text-[#CCFF00] transition-colors">
+                <X size={10} className="group-hover:rotate-90 transition-transform" /> 
+                Purge Archive Logs
+             </button>
           </div>
         </div>
       )}

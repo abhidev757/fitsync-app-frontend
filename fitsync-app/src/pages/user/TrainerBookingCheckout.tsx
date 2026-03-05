@@ -7,6 +7,7 @@ import { format, parseISO } from "date-fns";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { createPaymentIntent, createBooking } from "../../axios/userApi";
+import { ShieldCheck, CreditCard, Receipt, User } from "lucide-react";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -28,13 +29,6 @@ interface Trainer {
     sessions: number;
     price: number;
     dateRange: string;
-  }[];
-  reviews?: {
-    id: number;
-    author: string;
-    avatar: string;
-    rating: number;
-    text: string;
   }[];
 }
 
@@ -73,7 +67,6 @@ const CheckoutForm: React.FC<{
   
       const userInfo = JSON.parse(userInfoString);
   
-      // 2. Create payment intent
       const { clientSecret } = await createPaymentIntent({
         amount: total * 100,
         userId: userId,
@@ -83,7 +76,6 @@ const CheckoutForm: React.FC<{
         isPackage: booking.isPackage
       });
   
-      // 3. Confirm payment
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: elements.getElement(CardElement)!,
@@ -96,7 +88,6 @@ const CheckoutForm: React.FC<{
       if (stripeError) throw stripeError;
   
       if (paymentIntent?.status === "succeeded") {
-        // 4. Create booking
         await createBooking({
           user: userId,
           trainer: trainer._id,
@@ -120,44 +111,53 @@ const CheckoutForm: React.FC<{
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6">
-      <div className="bg-[#2a2a2a] rounded-lg p-4 mb-6">
-        <h3 className="text-lg font-semibold mb-4">Payment Details</h3>
-        <div className="border border-gray-600 rounded-lg p-3">
+    <form onSubmit={handleSubmit} className="mt-8">
+      <div className="bg-black border border-gray-900 rounded-2xl p-6 mb-8">
+        <div className="flex items-center gap-2 mb-6 text-[#CCFF00]">
+            <CreditCard size={18} />
+            <h3 className="text-xs font-black uppercase tracking-widest">Secure Credit Card</h3>
+        </div>
+        <div className="bg-[#0D1117] border border-gray-800 rounded-xl p-4 focus-within:border-[#CCFF00] transition-colors">
           <CardElement
             options={{
               style: {
                 base: {
                   fontSize: "16px",
                   color: "#ffffff",
+                  fontFamily: 'Inter, sans-serif',
                   "::placeholder": {
-                    color: "#aab7c4",
+                    color: "#4B5563",
                   },
                   backgroundColor: "transparent",
                 },
                 invalid: {
-                  color: "#ff5252",
+                  color: "#FF5252",
                 },
               },
             }}
           />
         </div>
-        {error && <div className="text-red-500 mt-2">{error}</div>}
+        {error && <div className="text-red-500 mt-4 text-xs font-bold uppercase tracking-tight italic">{error}</div>}
       </div>
 
-      <div className="flex justify-between items-center border-t border-gray-700 pt-4">
-        <div className="text-lg font-bold">
-          Total Amount: <span className="text-white">${total}</span>
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-6 border-t border-gray-900 pt-8">
+        <div className="flex flex-col">
+            <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Authorized Amount</span>
+            <div className="text-3xl font-black text-white italic tracking-tighter">${total}.00</div>
         </div>
         <button
-          className={`bg-[#d9ff00] hover:bg-[#c8e600] text-black font-medium py-2 px-8 rounded-lg transition-colors ${
-            processing ? "opacity-70 cursor-not-allowed" : ""
+          className={`w-full sm:w-auto bg-[#CCFF00] text-black font-black py-4 px-12 rounded-xl uppercase text-xs tracking-widest hover:shadow-[0_0_20px_rgba(204,255,0,0.4)] transition-all ${
+            processing ? "opacity-50 cursor-not-allowed" : "active:scale-95"
           }`}
           type="submit"
           disabled={!stripe || processing}
         >
-          {processing ? "Processing..." : "Confirm & Pay"}
+          {processing ? "Authorizing..." : "Authorize & Pay"}
         </button>
+      </div>
+      <div className="mt-6 flex justify-center items-center gap-2 text-gray-600">
+          <ShieldCheck size={14} />
+          <span className="text-[10px] font-bold uppercase tracking-widest">Encrypted SSL Transaction</span>
       </div>
     </form>
   );
@@ -185,7 +185,6 @@ const BookingCheckout: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchTrainerData();
   }, [id]);
 
@@ -209,7 +208,6 @@ const BookingCheckout: React.FC = () => {
           startDate,
           isPackage,
           total,
-          
         },
       },
     });
@@ -217,99 +215,106 @@ const BookingCheckout: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#121212] text-white flex items-center justify-center">
-        <div className="animate-pulse">Loading booking details...</div>
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-12 w-12 border-2 border-t-[#CCFF00] border-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-[#CCFF00]">Securing Gateway</p>
+        </div>
       </div>
     );
   }
 
   if (!trainerData || !state) {
     return (
-      <div className="min-h-screen bg-[#121212] text-white flex items-center justify-center">
-        <div>Booking information not found</div>
+      <div className="min-h-screen bg-black text-white flex items-center justify-center font-black uppercase italic tracking-tighter text-3xl">
+        Transaction Error
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#121212] text-white">
-      <div className="p-6 max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Booking Checkout</h1>
+    <div className="min-h-screen bg-black text-white font-sans p-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-10">
+          <p className="text-[#CCFF00] font-black text-xs tracking-widest uppercase mb-1">Secure Transaction</p>
+          <h1 className="text-5xl font-black tracking-tighter uppercase italic">Booking Checkout</h1>
+        </div>
 
-        <div className="bg-[#1a1a1a] rounded-lg p-6 mb-6">
-          <div className="flex items-center gap-4 mb-6">
-            <img
-              src={trainerData.profileImageUrl || "/placeholder.svg"}
-              alt={trainerData.name}
-              className="w-24 h-24 rounded-full object-cover"
-            />
+        <div className="bg-[#0B0B0B] border border-gray-900 rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#CCFF00] opacity-5 blur-[100px] pointer-events-none"></div>
+
+          {/* Trainer Summary Card */}
+          <div className="flex flex-col md:flex-row items-center gap-8 mb-12 pb-12 border-b border-gray-900">
+            <div className="relative">
+                <div className="absolute -inset-1 bg-[#CCFF00] rounded-full blur opacity-10"></div>
+                <img
+                  src={trainerData.profileImageUrl || "/placeholder.svg"}
+                  alt={trainerData.name}
+                  className="relative w-28 h-28 rounded-full object-cover grayscale brightness-75 border-2 border-gray-800"
+                />
+            </div>
+            <div className="text-center md:text-left">
+              <h2 className="text-3xl font-black italic uppercase tracking-tighter text-[#CCFF00] mb-1">{trainerData.name}</h2>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em]">{trainerData.specializations}</p>
+              <div className="flex items-center justify-center md:justify-start mt-3 gap-1">
+                <span className="text-[#CCFF00] text-xs">★</span>
+                <span className="text-xs font-black italic">{trainerData.rating?.toFixed(1) || "N/A"}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            {/* Left: Booking Details */}
             <div>
-              <h2 className="text-xl font-bold text-[#d9ff00]">{trainerData.name}</h2>
-              <p className="text-gray-300">{trainerData.specializations}</p>
-              {trainerData.rating && (
-                <div className="flex items-center mt-1">
-                  <span className="text-yellow-400 mr-1">★</span>
-                  <span>{trainerData.rating.toFixed(1)}</span>
+              <div className="flex items-center gap-2 mb-6">
+                <Receipt className="text-[#CCFF00]" size={18} />
+                <h3 className="text-xs font-black uppercase tracking-widest">Booking Invoice</h3>
+              </div>
+              <div className="bg-black border border-gray-900 rounded-2xl p-6 space-y-4">
+                <div className="flex justify-between items-center py-2 border-b border-gray-900/50">
+                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Plan</span>
+                  <span className="text-xs font-black uppercase italic text-[#CCFF00]">
+                    {isPackage ? "10 Session Package" : "Single Session"}
+                  </span>
                 </div>
-              )}
-            </div>
-          </div>
-
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold mb-4">Booking Details</h3>
-            <div className="bg-[#2a2a2a] rounded-lg p-4">
-              <div className="mb-4">
-                <h4 className="text-[#d9ff00] font-medium">
-                  {isPackage ? "Training Package" : "Single Session"}
-                </h4>
-              </div>
-              <div className="grid grid-cols-2 py-2 border-b border-gray-700">
-                <span className="text-gray-400">Date:</span>
-                <span>
-                  {isPackage 
-                    ? trainerData.packages?.[0]?.dateRange || "Custom dates" 
-                    : formatDate(startDate)}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 py-2 border-b border-gray-700">
-                <span className="text-gray-400">Time:</span>
-                <span>{time || "Not specified"}</span>
-              </div>
-              <div className="grid grid-cols-2 py-2 border-b border-gray-700">
-                <span className="text-gray-400">Trainer:</span>
-                <span>{trainerData.name}</span>
-              </div>
-              <div className="grid grid-cols-2 py-2 border-b border-gray-700">
-                <span className="text-gray-400">Service:</span>
-                <span className="text-[#d9ff00] capitalize">
-                  {trainerData.specializations}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 py-2">
-                <span className="text-gray-400">Plan:</span>
-                <span>
-                  {isPackage ? "Package (10 sessions)" : "Single Session"}
-                </span>
+                <div className="flex justify-between items-center py-2 border-b border-gray-900/50">
+                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Deployment</span>
+                  <span className="text-xs font-black uppercase italic">
+                    {isPackage ? "Block Training" : formatDate(startDate)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-900/50">
+                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Time Slot</span>
+                  <span className="text-xs font-black uppercase italic">{time || "TBD"}</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Expert</span>
+                  <span className="text-xs font-black uppercase italic">{trainerData.name}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4">Pricing</h3>
-            <div className="bg-[#2a2a2a] rounded-lg p-4">
-              <div className="grid grid-cols-2 py-2 border-b border-gray-700">
-                <span className="text-gray-400">Session Price:</span>
-                <span>${price}</span>
+            {/* Right: Pricing Breakdown */}
+            <div>
+              <div className="flex items-center gap-2 mb-6">
+                <User className="text-[#CCFF00]" size={18} />
+                <h3 className="text-xs font-black uppercase tracking-widest">Pricing Ledger</h3>
               </div>
-              {isPackage && (
-                <div className="grid grid-cols-2 py-2 border-b border-gray-700">
-                  <span className="text-gray-400">Sessions:</span>
-                  <span>10</span>
+              <div className="bg-black border border-gray-900 rounded-2xl p-6 space-y-4">
+                <div className="flex justify-between items-center py-2 border-b border-gray-900/50">
+                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Unit Price</span>
+                  <span className="text-xs font-black italic">${price}.00</span>
                 </div>
-              )}
-              <div className="grid grid-cols-2 py-2 font-bold">
-                <span className="text-gray-400">Total:</span>
-                <span>${total}</span>
+                {isPackage && (
+                  <div className="flex justify-between items-center py-2 border-b border-gray-900/50">
+                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Quantity</span>
+                    <span className="text-xs font-black italic">x10</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center py-4 bg-[#CCFF00]/5 -mx-6 px-6">
+                  <span className="text-[10px] font-black text-[#CCFF00] uppercase tracking-[0.2em]">Total Balance</span>
+                  <span className="text-xl font-black italic tracking-tighter text-white">${total}.00</span>
+                </div>
               </div>
             </div>
           </div>

@@ -10,7 +10,7 @@ import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { toast } from "react-toastify";
 import { setCredentials } from "../../slices/authSlice";
 import { IApiError } from "../../types/error.types";
-import {googleSignin,loginUser} from '../../axios/userApi'
+import { googleSignin, loginUser } from '../../axios/userApi'
 
 const SigninPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -22,12 +22,11 @@ const SigninPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { userInfo } = useSelector((state: RootState) => state.auth);
 
-  
-useEffect(() => {
-  if (userInfo) {
-    navigate("/user/dashboard");
-  }
-}, [userInfo, navigate]);
+  useEffect(() => {
+    if (userInfo) {
+      navigate("/user/dashboard");
+    }
+  }, [userInfo, navigate]);
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) {
@@ -37,7 +36,7 @@ useEffect(() => {
 
     try {
       setIsLoading(true);
-      const data  = await googleSignin({
+      const data = await googleSignin({
         credential: credentialResponse.credential,
       });
 
@@ -75,24 +74,25 @@ useEffect(() => {
 
   return (
     <AuthLayout title="Welcome Back">
-      {/* Top Right "Become a Trainer" Button */}
-            <div className="absolute top-4 right-4">
-              <Link to="/trainerSignup">
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700">
-                  Become a Trainer
-                </button>
-              </Link>
-            </div>
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        <div className="rounded-md shadow-sm -space-y-px">
-          <div>
+      {/* Top Right "Become a Trainer" Button - Adjusted to Lime/Black */}
+      <div className="absolute top-6 right-6">
+        <Link to="/trainerSignup">
+          <button className="px-4 py-2 bg-[#CCFF00] text-black font-bold rounded-sm shadow-[0_0_15px_rgba(204,255,0,0.2)] hover:bg-white transition-all text-sm uppercase tracking-tight">
+            Become a Trainer
+          </button>
+        </Link>
+      </div>
+
+      <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+        <div className="rounded-xl overflow-hidden border border-gray-800 bg-[#0D1117]">
+          <div className="border-b border-gray-800">
             <input
               id="email-address"
               name="email"
               type="email"
               autoComplete="email"
               required
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-white rounded-t-md focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 focus:z-10 sm:text-sm"
+              className="appearance-none relative block w-full px-4 py-4 bg-transparent placeholder-gray-600 text-white focus:outline-none focus:ring-1 focus:ring-[#CCFF00] focus:z-10 sm:text-sm"
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -105,7 +105,7 @@ useEffect(() => {
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               required
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-white rounded-b-md focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 focus:z-10 sm:text-sm"
+              className="appearance-none relative block w-full px-4 py-4 bg-transparent placeholder-gray-600 text-white focus:outline-none focus:ring-1 focus:ring-[#CCFF00] focus:z-10 sm:text-sm"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -113,16 +113,16 @@ useEffect(() => {
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-2 top-2 text-xs text-yellow-300 hover:text-yellow-500"
+              className="absolute right-4 top-4 text-[10px] uppercase font-bold text-[#CCFF00] hover:text-white transition-colors"
             >
               {showPassword ? "Hide" : "Show"}
             </button>
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="text-sm">
-            <Link to="/forgotpassword" className="font-medium text-yellow-400 hover:text-yellow-500">
+        <div className="flex items-center justify-end">
+          <div className="text-xs">
+            <Link to="/forgotpassword" className="font-bold text-gray-500 hover:text-[#CCFF00] uppercase tracking-widest transition-colors">
               Forgot your password?
             </Link>
           </div>
@@ -131,43 +131,48 @@ useEffect(() => {
         <div>
           <button
             type="submit"
-            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+            className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-black rounded-xl text-black bg-[#CCFF00] hover:shadow-[0_0_20px_rgba(204,255,0,0.4)] transition-all focus:outline-none uppercase tracking-widest"
             disabled={isLoading}
           >
-            {isLoading ? "Signing In..." : "Sign In"}
+            {isLoading ? "Authenticating..." : "Sign In"}
           </button>
         </div>
       </form>
 
-      <div className="mt-6">
+      <div className="mt-8">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
+            <div className="w-full border-t border-gray-800"></div>
           </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-gray-800 text-gray-300">Or</span>
+          <div className="relative flex justify-center text-xs uppercase font-bold">
+            <span className="px-4 bg-black text-gray-600 tracking-widest">Or Secure Login</span>
           </div>
         </div>
 
-        <div className="mt-6">
-          <GoogleLogin
-            onSuccess={(credentialResponse) => {
-              if (credentialResponse.credential) {
-                handleGoogleSuccess(credentialResponse);
-              } else {
+        <div className="mt-8 flex justify-center">
+          {/* Customizing Google Login is limited by the library, but we maintain the dark theme surroundings */}
+          <div className="p-1 bg-white rounded-md">
+            <GoogleLogin
+              theme="outline"
+              shape="rectangular"
+              onSuccess={(credentialResponse) => {
+                if (credentialResponse.credential) {
+                  handleGoogleSuccess(credentialResponse);
+                } else {
+                  toast.error("Google Sign In was unsuccessful");
+                }
+              }}
+              onError={() => {
                 toast.error("Google Sign In was unsuccessful");
-              }
-            }}
-            onError={() => {
-              toast.error("Google Sign In was unsuccessful");
-            }}
-          />
+              }}
+            />
+          </div>
         </div>
       </div>
 
-      <div className="mt-6 text-center">
-        <Link to="/signup" className="text-sm text-yellow-400 hover:text-yellow-500">
-          Don't have an account? Sign up
+      <div className="mt-10 text-center">
+        <Link to="/signup" className="text-xs font-bold text-gray-400 hover:text-[#CCFF00] uppercase tracking-widest transition-all">
+          Don't have an account? <span className="text-white underline decoration-[#CCFF00] decoration-2 underline-offset-4">Sign up</span>
         </Link>
       </div>
     </AuthLayout>

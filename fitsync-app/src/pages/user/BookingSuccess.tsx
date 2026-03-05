@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { CheckCircle } from "lucide-react"
+import { CheckCircle, ArrowRight, ShieldCheck, Download } from "lucide-react"
 
 interface BookingData {
   trainer: {
@@ -20,77 +20,92 @@ const PaymentSuccess: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   
-  // Get booking data from navigation state
   const bookingData = location.state?.booking as BookingData | undefined
-  console.log('Booking Data:', bookingData);
-
-  // Get user info from localStorage
   const userInfoString = localStorage.getItem('userInfo');
   const userInfo = userInfoString ? JSON.parse(userInfoString) : null;
 
- 
-
   return (
-    <div className="min-h-screen bg-[#121212] text-white flex items-center justify-center">
-      <div className="max-w-md w-full p-6">
-        <div className="bg-[#1a1a1a] rounded-lg p-8 shadow-lg">
-          {/* Success icon */}
-          <div className="flex flex-col items-center justify-center mb-6">
-            <div className="bg-[#d9ff00] rounded-full p-2 mb-4">
-              <CheckCircle size={40} className="text-black" />
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 font-sans">
+      <div className="max-w-xl w-full">
+        {/* Elite Success Container */}
+        <div className="bg-[#0B0B0B] border border-gray-900 rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#CCFF00] opacity-5 blur-[100px] pointer-events-none"></div>
+
+          {/* Success Header */}
+          <div className="flex flex-col items-center justify-center mb-10">
+            <div className="relative mb-6">
+              <div className="absolute -inset-4 bg-[#CCFF00] rounded-full blur-2xl opacity-20 animate-pulse"></div>
+              <div className="relative bg-[#CCFF00] rounded-full p-4 shadow-[0_0_30px_rgba(204,255,0,0.4)]">
+                <CheckCircle size={48} className="text-black stroke-[3px]" />
+              </div>
             </div>
-            <h1 className="text-2xl font-bold text-[#d9ff00] mb-2">Payment Successful</h1>
-            <p className="text-center text-gray-300">
-              Thank you for your payment. Your transaction has been completed successfully.
+            <p className="text-[#CCFF00] font-black text-xs tracking-[0.3em] uppercase mb-2">Transaction Verified</p>
+            <h1 className="text-4xl font-black tracking-tighter uppercase italic text-center">Evolution Started</h1>
+            <p className="text-center text-gray-500 mt-4 text-sm max-w-xs font-medium">
+              Your session has been authorized. Prepare for peak performance.
             </p>
           </div>
 
-         
-
-          {/* Booking Information */}
-          {bookingData && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-[#d9ff00] mb-2">Booking Details</h2>
-              <div className="bg-[#2a2a2a] rounded-lg p-4">
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <span className="text-gray-400">Trainer:</span>
-                  <span>{bookingData.trainer.name}</span>
-
-                  <span className="text-gray-400">Session Time:</span>
-                  <span>{bookingData.time}</span>
-
-                  <span className="text-gray-400">Start Date:</span>
-                  <span>{bookingData.startDate}</span>
-
-                  <span className="text-gray-400">Type:</span>
-                  <span>{bookingData.isPackage ? "Package" : "Single Session"}</span>
+          <div className="space-y-6 mb-10">
+            {/* Tactical Booking Receipt */}
+            {bookingData && (
+              <div>
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <h2 className="text-[10px] font-black text-gray-600 uppercase tracking-widest italic">Deployment Details</h2>
+                  <span className="text-[10px] font-black text-[#CCFF00] uppercase tracking-widest underline decoration-dotted underline-offset-4">Digital Invoice</span>
+                </div>
+                <div className="bg-black border border-gray-900 rounded-2xl p-6 space-y-4">
+                  <div className="flex justify-between items-center py-1 border-b border-gray-900/50">
+                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Expert Coach</span>
+                    <span className="text-sm font-black uppercase italic text-[#CCFF00]">{bookingData.trainer.name}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-gray-900/50">
+                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Schedule</span>
+                    <span className="text-sm font-black uppercase italic">{bookingData.startDate} @ {bookingData.time}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Integration</span>
+                    <span className="text-sm font-black uppercase italic">{bookingData.isPackage ? "10-Session Block" : "Single Session"}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Billing Information (Now using localStorage userInfo) */}
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold text-[#d9ff00] mb-2">Billing Information</h2>
-            <div className="bg-[#2a2a2a] rounded-lg p-4">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <span className="text-gray-400">Name:</span>
-                <span>{userInfo?.name || "Not available"}</span>
-
-                <span className="text-gray-400">Email:</span>
-                <span className="truncate" >{userInfo?.email || "Not available"}</span>
+            {/* Billing Summary */}
+            <div>
+              <h2 className="text-[10px] font-black text-gray-600 uppercase tracking-widest italic mb-3 px-1">Authorized Member</h2>
+              <div className="bg-black border border-gray-900 rounded-2xl p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-gray-900 flex items-center justify-center border border-gray-800">
+                    <ShieldCheck className="text-[#CCFF00]" size={20} />
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <p className="text-xs font-black uppercase tracking-tight truncate">{userInfo?.name || "Member"}</p>
+                    <p className="text-[10px] font-bold text-gray-600 tracking-widest truncate uppercase">{userInfo?.email || "ID Encrypted"}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Back to home button */}
-          <button
-            className="w-full bg-[#d9ff00] hover:bg-[#c8e600] text-black font-medium py-3 rounded-lg"
-            onClick={() => navigate("/user/dashboard")}
-          >
-            Go to Home
-          </button>
+          {/* Action Footer */}
+          <div className="space-y-4">
+            <button
+              className="group w-full bg-[#CCFF00] text-black font-black py-5 rounded-2xl uppercase text-xs tracking-widest hover:shadow-[0_0_30px_rgba(204,255,0,0.4)] transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+              onClick={() => navigate("/user/dashboard")}
+            >
+              Enter Dashboard <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+            
+            <button className="w-full flex items-center justify-center gap-2 text-gray-600 hover:text-white transition-colors py-2 text-[10px] font-black uppercase tracking-widest">
+              <Download size={14} /> Download Receipt
+            </button>
+          </div>
         </div>
+        
+        <p className="text-center mt-8 text-gray-700 text-[10px] font-black uppercase tracking-[0.4em]">
+          FitSync Protocol 2026 // End of Transmission
+        </p>
       </div>
     </div>
   )

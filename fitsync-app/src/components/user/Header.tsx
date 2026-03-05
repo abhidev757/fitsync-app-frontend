@@ -1,5 +1,5 @@
 import { useLocation, Link } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { Avatar } from "./ui/avatar";
 import { Input } from "./ui/input";
 import { useTrainerSearchStore } from "../../util/useSearchTrainer";
@@ -16,13 +16,9 @@ const Header = () => {
   const userInfo = useSelector((state: RootState) => state.auth.userInfo);
   const [socketReady, setSocketReady] = useState(false);
   
-  // New state for the profile image URL.
-  // This can come from local storage, a global context, or any user state.
-  const [profilePic, setProfilePic] = useState("https://via.placeholder.com/40");
+  const [profilePic, setProfilePic] = useState("/placeholder.svg");
   
   useEffect(() => {
-    // Example: Read the profile picture from localStorage
-    // (Ensure that you update localStorage when the user updates their profile)
     const storedPic = localStorage.getItem("profilePic");
     if (storedPic) {
       setProfilePic(storedPic);
@@ -53,54 +49,72 @@ const Header = () => {
     }
   };
 
-  // Extract page title from pathname
   const getPageTitle = () => {
-    const path = location.pathname.split("/")[1];
-    if (!path) return "Dashboard";
-    return path.charAt(0).toUpperCase() + path.slice(1);
+    const path = location.pathname.split("/").pop();
+    if (!path || path === "dashboard") return "Command Center";
+    return path.replace(/([A-Z])/g, ' $1').trim().toUpperCase();
   };
 
   return (
-    <header className="border-b border-[#2a2a2a] p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-gray-400">
-          <span>Pages</span>
-          <span>/</span>
-          <span className="text-white">{getPageTitle()}</span>
+    <header className="bg-black/40 backdrop-blur-md border-b border-gray-900 p-5 sticky top-0 z-40">
+      <div className="flex items-center justify-between max-w-[1600px] mx-auto">
+        
+        {/* Breadcrumb / Title Area */}
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">
+            <span>Protocol</span>
+            <span className="text-[#CCFF00]">/</span>
+            <span className="text-gray-400">{getPageTitle()}</span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="relative w-80">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <div className="flex items-center gap-6">
+          {/* Search Bar */}
+          <div className={`relative transition-all duration-500 ${isTrainerListPage ? 'w-96' : 'w-64 opacity-50'}`}>
+            <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 transition-colors ${isTrainerListPage ? 'text-[#CCFF00]' : 'text-gray-700'}`} />
             <Input
-              placeholder="Search any keywords"
+              placeholder="Search personnel..."
               value={inputValue}
               onChange={handleSearchChange}
-              className="pl-10 bg-[#1a1a1a] border-none h-10 focus:ring-1 focus:ring-[#d9ff00]"
+              className="pl-12 bg-[#0B0B0B] border border-gray-900 text-white h-11 rounded-xl focus:border-[#CCFF00] focus:ring-0 transition-all placeholder-gray-700 text-xs font-bold uppercase tracking-widest italic"
               disabled={!isTrainerListPage}
             />
           </div>
 
-          {userInfo && socketReady && (
-            <NotificationDropdown 
-              userId={userInfo._id} 
-              userType="user" 
-              getSocket={getUserSocket} 
-            />
-          )}
+          <div className="h-6 w-[1px] bg-gray-900 hidden md:block"></div>
 
-          <Link to="/user/userProfile" className="relative group">
-            <Avatar className="cursor-pointer transition-transform hover:scale-105">
-              <img
-                src={profilePic}
-                alt="User Profile"
-                className="h-full w-full object-cover"
+          {/* Action Area */}
+          <div className="flex items-center gap-4">
+            {userInfo && socketReady && (
+              <NotificationDropdown 
+                userId={userInfo._id} 
+                userType="user" 
+                getSocket={getUserSocket} 
               />
-            </Avatar>
-            <span className="absolute -bottom-6 right-0 bg-[#2a2a2a] text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-              View Profile
-            </span>
-          </Link>
+            )}
+
+            <Link to="/user/userProfile" className="relative group">
+              <div className="absolute -inset-1 bg-[#CCFF00] rounded-full blur opacity-0 group-hover:opacity-20 transition-opacity"></div>
+              <Avatar className="h-10 w-10 border border-gray-800 cursor-pointer transition-all group-hover:border-[#CCFF00]">
+                {profilePic ? (
+                  <img
+                    src={profilePic}
+                    alt="Member Profile"
+                    className="h-full w-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                  />
+                ) : (
+                  <div className="bg-gray-900 h-full w-full flex items-center justify-center">
+                    <User size={18} className="text-gray-600" />
+                  </div>
+                )}
+              </Avatar>
+              
+              {/* Tooltip */}
+              <span className="absolute -bottom-10 right-0 bg-[#CCFF00] text-black text-[9px] font-black uppercase tracking-widest py-1.5 px-3 rounded shadow-xl opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0 whitespace-nowrap pointer-events-none">
+                Access Profile
+              </span>
+            </Link>
+          </div>
         </div>
       </div>
     </header>

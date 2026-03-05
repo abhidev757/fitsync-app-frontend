@@ -43,6 +43,7 @@ const DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
 const Dashboard: React.FC = () => {
   const userId = localStorage.getItem("userId") || "";
+  const limeColor = "#CCFF00";
 
   // ── Water
   const [waterGlasses, setWaterGlasses] = useState(0);
@@ -61,12 +62,11 @@ const Dashboard: React.FC = () => {
   // ── Calendar navigation
   const now = new Date();
   const [calYear, setCalYear] = useState(now.getFullYear());
-  const [calMonth, setCalMonth] = useState(now.getMonth()); // 0-indexed
+  const [calMonth, setCalMonth] = useState(now.getMonth());
   const todayDate = now.getDate();
   const todayMonth = now.getMonth();
   const todayYear = now.getFullYear();
 
-  // Fetch dashboard data whenever month changes
   useEffect(() => {
     if (!userId) return;
     getDashboardData(calYear, calMonth + 1)
@@ -74,12 +74,10 @@ const Dashboard: React.FC = () => {
       .catch(console.error);
   }, [userId, calYear, calMonth]);
 
-  // Google Fit connection status
   useEffect(() => {
     setFitConnected(localStorage.getItem("googleFitConnected") === "true");
   }, []);
 
-  // Water log
   useEffect(() => {
     if (!userId) return;
     fetchTodayWater(userId)
@@ -87,7 +85,6 @@ const Dashboard: React.FC = () => {
       .catch(console.error);
   }, [userId]);
 
-  // Health data auto-sync
   useEffect(() => {
     if (!userId || !initialLoad) return;
     const run = async () => {
@@ -135,10 +132,15 @@ const Dashboard: React.FC = () => {
 
   const BlurSection = ({ active, children }: BlurSectionProps) => (
     <div className="relative">
-      <div className={active ? "filter blur-md" : ""}>{children}</div>
+      <div className={active ? "filter blur-xl grayscale opacity-40 transition-all" : "transition-all"}>{children}</div>
       {active && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-          <Button onClick={connectGoogleFit} disabled={loadingFit}>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 rounded-2xl">
+          <p className="text-white font-bold mb-4 text-xs uppercase tracking-widest">Connect Data Stream</p>
+          <Button
+            onClick={connectGoogleFit}
+            disabled={loadingFit}
+            className="bg-[#CCFF00] text-black font-black hover:scale-105 transition-transform"
+          >
             {loadingFit ? "Syncing..." : "Sync Google Fit"}
           </Button>
         </div>
@@ -146,9 +148,8 @@ const Dashboard: React.FC = () => {
     </div>
   );
 
-  // ── Calendar
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const firstDow = (new Date(calYear, calMonth, 1).getDay() + 6) % 7; // Mon=0
+  const firstDow = (new Date(calYear, calMonth, 1).getDay() + 6) % 7;
   const apptDays = new Set(dashInfo?.appointmentDays ?? []);
   const monthName = new Date(calYear, calMonth, 1).toLocaleString("default", { month: "long" });
 
@@ -158,45 +159,62 @@ const Dashboard: React.FC = () => {
   const fitness = dashInfo?.fitness;
 
   return (
-    <div className="p-4 space-y-6">
-      <h1 className="text-2xl font-bold">Dashboard Overview</h1>
+    <div className="p-6 space-y-8 bg-black min-h-screen text-white font-sans">
+      <div className="flex justify-between items-end">
+        <div>
+          <p className="text-[#CCFF00] font-black text-xs tracking-widest uppercase mb-1">Command Center</p>
+          <h1 className="text-4xl font-black tracking-tighter uppercase italic">Dashboard Overview</h1>
+        </div>
+        <div className="text-right hidden md:block text-gray-600 text-xs font-bold tracking-widest uppercase">
+          {now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+        </div>
+      </div>
 
-      {/* Welcome */}
-      <Card className="bg-[#1a1a1a] border-none">
-        <CardContent className="flex justify-between items-center">
+      {/* Welcome Card */}
+      <Card className="bg-[#0B0B0B] border border-gray-900 overflow-hidden relative group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[#CCFF00] opacity-5 blur-3xl group-hover:opacity-10 transition-opacity"></div>
+        <CardContent className="flex justify-between items-center p-8">
           <div>
-            <h2 className="text-2xl font-bold">Hello, {dashInfo?.user.name ?? "there"}!</h2>
-            <p className="text-gray-400">Stay healthy by connecting your Google Fit account.</p>
+            <h2 className="text-3xl font-black tracking-tight mb-2">Welcome back, {dashInfo?.user.name?.split(' ')[0] ?? "Elite"}!</h2>
+            <p className="text-gray-500 font-medium max-w-md">Your bio-data is syncing. Continue your journey to peak performance.</p>
           </div>
-          <ChevronRight className="h-8 w-8 text-[#d9ff00]" />
+          <div className="bg-[#CCFF00] p-3 rounded-full shadow-[0_0_20px_rgba(204,255,0,0.3)]">
+            <ChevronRight className="h-6 w-6 text-black" />
+          </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* Left – Google Fit metrics */}
-        <div className="md:col-span-2 space-y-6">
+        {/* Left – Metrics */}
+        <div className="lg:col-span-2 space-y-8">
           <BlurSection active={!fitConnected}>
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="bg-[#1a1a1a] border-none">
-                <CardContent>
-                  <div className="flex items-center mb-2"><Flame className="text-[#d9ff00] mr-2" /><span>Total Calories</span></div>
-                  <ProgressCircle percentage={((healthData?.caloriesBurned ?? 0) / 2000) * 100} size={100} strokeWidth={10}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="bg-[#0B0B0B] border border-gray-900 p-2">
+                <CardContent className="flex flex-col items-center">
+                  <div className="flex items-center justify-between w-full mb-6">
+                    <span className="text-xs font-black uppercase tracking-widest text-gray-500">Total Calories</span>
+                    <Flame className="text-[#CCFF00] h-5 w-5" />
+                  </div>
+                  <ProgressCircle percentage={((healthData?.caloriesBurned ?? 0) / 2000) * 100} size={140} strokeWidth={12} color={limeColor}>
                     <div className="text-center">
-                      <p className="text-xl font-bold">{Math.round(healthData?.caloriesBurned ?? 0)}</p>
-                      <p className="text-xs text-gray-400">kcal</p>
+                      <p className="text-4xl font-black tracking-tighter italic">{Math.round(healthData?.caloriesBurned ?? 0)}</p>
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">kcal / 2000</p>
                     </div>
                   </ProgressCircle>
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#1a1a1a] border-none">
-                <CardContent>
-                  <div className="flex items-center mb-2"><Footprints className="text-[#d9ff00] mr-2" /><span>Steps</span></div>
-                  <ProgressCircle percentage={((healthData?.steps ?? 0) / 5000) * 100} size={100} strokeWidth={10}>
+              <Card className="bg-[#0B0B0B] border border-gray-900 p-2">
+                <CardContent className="flex flex-col items-center">
+                  <div className="flex items-center justify-between w-full mb-6">
+                    <span className="text-xs font-black uppercase tracking-widest text-gray-500">Step Count</span>
+                    <Footprints className="text-[#CCFF00] h-5 w-5" />
+                  </div>
+                  <ProgressCircle percentage={((healthData?.steps ?? 0) / 10000) * 100} size={140} strokeWidth={12} color={limeColor}>
                     <div className="text-center">
-                      <p className="text-xl font-bold">{healthData?.steps ?? 0}</p>
-                      <p className="text-xs text-gray-400">steps</p>
+                      <p className="text-4xl font-black tracking-tighter italic">{healthData?.steps ?? 0}</p>
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Steps / 10k</p>
                     </div>
                   </ProgressCircle>
                 </CardContent>
@@ -204,72 +222,76 @@ const Dashboard: React.FC = () => {
             </div>
           </BlurSection>
 
-          {/* Sleep & Water */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Sleep & Water Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <BlurSection active={!fitConnected}>
-              <Card className="bg-[#1a1a1a] border-none">
-                <CardContent>
-                  <div className="flex items-center mb-2"><Moon className="text-[#d9ff00] mr-2" /><span>Sleep (hrs)</span></div>
-                  <ProgressCircle percentage={((healthData?.sleepHours ?? 0) / 8) * 100} size={80} strokeWidth={8}>
-                    <div className="text-center"><p>{Math.round(healthData?.sleepHours ?? 0)}</p></div>
-                  </ProgressCircle>
+              <Card className="bg-[#0B0B0B] border border-gray-900 p-4 h-full">
+                <CardContent className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center text-[#CCFF00] text-xs font-black uppercase tracking-widest mb-4">
+                      <Moon className="mr-2 h-4 w-4" /> Sleep Cycles
+                    </div>
+                    <p className="text-4xl font-black tracking-tighter italic">{Math.round(healthData?.sleepHours ?? 0)} <span className="text-xs font-bold text-gray-600 not-italic">HRS</span></p>
+                    <p className="text-xs text-gray-500">8h Target</p>
+                  </div>
+                  <ProgressCircle percentage={((healthData?.sleepHours ?? 0) / 8) * 100} size={80} strokeWidth={8} color={limeColor} />
                 </CardContent>
               </Card>
             </BlurSection>
 
-            <Card className="bg-[#1a1a1a] border-none">
-              <CardContent>
-                <div className="flex items-center mb-2"><Droplets className="text-[#d9ff00] mr-2" /><span>Water</span></div>
-                <ProgressCircle percentage={waterPct} size={80} strokeWidth={8}>
-                  <div className="text-center">
-                    <p>{waterGlasses}/{totalGlasses}</p>
-                    <p className="text-xs text-gray-400">glasses</p>
+            <Card className="bg-[#0B0B0B] border border-gray-900 p-4 h-full">
+              <CardContent className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center text-[#CCFF00] text-xs font-black uppercase tracking-widest mb-4">
+                    <Droplets className="mr-2 h-4 w-4" /> Hydration
                   </div>
-                </ProgressCircle>
-                <div className="flex justify-center gap-2 mt-2">
-                  <button onClick={() => handleWaterChange(Math.max(0, waterGlasses - 1))}
-                    className="w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center">−</button>
-                  <button onClick={() => handleWaterChange(Math.min(totalGlasses, waterGlasses + 1))}
-                    className="w-6 h-6 bg-[#d9ff00] rounded-full flex items-center justify-center text-black font-bold">+</button>
+                  <p className="text-4xl font-black tracking-tighter italic">{waterGlasses} <span className="text-xs font-bold text-gray-600 not-italic">/ {totalGlasses}</span></p>
+                  <div className="flex gap-2 mt-4">
+                    <button onClick={() => handleWaterChange(Math.max(0, waterGlasses - 1))}
+                      className="w-8 h-8 bg-gray-900 border border-gray-800 rounded-lg hover:border-[#CCFF00] transition-colors flex items-center justify-center text-gray-400">−</button>
+                    <button onClick={() => handleWaterChange(Math.min(totalGlasses, waterGlasses + 1))}
+                      className="w-8 h-8 bg-[#CCFF00] rounded-lg flex items-center justify-center text-black font-black">+</button>
+                  </div>
                 </div>
+                <ProgressCircle percentage={waterPct} size={80} strokeWidth={8} color={limeColor} />
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Right – Profile & Calendar */}
-        <div className="space-y-6">
+        {/* Right Sidebar – Profile & Calendar */}
+        <div className="space-y-8">
 
           {/* Profile Card */}
-          <Card className="bg-[#1a1a1a] border-none">
-            <CardContent className="text-center">
-              <div className="h-24 w-24 rounded-full overflow-hidden mx-auto mb-3 bg-gray-700 flex items-center justify-center">
-                {dashInfo?.user.profileImageUrl
-                  ? <img src={dashInfo.user.profileImageUrl} alt="Profile" className="object-cover w-full h-full" />
-                  : <User size={40} className="text-gray-400" />
-                }
+          <Card className="bg-[#0B0B0B] border border-gray-900 overflow-hidden">
+            <div className="h-1 bg-[#CCFF00]"></div>
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="h-16 w-16 rounded-2xl overflow-hidden bg-gray-900 border border-gray-800 flex items-center justify-center">
+                  {dashInfo?.user.profileImageUrl
+                    ? <img src={dashInfo.user.profileImageUrl} alt="Profile" className="object-cover w-full h-full" />
+                    : <User size={24} className="text-gray-700" />
+                  }
+                </div>
+                <div>
+                  <h3 className="text-xl font-black tracking-tight">{dashInfo?.user.name ?? "—"}</h3>
+                  <p className="text-[#CCFF00] text-[10px] font-black uppercase tracking-widest">Pro Member</p>
+                </div>
               </div>
-              <h3 className="text-xl font-bold">{dashInfo?.user.name ?? "—"}</h3>
 
               {fitness && (
-                <p className="text-gray-400 text-sm mt-1">
-                  {fitness.age} yrs · {fitness.sex} · {fitness.activity}
-                </p>
-              )}
-
-              {fitness && (
-                <div className="grid grid-cols-3 gap-2 mt-3 text-center">
-                  <div className="bg-gray-800 rounded-lg p-2">
-                    <p className="text-[#d9ff00] font-bold text-sm">{fitness.weight}<span className="text-xs text-gray-400"> kg</span></p>
-                    <p className="text-xs text-gray-500">Weight</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-black/50 border border-gray-900 rounded-xl p-3 text-center">
+                    <p className="text-white font-black text-sm italic">{fitness.weight}kg</p>
+                    <p className="text-[8px] uppercase tracking-tighter text-gray-600 font-bold">Current</p>
                   </div>
-                  <div className="bg-gray-800 rounded-lg p-2">
-                    <p className="text-[#d9ff00] font-bold text-sm">{fitness.height}<span className="text-xs text-gray-400"> cm</span></p>
-                    <p className="text-xs text-gray-500">Height</p>
+                  <div className="bg-black/50 border border-gray-900 rounded-xl p-3 text-center">
+                    <p className="text-white font-black text-sm italic">{fitness.height}cm</p>
+                    <p className="text-[8px] uppercase tracking-tighter text-gray-600 font-bold">Height</p>
                   </div>
-                  <div className="bg-gray-800 rounded-lg p-2">
-                    <p className="text-[#d9ff00] font-bold text-sm">{fitness.targetWeight}<span className="text-xs text-gray-400"> kg</span></p>
-                    <p className="text-xs text-gray-500">Goal</p>
+                  <div className="bg-black/50 border border-gray-900 rounded-xl p-3 text-center">
+                    <p className="text-[#CCFF00] font-black text-sm italic">{fitness.targetWeight}kg</p>
+                    <p className="text-[8px] uppercase tracking-tighter text-gray-600 font-bold">Goal</p>
                   </div>
                 </div>
               )}
@@ -277,33 +299,34 @@ const Dashboard: React.FC = () => {
           </Card>
 
           {/* Appointment Calendar */}
-          <Card className="bg-[#1a1a1a] border-none">
-            <CardContent>
-              <div className="flex items-center justify-between mb-3">
-                <button onClick={prevMonth} className="text-gray-400 hover:text-white px-1 text-lg">‹</button>
-                <h4 className="font-medium text-sm">{monthName} {calYear}</h4>
-                <button onClick={nextMonth} className="text-gray-400 hover:text-white px-1 text-lg">›</button>
+          <Card className="bg-[#0B0B0B] border border-gray-900">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h4 className="font-black text-xs uppercase tracking-widest italic">{monthName} {calYear}</h4>
+                <div className="flex space-x-1">
+                  <button onClick={prevMonth} className="w-6 h-6 flex items-center justify-center bg-gray-900 rounded-md text-gray-400 hover:text-[#CCFF00]">‹</button>
+                  <button onClick={nextMonth} className="w-6 h-6 flex items-center justify-center bg-gray-900 rounded-md text-gray-400 hover:text-[#CCFF00]">›</button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-500 mb-1">
+              <div className="grid grid-cols-7 gap-2 text-center text-[9px] font-black uppercase text-gray-600 mb-2">
                 {DAYS.map((d) => <div key={d}>{d}</div>)}
               </div>
 
-              <div className="grid grid-cols-7 gap-1 text-center">
+              <div className="grid grid-cols-7 gap-2 text-center">
                 {Array.from({ length: firstDow }).map((_, i) => <div key={`blank-${i}`} />)}
                 {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
                   const isToday = d === todayDate && calMonth === todayMonth && calYear === todayYear;
                   const hasAppt = apptDays.has(d);
+
                   return (
                     <div key={d}
-                      title={hasAppt ? "Session booked" : undefined}
-                      className={`p-1 rounded-full text-xs transition-colors ${
-                        isToday
-                          ? "bg-[#d9ff00] text-black font-bold"
+                      className={`h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${isToday
+                          ? "bg-[#CCFF00] text-black shadow-[0_0_15px_rgba(204,255,0,0.3)]" // Solid Lime for Today
                           : hasAppt
-                          ? "bg-blue-600 text-white font-medium"
-                          : "hover:bg-[#2a2a2a] text-gray-300"
-                      }`}
+                            ? "border-2 border-[#CCFF00] text-[#CCFF00] bg-[#CCFF00]/5" // Lime Border for Scheduled
+                            : "text-gray-500 hover:bg-gray-900"
+                        }`}
                     >
                       {d}
                     </div>
@@ -311,16 +334,17 @@ const Dashboard: React.FC = () => {
                 })}
               </div>
 
-              <div className="flex gap-4 mt-3 text-xs text-gray-500 justify-center">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#d9ff00] inline-block" />Today
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-blue-600 inline-block" />Session
-                </span>
+              {/* Updated Legend to match your request */}
+              <div className="mt-6 pt-6 border-t border-gray-900 flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-md bg-[#CCFF00]"></div>
+                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Today</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-md border-2 border-[#CCFF00]"></div>
+                  <span className="text-[9px] font-black text-[#CCFF00] uppercase tracking-widest">Scheduled Session</span>
+                </div>
               </div>
-
-              <p className="text-center text-xs text-gray-600 mt-2">Trainer's Appointment</p>
             </CardContent>
           </Card>
         </div>

@@ -42,7 +42,6 @@ const SignupPage = () => {
     if (hasUpper && hasLower && hasNumber && isLongEnough) return "Medium";
     return "Weak";
   };
-  
 
   useEffect(() => {
     if (password) {
@@ -106,23 +105,24 @@ const SignupPage = () => {
 
   return (
     <AuthLayout title="Create An Account">
-      <div className="absolute top-4 right-4">
+      {/* Become a Trainer Button - Synced with Elite Hybrid style */}
+      <div className="absolute top-6 right-6">
         <Link to="/trainerSignup">
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700">
+          <button className="px-4 py-2 bg-[#CCFF00] text-black font-black rounded-sm shadow-[0_0_15px_rgba(204,255,0,0.2)] hover:bg-white transition-all text-xs uppercase tracking-tight">
             Become a Trainer
           </button>
         </Link>
       </div>
 
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        <div className="space-y-4">
+      <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+        <div className="space-y-3">
           <input
             id="name"
             name="name"
             type="text"
             required
-            className="w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-white bg-transparent rounded-md focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
-            placeholder="Your name"
+            className="w-full px-4 py-3 bg-[#0D1117] border border-gray-800 placeholder-gray-600 text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-[#CCFF00] transition-all sm:text-sm"
+            placeholder="Your full name"
             value={name}
             onChange={(e) => setName(e.target.value.trim())}
           />
@@ -132,35 +132,45 @@ const SignupPage = () => {
             type="email"
             autoComplete="email"
             required
-            className="w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-white bg-transparent rounded-md focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
+            className="w-full px-4 py-3 bg-[#0D1117] border border-gray-800 placeholder-gray-600 text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-[#CCFF00] transition-all sm:text-sm"
             placeholder="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
+          
           <div className="relative">
             <input
               id="password"
               name="password"
               type={showPassword ? "text" : "password"}
               required
-              className="w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-white bg-transparent rounded-md focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
-              placeholder="Password"
+              className="w-full px-4 py-3 bg-[#0D1117] border border-gray-800 placeholder-gray-600 text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-[#CCFF00] transition-all sm:text-sm"
+              placeholder="Create Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            {strength && (
-              <p className={`text-sm mt-1 ${strength === "Strong" ? "text-green-400" : strength === "Medium" ? "text-yellow-400" : "text-red-400"}`}>
-                Password Strength: {strength}
-              </p>
-            )}
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-2 top-2 text-xs text-yellow-300 hover:text-yellow-500"
+              className="absolute right-4 top-3.5 text-[10px] font-black uppercase text-[#CCFF00] hover:text-white transition-colors"
             >
               {showPassword ? "Hide" : "Show"}
             </button>
           </div>
+
+          {/* Password Strength Indicator - Color coded for brand sync */}
+          {strength && (
+            <div className="px-1 flex items-center justify-between">
+              <div className="flex space-x-1">
+                <div className={`h-1 w-8 rounded-full ${password ? (strength === 'Weak' ? 'bg-red-500' : strength === 'Medium' ? 'bg-[#CCFF00]/50' : 'bg-[#CCFF00]') : 'bg-gray-800'}`}></div>
+                <div className={`h-1 w-8 rounded-full ${strength === 'Medium' || strength === 'Strong' ? (strength === 'Medium' ? 'bg-[#CCFF00]/50' : 'bg-[#CCFF00]') : 'bg-gray-800'}`}></div>
+                <div className={`h-1 w-8 rounded-full ${strength === 'Strong' ? 'bg-[#CCFF00]' : 'bg-gray-800'}`}></div>
+              </div>
+              <span className={`text-[10px] font-black uppercase tracking-widest ${strength === "Strong" ? "text-[#CCFF00]" : strength === "Medium" ? "text-[#CCFF00]/60" : "text-red-500"}`}>
+                {strength}
+              </span>
+            </div>
+          )}
 
           <div className="relative">
             <input
@@ -168,7 +178,7 @@ const SignupPage = () => {
               name="confirmPassword"
               type={showConfirm ? "text" : "password"}
               required
-              className="w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-white bg-transparent rounded-md focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
+              className="w-full px-4 py-3 bg-[#0D1117] border border-gray-800 placeholder-gray-600 text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-[#CCFF00] transition-all sm:text-sm"
               placeholder="Confirm Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -176,45 +186,49 @@ const SignupPage = () => {
             <button
               type="button"
               onClick={() => setShowConfirm((prev) => !prev)}
-              className="absolute right-2 top-2 text-xs text-yellow-300 hover:text-yellow-500"
+              className="absolute right-4 top-3.5 text-[10px] font-black uppercase text-[#CCFF00] hover:text-white transition-colors"
             >
               {showConfirm ? "Hide" : "Show"}
             </button>
           </div>
         </div>
 
-        <div>
+        <div className="pt-2">
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-yellow-400 text-black font-semibold rounded-md hover:bg-yellow-500 focus:outline-none"
+            className="w-full py-4 px-4 bg-[#CCFF00] text-black font-black uppercase tracking-widest rounded-xl hover:shadow-[0_0_20px_rgba(204,255,0,0.4)] transition-all active:scale-[0.98] focus:outline-none"
           >
-            Sign Up
+            Start Your Journey
           </button>
         </div>
       </form>
 
-      <div className="mt-6">
+      <div className="mt-8">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-500"></div>
+            <div className="w-full border-t border-gray-800"></div>
           </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-gray-800 text-gray-300">Or</span>
+          <div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest">
+            <span className="px-4 bg-black text-gray-600 italic">One-tap Evolution</span>
           </div>
         </div>
 
-        <div className="mt-6">
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => toast.error("Google Sign Up was unsuccessful")}
-          />
+        <div className="mt-8 flex justify-center">
+           <div className="p-1 bg-white rounded-md">
+            <GoogleLogin
+              theme="outline"
+              shape="rectangular"
+              onSuccess={handleGoogleSuccess}
+              onError={() => toast.error("Google Sign Up was unsuccessful")}
+            />
+          </div>
         </div>
       </div>
 
-      <div className="mt-6 text-center">
+      <div className="mt-10 text-center">
         <Link to="/signin">
-          <span className="text-sm text-yellow-400 hover:text-yellow-500">
-            Already have an account? Sign in
+          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest hover:text-[#CCFF00] transition-all cursor-pointer">
+            Already a member? <span className="text-white underline decoration-[#CCFF00] decoration-2 underline-offset-4">Sign in</span>
           </span>
         </Link>
       </div>

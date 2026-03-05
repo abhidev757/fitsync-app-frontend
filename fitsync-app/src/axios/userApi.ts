@@ -280,6 +280,11 @@ export const getReview = async (bookingId: string) => {
   return response.data;
 };
 
+export const getTrainerReviews = async (trainerId: string) => {
+  const response = await axiosInstance.get(`/user/trainer-reviews/${trainerId}`);
+  return response.data;
+};
+
 const today = new Date().toISOString().split("T")[0]
 
 export const fetchTodayWater = async (userId: string) => {
