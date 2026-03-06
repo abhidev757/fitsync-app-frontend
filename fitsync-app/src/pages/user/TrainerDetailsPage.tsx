@@ -3,8 +3,8 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Star } from "lucide-react";
-import { fetchTrainer } from "../../axios/userApi";
+import { Star, ChevronLeft, Award, Clock, Calendar, ShieldCheck } from "lucide-react";
+import { fetchTrainer, getTrainerReviews } from "../../axios/userApi";
 import { format } from "date-fns";
 
 interface Trainer {
@@ -27,31 +27,35 @@ interface Trainer {
     dateRange: string;
   }[];
   reviews?: {
-    id: number;
-    author: string;
-    avatar: string;
+    _id: string;
+    userId: {
+      name: string;
+      profileImageUrl: string;
+    };
     rating: number;
-    text: string;
+    review: string;
+    createdAt?: string;
   }[];
 }
 
 const TrainerDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"sessions" | "packages">(
-    "sessions"
-  );
-  const [userReview, setUserReview] = useState("");
-  const [userRating, setUserRating] = useState(5);
   const [trainerData, setTrainerData] = useState<Trainer | null>(null);
+  const [trainerReviews, setTrainerReviews] = useState<Trainer['reviews']>([]);
+  const [visibleReviews, setVisibleReviews] = useState(3);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTrainerData = async () => {
       try {
         if (!id) return;
-        const response = await fetchTrainer(id);
-        setTrainerData(response);
+        const [trainerRes, reviewsRes] = await Promise.all([
+          fetchTrainer(id),
+          getTrainerReviews(id)
+        ]);
+        setTrainerData(trainerRes);
+        setTrainerReviews(reviewsRes);
       } catch (error) {
         console.error("Error fetching trainer data:", error);
       } finally {
@@ -62,259 +66,230 @@ const TrainerDetails: React.FC = () => {
     fetchTrainerData();
   }, [id]);
 
-  const renderStars = (rating: number, interactive = false) => {
-    return Array(5)
-      .fill(0)
-      .map((_, index) => (
-        <Star
-          key={index}
-          className={`h-5 w-5 ${
-            index < rating ? "text-[#d9ff00] fill-[#d9ff00]" : "text-gray-400"
-          } ${interactive ? "cursor-pointer" : ""}`}
-          onClick={interactive ? () => setUserRating(index + 1) : undefined}
-        />
-      ));
+  const renderStars = (rating: number) => {
+    return Array(5).fill(0).map((_, index) => (
+      <Star
+        key={index}
+        className={`h-3 w-3 ${index < rating ? "text-[#CCFF00] fill-[#CCFF00]" : "text-gray-800"}`}
+      />
+    ));
   };
 
-  const handleBookNow = (time: string, price: number,startDate: string, isPackage = false) => {
+  const handleBookNow = (time: string, price: number, startDate: string, isPackage = false) => {
     if (isPackage) {
       navigate(`/user/bookingCheckout/${id}`);
     } else {
-      console.log('Booking Data:',time,price,startDate,isPackage);
-      navigate(`/user/bookingCheckout/${id}`,{state:{time,price,startDate,isPackage}});
+      navigate(`/user/bookingCheckout/${id}`, { state: { time, price, startDate, isPackage } });
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#121212] text-white flex items-center justify-center">
-        <div className="animate-pulse">Loading trainer details...</div>
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-12 w-12 border-2 border-t-[#CCFF00] border-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-[#CCFF00]">Retrieving Expert Profile</p>
+        </div>
       </div>
     );
   }
 
   if (!trainerData) {
     return (
-      <div className="min-h-screen bg-[#121212] text-white flex items-center justify-center">
-        <div>Trainer not found</div>
+      <div className="min-h-screen bg-black text-white flex items-center justify-center font-black uppercase italic tracking-tighter text-3xl">
+        Trainer Not Found
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#121212] text-white">
-      <div className="p-6 max-w-5xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Trainer Details</h1>
+    <div className="min-h-screen bg-black text-white font-sans p-8">
+      <div className="max-w-7xl mx-auto">
 
-        {/* Trainer Profile */}
-        <div className="bg-[#1a1a1a] rounded-lg p-6 mb-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex flex-col items-center">
+        {/* Header Breadcrumb */}
+        <div className="flex items-center gap-4 mb-8">
+          <button onClick={() => navigate(-1)} className="p-2 bg-gray-900 rounded-xl text-gray-400 hover:text-[#CCFF00] transition-colors">
+            <ChevronLeft size={20} />
+          </button>
+          <div>
+            <p className="text-[#CCFF00] font-black text-[10px] tracking-[0.3em] uppercase mb-0.5">Elite Coaching Roster</p>
+            <h1 className="text-3xl font-black tracking-tighter uppercase italic">Personnel Profile</h1>
+          </div>
+        </div>
+
+        {/* Hero Section */}
+        <div className="bg-[#0B0B0B] border border-gray-900 rounded-[2rem] p-10 mb-10 overflow-hidden relative shadow-2xl">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#CCFF00] opacity-5 blur-[120px] pointer-events-none"></div>
+
+          <div className="flex flex-col lg:flex-row gap-12 items-start relative z-10">
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-[#CCFF00] rounded-[2rem] blur opacity-10 group-hover:opacity-20 transition-opacity"></div>
               <img
                 src={trainerData.profileImageUrl || "/placeholder.svg"}
                 alt={trainerData.name}
-                className="w-28 h-28 rounded-full object-cover mb-2"
+                className="relative w-48 h-64 rounded-[1.5rem] object-cover grayscale hover:grayscale-0 transition-all duration-500 brightness-90 border border-gray-800 cursor-pointer"
               />
+              <div className="absolute -bottom-3 -right-3 bg-black p-3 rounded-2xl border border-gray-800 shadow-xl">
+                <ShieldCheck className="text-[#CCFF00]" size={24} />
+              </div>
             </div>
 
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-[#d9ff00] mb-1">
-                {trainerData.name}
-              </h2>
-              <p className="text-gray-300 mb-2">
-                {trainerData.specializations}
-              </p>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                <div>
+                  <h2 className="text-5xl font-black tracking-tighter uppercase italic mb-2">
+                    {trainerData.name}
+                  </h2>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[#CCFF00] text-[10px] font-black uppercase tracking-widest bg-[#CCFF00]/10 px-3 py-1.5 rounded-lg border border-[#CCFF00]/20">
+                      {trainerData.specializations}
+                    </span>
+                    <div className="flex items-center gap-2 bg-gray-900/50 px-3 py-1 rounded-lg">
+                      {renderStars(trainerData.rating)}
+                      <span className="text-[10px] font-black text-gray-500 mt-0.5 italic">{trainerReviews?.length || 0} REVIEWS</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-              <div className="flex mb-4">{renderStars(trainerData.rating)}</div>
-
-              <div className="mb-6">
-                <h3 className="text-[#d9ff00] font-semibold mb-2">About</h3>
-                <p className="text-sm text-gray-300">
-                  {trainerData.description}
+              <div className="mb-10">
+                <h3 className="text-xs font-black uppercase text-gray-600 tracking-[0.3em] mb-4">Professional Dossier</h3>
+                <p className="text-gray-400 text-lg leading-relaxed max-w-4xl italic border-l-2 border-[#CCFF00]/30 pl-6">
+                  "{trainerData.description}"
                 </p>
               </div>
 
               {trainerData.experience && trainerData.experience.length > 0 && (
-                <div>
-                  <h3 className="text-[#d9ff00] font-semibold mb-2">
-                    Experience
-                  </h3>
-                  <ul className="text-sm text-gray-300">
-                    {trainerData.experience.map((item, index) => (
-                      <li key={index} className="mb-1 flex items-start">
-                        <span className="text-[#d9ff00] mr-2">•</span>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {trainerData.experience.map((item, index) => (
+                    <div key={index} className="flex items-center gap-4 bg-black border border-gray-900 p-4 rounded-2xl group hover:border-[#CCFF00]/30 transition-all">
+                      <Award className="text-[#CCFF00] opacity-50 group-hover:opacity-100" size={18} />
+                      <span className="text-sm font-bold text-gray-300 uppercase tracking-tight">{item}</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Booking Tabs */}
-        <div className="bg-[#d9ff00] rounded-lg overflow-hidden mb-6">
-          <div className="flex">
-            <button
-              className={`flex-1 py-3 font-medium ${
-                activeTab === "sessions"
-                  ? "bg-[#d9ff00] text-black"
-                  : "bg-[#3a3a3a] text-white"
-              }`}
-              onClick={() => setActiveTab("sessions")}
-            >
-              Single Sessions
-            </button>
-            <button
-              className={`flex-1 py-3 font-medium ${
-                activeTab === "packages"
-                  ? "bg-[#d9ff00] text-black"
-                  : "bg-[#3a3a3a] text-white"
-              }`}
-              onClick={() => setActiveTab("packages")}
-            >
-              Packages
-            </button>
-          </div>
+        {/* Booking & Feedback Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
 
-          <div className="p-6">
-            {activeTab === "sessions" ? (
-              /* Single Sessions */
-              <div className="space-y-4">
-  {trainerData.timeSlots && trainerData.timeSlots.length > 0 ? (
-    <div className="relative">
-      {/* Container with max height and scroll */}
-      <div className={`space-y-4 ${trainerData.timeSlots.length > 3 ? "max-h-60 overflow-y-auto pr-2" : ""}`}>
-        {trainerData.timeSlots.map((timeSlot, index) => (
-          <div
-            key={index}
-            className="border-b border-[#b0ca00] py-4 last:border-0"
-          >
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="font-medium text-black">
-                  Date: {format(new Date(timeSlot.startDate), "dd/MM/yyyy")}
-                </p>
-                <p className="font-medium text-black">
-                  Time: {timeSlot.time}
-                </p>
+          {/* Sessions Column */}
+          <div className="xl:col-span-8 space-y-10">
+            <section className="bg-[#0B0B0B] border border-gray-900 rounded-[2rem] overflow-hidden">
+              <div className="p-8 border-b border-gray-900 flex items-center justify-between">
+                <h2 className="text-2xl font-black italic uppercase tracking-tighter">Mission Deployment</h2>
+                <Clock className="text-[#CCFF00] opacity-40" />
               </div>
-              <div className="flex items-center gap-4">
-                <p className="font-medium text-black">
-                  Price: ${timeSlot.price}
-                </p>
-                <button
-                  className="bg-black text-white py-1 px-4 rounded-md text-sm hover:bg-gray-800"
-                  onClick={() => handleBookNow(timeSlot.time, timeSlot.price,timeSlot.startDate,false)}
-                >
-                  Book Now
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-      
-      {/* Gradient fade effect (only when there are more than 3 slots) */}
-      {trainerData.timeSlots.length > 3 && (
-        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#121212] to-transparent pointer-events-none" />
-      )}
-    </div>
-  ) : (
-    <p className="text-gray-700">No sessions available</p>
-  )}
-</div>
-            ) : (
-              /* Packages */
-              <div className="space-y-4">
-                {trainerData.packages && trainerData.packages.length > 0 ? (
-                  trainerData.packages.map((pkg, index) => (
-                    <div
-                      key={index}
-                      className="border-b border-[#b0ca00] py-4 last:border-0"
-                    >
-                      <div className="flex justify-between items-center flex-wrap gap-2">
-                        <div>
-                          <p className="font-medium">Time: {pkg.time}</p>
-                          <p className="text-sm">
-                            Number of Sessions: {pkg.sessions}
-                          </p>
-                          <p className="text-xs text-gray-700">
-                            ({pkg.dateRange})
-                          </p>
+
+              <div className="p-8 space-y-10">
+                {/* Single Sessions */}
+                <div>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 mb-6">Individual Ops</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {trainerData.timeSlots && trainerData.timeSlots.length > 0 ? (
+                      trainerData.timeSlots.map((slot, i) => (
+                        <div key={i} className="flex flex-col sm:flex-row items-center justify-between p-6 bg-black border border-gray-900 rounded-2xl hover:border-[#CCFF00]/40 transition-all group">
+                          <div className="flex items-center gap-6 mb-4 sm:mb-0">
+                            <Calendar className="text-[#CCFF00] hidden sm:block" size={24} />
+                            <div>
+                              <p className="font-black text-xl italic uppercase tracking-tighter group-hover:text-[#CCFF00] transition-colors">
+                                {format(new Date(slot.startDate), "MMMM dd, yyyy")}
+                              </p>
+                              <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">{slot.time}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-6">
+                            <div className="text-right">
+                              <p className="text-2xl font-black text-[#CCFF00] tracking-tighter italic">${slot.price}</p>
+                              <p className="text-[8px] font-black text-gray-600 uppercase">Single Session</p>
+                            </div>
+                            <button
+                              onClick={() => handleBookNow(slot.time, slot.price, slot.startDate)}
+                              className="bg-[#CCFF00] text-black px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:shadow-[0_0_20px_rgba(204,255,0,0.4)] transition-all"
+                            >
+                              Reserve
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <p className="font-medium">Price: ${pkg.price}</p>
+                      ))
+                    ) : (
+                      <div className="py-12 text-center border-2 border-dashed border-gray-900 rounded-2xl italic text-gray-600 font-bold uppercase text-xs">No Active Slots</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Packages */}
+                <div>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 mb-6">Bulk Integration</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {trainerData.packages?.map((pkg, i) => (
+                      <div key={i} className="p-6 bg-black border border-gray-900 rounded-2xl hover:border-[#CCFF00]/40 transition-all flex flex-col justify-between">
+                        <div className="mb-6">
+                          <p className="text-[#CCFF00] text-[10px] font-black uppercase tracking-widest mb-1">{pkg.sessions} Sessions</p>
+                          <h4 className="text-2xl font-black italic uppercase tracking-tighter">{pkg.time}</h4>
+                          <p className="text-[10px] text-gray-600 font-bold mt-2 uppercase">{pkg.dateRange}</p>
+                        </div>
+                        <div className="flex items-center justify-between pt-6 border-t border-gray-900/50">
+                          <p className="text-2xl font-black tracking-tighter italic">${pkg.price}</p>
                           <button
-                            className="bg-black text-white py-1 px-4 rounded-md text-sm hover:bg-gray-800"
-                            onClick={() =>
-                              handleBookNow(pkg.time, pkg.price,pkg.dateRange, true)
-                            }
+                            onClick={() => handleBookNow(pkg.time, pkg.price, pkg.dateRange, true)}
+                            className="bg-white text-black px-6 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#CCFF00] transition-colors"
                           >
-                            Book Now
+                            Select
                           </button>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          {/* Reviews Column */}
+          <div className="xl:col-span-4 space-y-8">
+            <section className="bg-[#0B0B0B] border border-gray-900 rounded-[2rem] p-8">
+              <h2 className="text-xl font-black italic uppercase tracking-tighter mb-8 border-b border-gray-900 pb-4">Social Proof</h2>
+
+              <div className="space-y-6">
+                {trainerReviews && trainerReviews.length > 0 ? (
+                  trainerReviews.slice(0, visibleReviews).map((review) => (
+                    <div key={review._id} className="p-6 bg-black border border-gray-900 rounded-2xl relative overflow-hidden">
+                      <div className="flex items-center gap-4 mb-4">
+                        <img
+                          src={review.userId?.profileImageUrl || "/placeholder.svg"}
+                          alt="Reviewer"
+                          className="w-10 h-10 rounded-lg object-cover grayscale"
+                        />
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-tight">{review.userId?.name}</p>
+                          <div className="flex gap-0.5">{renderStars(review.rating)}</div>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-500 leading-relaxed italic">"{review.review}"</p>
+                      <div className="absolute top-0 right-0 p-3 opacity-10">
+                        <Award size={40} className="text-[#CCFF00]" />
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-700">No packages available</p>
+                  <p className="text-gray-700 font-black uppercase text-[10px] tracking-widest text-center py-10 italic">Awaiting Feedback Logs</p>
+                )}
+
+                {trainerReviews && trainerReviews.length > visibleReviews && (
+                  <button
+                    onClick={() => setVisibleReviews(v => v + 3)}
+                    className="w-full py-4 border border-gray-900 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-[#CCFF00] hover:border-[#CCFF00] transition-all"
+                  >
+                    View More Reports
+                  </button>
                 )}
               </div>
-            )}
+            </section>
           </div>
-        </div>
-
-        {/* Reviews Section */}
-        <div className="bg-[#1a1a1a] rounded-lg p-6">
-          <h2 className="text-[#d9ff00] font-bold mb-4">Feedback to Trainer</h2>
-
-          {/* Review Form */}
-          <div className="mb-6 border border-gray-700 rounded-lg p-4">
-            <div className="flex justify-center mb-4">
-              {renderStars(userRating, true)}
-            </div>
-            <textarea
-              className="w-full bg-[#2a2a2a] border-none rounded-md p-3 text-white resize-none placeholder-gray-500 focus:ring-1 focus:ring-[#d9ff00] focus:outline-none"
-              rows={3}
-              placeholder="Write Your review"
-              value={userReview}
-              onChange={(e) => setUserReview(e.target.value)}
-            ></textarea>
-            <div className="flex justify-end gap-2 mt-2">
-              <button className="bg-gray-600 text-white py-1 px-4 rounded-md text-sm hover:bg-gray-700">
-                Cancel
-              </button>
-              <button className="bg-[#d9ff00] text-black py-1 px-4 rounded-md text-sm hover:bg-[#c8e600]">
-                Post
-              </button>
-            </div>
-          </div>
-
-          {/* Review List */}
-          {trainerData.reviews && trainerData.reviews.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {trainerData.reviews.map((review) => (
-                <div key={review.id} className="bg-[#2a2a2a] rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <img
-                      src={review.avatar || "/placeholder.svg"}
-                      alt={review.author}
-                      className="w-8 h-8 rounded-full"
-                    />
-                    <div>
-                      <p className="text-sm font-medium">{review.author}</p>
-                      <div className="flex">{renderStars(review.rating)}</div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-300">{review.text}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-400 text-center">No reviews yet</p>
-          )}
         </div>
       </div>
     </div>

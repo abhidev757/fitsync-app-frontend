@@ -1,73 +1,93 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Home, Users, BarChart2, Heart, LogOut, Wallet } from "lucide-react"
+import { Users, BarChart2, Heart, LogOut, Wallet, LayoutGrid } from "lucide-react"
 import { logoutUser } from "../../axios/userApi"
+import { useDispatch } from "react-redux"
+import { logout } from "../../slices/authSlice"
 
 const Sidebar = () => {
   const location = useLocation()
   const navigate = useNavigate()
+  const dispatch = useDispatch()
 
   const isActive = (path: string) => {
-    return location.pathname === path
+    // Exact match for dash, or start of path for sub-routes
+    if (path === "/user/dashboard") return location.pathname === path
+    return location.pathname.startsWith(path)
   }
 
   const handleLogout = async () => {
     await logoutUser()
-    navigate("/signin") 
+    localStorage.removeItem("userId")
+    dispatch(logout())
+    navigate("/signin")
   }
 
   return (
-    <div className="w-20 bg-[#1a1a1a] min-h-screen flex flex-col items-center py-8 border-r border-[#2a2a2a]">
-      <div className="mb-12">
-        <Link to="/user/dashboard">
-          <div className="text-xl font-bold">
-            <span className="text-white">FIT</span>
-            <span className="text-[#d9ff00]">SYNC</span>
+    <div className="w-24 bg-[#0B0B0B] min-h-screen flex flex-col items-center py-10 border-r border-gray-900 sticky top-0 left-0 z-50">
+
+      {/* Brand Logo Area */}
+      <div className="mb-16">
+        <Link to="/user/dashboard" className="group relative">
+          <div className="absolute -inset-2 bg-[#CCFF00] rounded-full blur opacity-0 group-hover:opacity-10 transition-opacity"></div>
+          <div className="relative text-center leading-none">
+            <span className="block text-[10px] font-black tracking-[0.3em] text-white">FIT</span>
+            <span className="block text-[10px] font-black tracking-[0.3em] text-[#CCFF00]">SYNC</span>
           </div>
         </Link>
       </div>
 
-      <nav className="flex flex-col items-center space-y-8">
-        <Link to="/user/dashboard" className={`p-3 rounded-lg ${isActive("/") ? "bg-[#2a2a2a]" : "hover:bg-[#2a2a2a]"}`}>
-          <Home className="w-6 h-6 text-[#d9ff00]" />
-        </Link>
+      {/* Main Navigation */}
+      <nav className="flex-1 flex flex-col items-center space-y-6 w-full">
+        {[
+          { path: "/user/dashboard", icon: <LayoutGrid size={22} />, label: "Grid" },
+          { path: "/user/mySessions", icon: <BarChart2 size={22} />, label: "Stats" },
+          { path: "/user/trainersList", icon: <Users size={22} />, label: "Unit" },
+          { path: "/favorites", icon: <Heart size={22} />, label: "Mark" },
+          { path: "/user/userWallet", icon: <Wallet size={22} />, label: "Asset" },
+        ].map((item) => (
+          <Link
+            key={item.path}
+            to={item.path}
+            className="relative w-full flex justify-center group py-2"
+          >
+            {/* Active Tactical Indicator */}
+            {isActive(item.path) && (
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.8)] rounded-r-full animate-in slide-in-from-left-2 duration-300"></div>
+            )}
 
-        <Link
-          to="/user/mySessions"
-          className={`p-3 rounded-lg ${isActive("/user/mySessions") ? "bg-[#2a2a2a]" : "hover:bg-[#2a2a2a]"}`}
-        >
-          <BarChart2 className="w-6 h-6 text-[#d9ff00]" />
-        </Link>
+            <div className={`p-3.5 rounded-2xl transition-all duration-300 ${isActive(item.path)
+                ? "bg-[#CCFF00]/10 text-[#CCFF00] shadow-[inset_0_0_15px_rgba(204,255,0,0.05)]"
+                : "text-gray-600 hover:text-white hover:bg-white/5"
+              }`}>
+              {item.icon}
+            </div>
 
-        <Link
-          to="/user/trainersList"
-          className={`p-3 rounded-lg ${isActive("/user/trainersList") ? "bg-[#2a2a2a]" : "hover:bg-[#2a2a2a]"}`}
-        >
-          <Users className="w-6 h-6 text-[#d9ff00]" />
-        </Link>
-
-        <Link
-          to="/favorites"
-          className={`p-3 rounded-lg ${isActive("/favorites") ? "bg-[#2a2a2a]" : "hover:bg-[#2a2a2a]"}`}
-        >
-          <Heart className="w-6 h-6 text-[#d9ff00]" />
-        </Link>
-
-        <Link
-          to="/user/userWallet"
-          className={`p-3 rounded-lg ${isActive("/user/userWallet") ? "bg-[#2a2a2a]" : "hover:bg-[#2a2a2a]"}`}
-        >
-          <Wallet className="w-6 h-6 text-[#d9ff00]" />
-        </Link>
+            {/* Tooltip Label */}
+            <span className="absolute left-20 bg-[#CCFF00] text-black text-[9px] font-black uppercase tracking-widest py-1.5 px-3 rounded shadow-2xl opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 whitespace-nowrap pointer-events-none z-50">
+              {item.label}
+            </span>
+          </Link>
+        ))}
       </nav>
 
-      <div className="mt-auto">
-  <button onClick={handleLogout} className="p-3 rounded-lg hover:bg-[#2a2a2a]">
-    <LogOut className="w-6 h-6 text-[#d9ff00]" />
-  </button>
-</div>
+      {/* Logout Area */}
+      <div className="mt-auto w-full flex flex-col items-center pb-4">
+        <div className="w-8 h-[1px] bg-gray-900 mb-8"></div>
+        <button
+          onClick={handleLogout}
+          className="group relative flex justify-center w-full py-2"
+        >
+          <div className="p-3.5 rounded-2xl text-gray-700 hover:text-red-500 hover:bg-red-500/10 transition-all">
+            <LogOut size={22} />
+          </div>
+
+          <span className="absolute left-20 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-3 rounded shadow-2xl opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 whitespace-nowrap pointer-events-none z-50">
+            Terminate
+          </span>
+        </button>
+      </div>
     </div>
   )
 }
 
 export default Sidebar
-

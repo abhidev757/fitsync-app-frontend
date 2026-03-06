@@ -1,6 +1,16 @@
 // src/components/trainer/TrainerSidebar.tsx
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, MessageSquare, BookOpen, Clock, Wallet, User, LogOut, Video, Star } from 'lucide-react';
+import {
+  LayoutGrid,
+  MessageSquare,
+  BookOpen,
+  Clock,
+  Wallet,
+  User,
+  LogOut,
+  Video,
+  Star
+} from 'lucide-react';
 import { logoutTrainer } from '../../slices/trainerAuthSlice';
 import { LogoutTrainer } from '../../axios/trainerApi';
 import { AppDispatch } from '../../store';
@@ -10,64 +20,95 @@ const TrainerSidebar = () => {
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+
   const handleLogout = async () => {
     try {
-      await LogoutTrainer()
+      await LogoutTrainer();
       dispatch(logoutTrainer());
+      localStorage.removeItem('trainerId');
       navigate('/trainer/trainerSignin');
     } catch (err) {
       console.log(err);
     }
   };
-  
+
   const menuItems = [
-    { path: '/trainer/trainerDashboard', label: 'Home', icon: Home },
-    { path: '/trainer/trainerLiveSessions', label: 'Live Sessions', icon: Video },
-    { path: '/trainer/trainerChat', label: 'Chat', icon: MessageSquare },
-    { path: '/trainer/bookings', label: 'Bookings', icon: BookOpen },
-    { path: '/trainer/timeSlots', label: 'Current Schedules', icon: Clock },
-    { path: '/trainer/wallet', label: 'Wallet', icon: Wallet },
-    { path: '/trainer/trainerReviews', label: 'Reviews', icon: Star },
-    { path: '/trainer/trainerProfile', label: 'Account', icon: User },
+    { path: '/trainer/trainerDashboard', label: 'Command', icon: LayoutGrid },
+    { path: '/trainer/trainerLiveSessions', label: 'Live Link', icon: Video },
+    { path: '/trainer/trainerChat', label: 'Comms', icon: MessageSquare },
+    { path: '/trainer/bookings', label: 'Roster', icon: BookOpen },
+    { path: '/trainer/timeSlots', label: 'Schedule', icon: Clock },
+    { path: '/trainer/wallet', label: 'Assets', icon: Wallet },
+    { path: '/trainer/trainerReviews', label: 'Feedback', icon: Star },
+    { path: '/trainer/trainerProfile', label: 'Identity', icon: User },
   ];
 
+  const isActive = (path: string) => location.pathname === path;
+
   return (
-    <div className="w-64 bg-gray-800 text-white h-screen">
-      <div className="p-4">
-        <h1 className="text-2xl font-bold">
-          <span className="text-white">FIT</span>
-          <span className="text-gray-400">SYNC</span>
-        </h1>
+    <div className="w-24 bg-[#0B0B0B] min-h-screen flex flex-col items-center py-10 border-r border-gray-900 sticky top-0 left-0 z-50">
+
+      {/* Brand Identity */}
+      <div className="mb-16">
+        <Link to="/trainer/trainerDashboard" className="group relative">
+          <div className="absolute -inset-2 bg-[#CCFF00] rounded-full blur opacity-0 group-hover:opacity-10 transition-opacity"></div>
+          <div className="relative text-center leading-none">
+            <span className="block text-[10px] font-black tracking-[0.3em] text-white">TS</span>
+            <span className="block text-[10px] font-black tracking-[0.3em] text-[#CCFF00]">OPS</span>
+          </div>
+        </Link>
       </div>
-      
-      <div className="p-4">
-        <p className="text-xs text-gray-400 mb-2">Menu</p>
-        <nav className="space-y-1">
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            const Icon = item.icon;
-            
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center px-4 py-3 rounded-md transition-colors ${
-                  isActive 
-                    ? 'bg-black text-white' 
-                    : 'text-gray-300 hover:bg-gray-700'
-                }`}
-              >
-                <Icon className="h-5 w-5 mr-3" />
+
+      {/* Tactical Navigation */}
+      <nav className="flex-1 flex flex-col items-center space-y-6 w-full">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.path);
+
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className="relative w-full flex justify-center group py-2"
+            >
+              {/* Active Protocol Indicator */}
+              {active && (
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.8)] rounded-r-full animate-in slide-in-from-left-2 duration-300"></div>
+              )}
+
+              <div className={`p-3.5 rounded-2xl transition-all duration-300 ${active
+                  ? "bg-[#CCFF00]/10 text-[#CCFF00] shadow-[inset_0_0_15px_rgba(204,255,0,0.05)]"
+                  : "text-gray-600 hover:text-white hover:bg-white/5"
+                }`}>
+                <Icon size={22} />
+              </div>
+
+              {/* Tactical Tooltip */}
+              <span className="absolute left-20 bg-[#CCFF00] text-black text-[9px] font-black uppercase tracking-widest py-1.5 px-3 rounded shadow-2xl opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 whitespace-nowrap pointer-events-none z-50">
                 {item.label}
-              </Link>
-            );
-          })}
-          <button onClick={handleLogout} className="flex items-center px-4 py-3 rounded-md text-gray-300 hover:bg-gray-700 w-full text-left">
-            <LogOut className="h-5 w-5 mr-3" />
-            Logout
-          </button>
-        </nav>
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Termination Area */}
+      <div className="mt-auto w-full flex flex-col items-center pb-4">
+        <div className="w-8 h-[1px] bg-gray-900 mb-8"></div>
+        <button
+          onClick={handleLogout}
+          className="group relative flex justify-center w-full py-2"
+        >
+          <div className="p-3.5 rounded-2xl text-gray-700 hover:text-red-500 hover:bg-red-500/10 transition-all">
+            <LogOut size={22} />
+          </div>
+
+          <span className="absolute left-20 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest py-1.5 px-3 rounded shadow-2xl opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 whitespace-nowrap pointer-events-none z-50">
+            Terminate
+          </span>
+        </button>
       </div>
+
     </div>
   );
 };

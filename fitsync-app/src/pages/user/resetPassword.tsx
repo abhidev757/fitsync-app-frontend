@@ -7,6 +7,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { resetUserPassword } from "../../axios/userApi";
+import { ShieldCheck, Lock } from "lucide-react";
 
 const ResetPasswordPage: React.FC = () => {
   const [password, setPassword] = useState("");
@@ -31,39 +32,39 @@ const ResetPasswordPage: React.FC = () => {
     setConfirmPasswordError("");
 
     if (!password) {
-      setPasswordError("Please enter your password.");
+      setPasswordError("Required: Enter new credentials.");
       return;
     }
     if (!validatePassword(password)) {
       setPasswordError(
-        "Password must include at least 1 uppercase, 1 lowercase, 1 digit, 1 special character, and be at least 8 characters long."
+        "Criteria: 1 Uppercase, 1 Lowercase, 1 Digit, 1 Special Char, Min 8 Length."
       );
       return;
     }
     if (!confirmPassword) {
-      setConfirmPasswordError("Please confirm your password.");
+      setConfirmPasswordError("Required: Confirm new credentials.");
       return;
     }
     if (password !== confirmPassword) {
-      setConfirmPasswordError("Passwords do not match.");
+      setConfirmPasswordError("Mismatch: Passwords do not align.");
       return;
     }
     if (!token) {
-      toast.error("Invalid or missing token.");
+      toast.error("Auth Error: Invalid or missing token.");
       return;
     }
 
     try {
       setIsLoading(true);
-      await resetUserPassword({ password},token);
+      await resetUserPassword({ password }, token);
 
-      toast.success("Password reset successfully! Redirecting to sign in...");
+      toast.success("Security Updated: Redirecting to Sign In...");
       setTimeout(() => navigate("/signin"), 3000);
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setPasswordError(err.response?.data?.message || "Error resetting password.");
+        setPasswordError(err.response?.data?.message || "Protocol Error: Reset failed.");
       } else {
-        setPasswordError("An unexpected error occurred.");
+        setPasswordError("System Error: Unexpected disruption.");
       }
     } finally {
       setIsLoading(false);
@@ -71,43 +72,67 @@ const ResetPasswordPage: React.FC = () => {
   };
 
   return (
-    <AuthLayout title="Reset Password">
-      <p className="mt-2 text-center text-sm text-gray-300">
-        Please enter your new password below.
-      </p>
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        <div className="space-y-4">
-          <input
-            type="password"
-            placeholder="New Password"
-            required
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
-
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            required
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-          {confirmPasswordError && <p className="text-red-500 text-sm">{confirmPasswordError}</p>}
+    <AuthLayout title="Reset Credentials">
+      <div className="flex flex-col items-center mb-6">
+        <div className="bg-[#CCFF00]/10 p-3 rounded-2xl border border-[#CCFF00]/20 mb-4">
+            <Lock className="text-[#CCFF00]" size={24} />
         </div>
+        <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-gray-500">
+          Enter your new security protocol below.
+        </p>
+      </div>
+
+      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <div className="rounded-xl overflow-hidden border border-gray-800 bg-[#0D1117]">
+          <div className="border-b border-gray-800">
+            <input
+              type="password"
+              placeholder="New Password"
+              required
+              className="appearance-none relative block w-full px-4 py-4 bg-transparent placeholder-gray-600 text-white focus:outline-none focus:ring-1 focus:ring-[#CCFF00] focus:z-10 sm:text-sm italic"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <div>
+            <input
+              type="password"
+              placeholder="Confirm New Password"
+              required
+              className="appearance-none relative block w-full px-4 py-4 bg-transparent placeholder-gray-600 text-white focus:outline-none focus:ring-1 focus:ring-[#CCFF00] focus:z-10 sm:text-sm italic"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {(passwordError || confirmPasswordError) && (
+            <div className="bg-red-500/10 border-l-2 border-red-500 p-3 space-y-1">
+                {passwordError && <p className="text-red-500 text-[10px] font-black uppercase tracking-widest italic">{passwordError}</p>}
+                {confirmPasswordError && <p className="text-red-500 text-[10px] font-black uppercase tracking-widest italic">{confirmPasswordError}</p>}
+            </div>
+        )}
 
         <div>
           <button
             type="submit"
-            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+            className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-black rounded-xl text-black bg-[#CCFF00] hover:shadow-[0_0_20px_rgba(204,255,0,0.4)] transition-all focus:outline-none uppercase tracking-widest active:scale-95"
             disabled={isLoading}
           >
-            {isLoading ? "Resetting..." : "Reset Password"}
+            {isLoading ? (
+                <span className="flex items-center gap-2">
+                    <ShieldCheck size={18} className="animate-pulse" /> Re-calibrating...
+                </span>
+            ) : (
+                "Update Credentials"
+            )}
           </button>
         </div>
       </form>
+
+      <p className="text-center mt-8 text-gray-700 text-[9px] font-black uppercase tracking-[0.4em]">
+        Secure Socket Encryption Active
+      </p>
     </AuthLayout>
   );
 };

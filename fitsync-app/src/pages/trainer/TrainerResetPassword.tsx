@@ -4,11 +4,14 @@ import { toast } from "react-toastify";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { resetTrainerPassword } from "../../axios/trainerApi";
 import axios from "axios";
+import { Lock, ShieldCheck, ChevronLeft } from "lucide-react";
 
 export default function ResetPassword() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [passwordError, setPasswordError] = useState("");
     const [confirmPasswordError, setConfirmPasswordError] = useState("");
   
@@ -28,39 +31,39 @@ export default function ResetPassword() {
       setConfirmPasswordError("");
   
       if (!password) {
-        setPasswordError("Please enter your password.");
+        setPasswordError("Required: Enter new credentials.");
         return;
       }
       if (!validatePassword(password)) {
         setPasswordError(
-          "Password must include at least 1 uppercase, 1 lowercase, 1 digit, 1 special character, and be at least 8 characters long."
+          "Criteria: 1 Uppercase, 1 Lowercase, 1 Digit, 1 Special Char, Min 8 Length."
         );
         return;
       }
       if (!confirmPassword) {
-        setConfirmPasswordError("Please confirm your password.");
+        setConfirmPasswordError("Required: Confirm new credentials.");
         return;
       }
       if (password !== confirmPassword) {
-        setConfirmPasswordError("Passwords do not match.");
+        setConfirmPasswordError("Mismatch: Passwords do not align.");
         return;
       }
       if (!token) {
-        toast.error("Invalid or missing token.");
+        toast.error("Auth Error: Invalid or missing token.");
         return;
       }
   
       try {
         setIsLoading(true);
-        await resetTrainerPassword({ password},token);
+        await resetTrainerPassword({ password }, token);
   
-        toast.success("Password reset successfully! Redirecting to sign in...");
+        toast.success("Security Updated: Redirecting to Sign In...");
         setTimeout(() => navigate("/trainerSignin"), 3000);
       } catch (err) {
         if (axios.isAxiosError(err)) {
-          setPasswordError(err.response?.data?.message || "Error resetting password.");
+          setPasswordError(err.response?.data?.message || "Protocol Error: Reset failed.");
         } else {
-          setPasswordError("An unexpected error occurred.");
+          setPasswordError("System Error: Unexpected disruption.");
         }
       } finally {
         setIsLoading(false);
@@ -69,83 +72,115 @@ export default function ResetPassword() {
   
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="p-6">
-        <span className="text-gray-400">Reset Password</span>
+    <div className="min-h-screen bg-black text-white font-sans flex flex-col overflow-hidden">
+      {/* Top Protocol Bar */}
+      <div className="p-6 border-b border-gray-900 bg-black/40 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+            <div className="flex flex-col">
+                <span className="text-[#CCFF00] font-black text-[10px] tracking-[0.4em] uppercase mb-0.5">Security Override</span>
+                <h1 className="text-xl font-black italic uppercase tracking-tighter">
+                FIT<span className="text-[#CCFF00]">SYNC</span> OPS
+                </h1>
+            </div>
+            <button onClick={() => navigate("/trainerSignin")} className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition-all">
+              <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Sign In
+            </button>
+        </div>
       </div>
 
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
-        <div className="w-full max-w-md px-6">
-          <div className="mb-6">
-            <h1 className="text-xl font-bold flex items-center">
-              <span className="text-white font-bold mr-1">FIT</span>
-              <span className="text-gray-400">SYNC</span>
-            </h1>
+      <div className="flex-1 flex items-center justify-center p-6 relative">
+        {/* Background Ambient Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#CCFF00] opacity-5 blur-[120px] pointer-events-none"></div>
+
+        <div className="w-full max-w-md bg-[#0B0B0B] border border-gray-900 rounded-[2.5rem] p-10 md:p-12 shadow-2xl relative z-10 text-center">
+          
+          <div className="flex justify-center mb-8">
+            <div className="relative">
+              <div className="absolute -inset-4 bg-[#CCFF00] rounded-full blur-2xl opacity-10 animate-pulse"></div>
+              <div className="relative bg-black border border-gray-800 p-4 rounded-2xl shadow-xl">
+                <Lock size={32} className="text-[#CCFF00]" />
+              </div>
+            </div>
           </div>
 
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-2">Reset Password</h2>
-            <p className="text-gray-400">
-              Enter your new password below to reset your account.
+          <div className="mb-10">
+            <h2 className="text-3xl font-black tracking-tighter uppercase italic mb-3">Reset Credentials</h2>
+            <p className="text-gray-500 text-xs font-medium leading-relaxed italic max-w-[280px] mx-auto">
+              Define your new security protocol below to restore expert access.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label htmlFor="newPassword" className="block text-sm font-medium">
-                New Password
-              </label>
-              <div className="relative">
+          <form onSubmit={handleSubmit} className="space-y-6 text-left">
+            {/* Identity Container */}
+            <div className="rounded-2xl overflow-hidden border border-gray-800 bg-black transition-all focus-within:border-[#CCFF00]/50">
+              <div className="relative flex items-center border-b border-gray-900">
+                <div className="pl-4 text-gray-700">
+                  <Lock size={18} />
+                </div>
                 <input
-                  type= 'password'
-                  id="newPassword"
-                  placeholder="Enter new password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="New Secret Key"
+                  required
+                  className="appearance-none relative block w-full px-4 py-5 bg-transparent placeholder-gray-800 text-white focus:outline-none sm:text-sm italic font-medium"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-3 rounded bg-gray-800/50 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
-                  required
                 />
                 <button
                   type="button"
-                  
-                  className="absolute inset-y-0 right-3 flex items-center text-gray-400"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="pr-4 text-gray-700 hover:text-white transition-colors"
                 >
-                  { <FiEyeOff size={20} /> }
+                  {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+                </button>
+              </div>
+
+              <div className="relative flex items-center">
+                <div className="pl-4 text-gray-700">
+                  <ShieldCheck size={18} />
+                </div>
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Verify Secret Key"
+                  required
+                  className="appearance-none relative block w-full px-4 py-5 bg-transparent placeholder-gray-800 text-white focus:outline-none sm:text-sm italic font-medium"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="pr-4 text-gray-700 hover:text-white transition-colors"
+                >
+                  {showConfirmPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
                 </button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="block text-sm font-medium">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  placeholder="Confirm new password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full p-3 rounded bg-gray-800/50 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
-                  required
-                />
-                <button
-                  type="button"
-                 
-                  className="absolute inset-y-0 right-3 flex items-center text-gray-400"
-                >
-                  {<FiEyeOff size={20} />}
-                </button>
-              </div>
-            </div>
+            {(passwordError || confirmPasswordError) && (
+                <div className="bg-red-500/10 border-l-2 border-red-500 p-3 space-y-1">
+                    {passwordError && <p className="text-red-500 text-[10px] font-black uppercase tracking-widest italic">{passwordError}</p>}
+                    {confirmPasswordError && <p className="text-red-500 text-[10px] font-black uppercase tracking-widest italic">{confirmPasswordError}</p>}
+                </div>
+            )}
 
             <button
               type="submit"
-              className="w-full bg-gray-400 text-black font-medium py-3 px-4 rounded hover:bg-gray-300 transition duration-200"
+              disabled={isLoading}
+              className="w-full bg-[#CCFF00] text-black font-black py-5 px-4 rounded-2xl uppercase text-xs tracking-[0.3em] hover:shadow-[0_0_30px_rgba(204,255,0,0.4)] transition-all active:scale-[0.98] disabled:opacity-50"
             >
-              Reset Password
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                    <ShieldCheck size={18} className="animate-pulse" /> Re-calibrating...
+                </span>
+              ) : (
+                "Update Credentials"
+              )}
             </button>
           </form>
+
+          <p className="mt-12 text-[9px] font-black text-gray-700 uppercase tracking-[0.4em] leading-relaxed">
+            SECURE CHANNEL ENCRYPTED // FITSYNC OPS
+          </p>
         </div>
       </div>
     </div>

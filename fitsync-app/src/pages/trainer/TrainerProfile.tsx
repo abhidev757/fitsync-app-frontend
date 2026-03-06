@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera } from "lucide-react";
+import { Camera, User, Mail, Phone, Award, Activity, Save, ShieldCheck } from "lucide-react";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -44,7 +44,6 @@ const TrainerProfile = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form state — only committed when Save is clicked
   const [formData, setFormData] = useState({
     name: "",
     yearsOfExperience: 0,
@@ -54,20 +53,14 @@ const TrainerProfile = () => {
     email: "",
   });
 
-  // Displayed avatar URL (shows local preview while pending)
   const [avatarUrl, setAvatarUrl] = useState("");
-  // Pending file to upload on Save
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
-
   const [specializations, setSpecializations] = useState<Specialization[]>([]);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
-
-  // Performance chart data
   const [perfLabels, setPerfLabels] = useState<string[]>([]);
   const [perfData, setPerfData] = useState<number[]>([]);
 
-  // ── Fetch profile on mount ─────────────────────────────────────────────────
   useEffect(() => {
     if (!trainerId) return;
 
@@ -97,17 +90,14 @@ const TrainerProfile = () => {
           setPerfData(perf.data);
         }
       } catch (err) {
-        console.error("Failed to load profile data:", err);
+        console.error("Protocol Error: Profile sync failed.", err);
       }
     };
 
     load();
   }, [trainerId]);
 
-  // ── Field change handler (text/select fields only) ─────────────────────────
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -115,15 +105,13 @@ const TrainerProfile = () => {
     }));
   };
 
-  // ── Image pick — local preview only, no upload yet ────────────────────────
   const handleImagePick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setPendingImageFile(file);
-    setAvatarUrl(URL.createObjectURL(file)); // instant local preview
+    setAvatarUrl(URL.createObjectURL(file));
   };
 
-  // ── Save Changes — upload image + persist form data ────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!trainerId) return;
@@ -131,14 +119,12 @@ const TrainerProfile = () => {
     setSaveMsg("");
 
     try {
-      // 1. Upload image if a new one was picked
       if (pendingImageFile) {
         const { fileUrl } = await uploadAndSaveProfileImage(pendingImageFile);
         setAvatarUrl(fileUrl);
         setPendingImageFile(null);
       }
 
-      // 2. Save text/select fields (exclude email — not editable)
       await updateTrainerProfile(
         {
           userData: {
@@ -153,27 +139,27 @@ const TrainerProfile = () => {
         trainerId
       );
 
-      setSaveMsg("Profile saved successfully!");
+      setSaveMsg("Identity Synchronized Successfully.");
     } catch (err) {
-      console.error("Failed to save profile:", err);
-      setSaveMsg("Failed to save. Please try again.");
+      setSaveMsg("Link Failure: Retry authorization.");
     } finally {
       setSaving(false);
     }
   };
 
-  // ── Performance chart config ───────────────────────────────────────────────
   const performanceData = {
     labels: perfLabels.length ? perfLabels : ["—"],
     datasets: [
       {
-        label: "Completed Sessions",
+        label: "Sessions",
         data: perfData.length ? perfData : [0],
-        borderColor: "rgb(217, 255, 0)",
-        backgroundColor: "rgba(217, 255, 0, 0.1)",
-        tension: 0.4,
-        pointRadius: 3,
-        pointBackgroundColor: "rgb(217, 255, 0)",
+        borderColor: "#CCFF00",
+        backgroundColor: "rgba(204, 255, 0, 0.05)",
+        tension: 0.5,
+        fill: true,
+        pointRadius: 4,
+        pointBackgroundColor: "#CCFF00",
+        borderWidth: 2,
       },
     ],
   };
@@ -184,188 +170,175 @@ const TrainerProfile = () => {
     scales: {
       y: {
         beginAtZero: true,
-        ticks: { color: "rgba(255,255,255,0.5)", stepSize: 1 },
-        grid: { color: "rgba(255,255,255,0.1)" },
+        ticks: { color: "#4b5563", font: { size: 10, weight: 'bold' as const } },
+        grid: { color: "rgba(255,255,255,0.05)" },
       },
       x: {
-        ticks: { color: "rgba(255,255,255,0.5)" },
+        ticks: { color: "#4b5563", font: { size: 10, weight: 'bold' as const } },
         grid: { display: false },
       },
     },
     plugins: {
       legend: { display: false },
       tooltip: {
-        callbacks: {
-          label: (ctx: any) => ` ${ctx.parsed.y} session${ctx.parsed.y !== 1 ? "s" : ""}`,
-        },
+        backgroundColor: '#0B0B0B',
+        borderColor: '#1f2937',
+        borderWidth: 1,
+        titleFont: { size: 10, family: 'Inter' },
+        bodyFont: { size: 12, family: 'Inter', weight: 'bold' as const },
+        displayColors: false,
       },
     },
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-white mb-6">Account</h1>
+    <div className="space-y-10 animate-in fade-in duration-500 pb-20">
+      <header>
+        <p className="text-[#CCFF00] font-black text-xs tracking-[0.4em] uppercase mb-1">Personnel Record</p>
+        <h1 className="text-4xl font-black tracking-tighter uppercase italic text-white leading-none">Identity Manager</h1>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left column: Profile Card + Performance Chart */}
-        <div className="space-y-6">
-          {/* Profile Card */}
-          <div className="bg-gray-800 rounded-lg p-6 text-center">
-            <div className="relative inline-block">
-              <img
-                src={avatarUrl || "https://via.placeholder.com/96"}
-                alt="Trainer Profile"
-                className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
-              />
-              {/* Hidden file input */}
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept="image/*"
-                className="hidden"
-                onChange={handleImagePick}
-              />
-              {/* Camera button triggers file picker */}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-3 right-0 bg-blue-500 hover:bg-blue-600 p-1.5 rounded-full transition-colors"
-                title="Change profile photo"
-              >
-                <Camera className="h-3.5 w-3.5 text-white" />
-              </button>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        {/* Left Column: Biometric ID & Performance */}
+        <div className="lg:col-span-4 space-y-8">
+          {/* Biometric identity Card */}
+          <div className="bg-[#0B0B0B] border border-gray-900 rounded-[2.5rem] p-10 text-center relative overflow-hidden group shadow-2xl">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-[#CCFF00] opacity-20"></div>
+            <div className="relative inline-block mb-8">
+              <div className="absolute -inset-4 bg-[#CCFF00] rounded-full blur-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-700"></div>
+              <div className="relative">
+                <img
+                    src={avatarUrl || "https://via.placeholder.com/96"}
+                    alt="Identity"
+                    className="w-32 h-32 rounded-[2rem] mx-auto object-cover grayscale group-hover:grayscale-0 transition-all duration-500 border-2 border-gray-800 group-hover:border-[#CCFF00]"
+                />
+                <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute -bottom-2 -right-2 bg-[#CCFF00] text-black p-3 rounded-2xl hover:scale-110 transition-all shadow-xl"
+                >
+                    <Camera size={18} />
+                </button>
+              </div>
             </div>
-            <h2 className="text-xl font-semibold text-white">{formData.name || "Trainer"}</h2>
-            <p className="text-gray-400 text-sm">{formData.email}</p>
+            <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white leading-none mb-2">{formData.name || "Subject Alpha"}</h2>
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">{formData.email}</p>
+            
             {pendingImageFile && (
-              <p className="text-xs text-yellow-400 mt-1">New photo selected — click Save Changes to apply</p>
+              <div className="mt-6 inline-flex items-center gap-2 bg-[#CCFF00]/10 border border-[#CCFF00]/20 px-4 py-2 rounded-xl">
+                 <Activity size={12} className="text-[#CCFF00] animate-pulse" />
+                 <span className="text-[9px] font-black text-[#CCFF00] uppercase tracking-widest">Image Calibration Pending</span>
+              </div>
             )}
+            
+            <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handleImagePick} />
           </div>
 
-          {/* Performance Chart */}
-          <div className="bg-gray-800 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-white mb-1">Performance</h3>
-            <p className="text-xs text-gray-400 mb-4">Completed sessions · last 6 months</p>
-            <div className="h-48">
+          {/* Performance Telemetry */}
+          <div className="bg-[#0B0B0B] border border-gray-900 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h3 className="text-lg font-black italic uppercase tracking-tighter text-white">Performance</h3>
+                    <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Efficiency Telemetry</p>
+                </div>
+                <Activity className="text-[#CCFF00]/20" size={24} />
+            </div>
+            <div className="h-56 relative z-10">
               <Line data={performanceData} options={chartOptions} />
             </div>
           </div>
         </div>
 
-        {/* Right column: Account Settings Form */}
-        <div className="lg:col-span-2">
-          <div className="bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-white mb-6">Account Settings</h2>
-            <form className="space-y-6" onSubmit={handleSubmit}>
+        {/* Right Column: Tactical Settings */}
+        <div className="lg:col-span-8">
+          <div className="bg-[#0B0B0B] border border-gray-900 rounded-[2.5rem] p-10 shadow-2xl relative">
+            <div className="flex items-center gap-3 mb-10 border-b border-gray-900 pb-6">
+                <ShieldCheck className="text-[#CCFF00]" size={20} />
+                <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-gray-500">Service Configuration</h3>
+            </div>
 
-              {/* Full Name + Years of Experience */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                  />
+            <form className="space-y-8" onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Personnel Full Name</label>
+                  <div className="flex items-center bg-black border border-gray-800 rounded-2xl p-4 focus-within:border-[#CCFF00] transition-all">
+                    <User size={18} className="text-gray-700 mr-4" />
+                    <input type="text" name="name" value={formData.name} onChange={handleChange} className="bg-transparent w-full text-white font-bold italic focus:outline-none uppercase tracking-tight" />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Years of Experience
-                  </label>
-                  <input
-                    type="number"
-                    name="yearsOfExperience"
-                    value={formData.yearsOfExperience}
-                    onChange={handleChange}
-                    min={0}
-                    className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                  />
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Registry Email (Locked)</label>
+                  <div className="flex items-center bg-black border border-gray-800 rounded-2xl p-4 opacity-50 cursor-not-allowed">
+                    <Mail size={18} className="text-gray-700 mr-4" />
+                    <input type="email" value={formData.email} readOnly className="bg-transparent w-full text-gray-600 font-bold italic focus:outline-none" />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Experience Calibration (Years)</label>
+                  <div className="flex items-center bg-black border border-gray-800 rounded-2xl p-4 focus-within:border-[#CCFF00] transition-all">
+                    <Award size={18} className="text-gray-700 mr-4" />
+                    <input type="number" name="yearsOfExperience" value={formData.yearsOfExperience} onChange={handleChange} min={0} className="bg-transparent w-full text-white font-bold italic focus:outline-none" />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Deployment Specialization</label>
+                  <div className="flex items-center bg-black border border-gray-800 rounded-2xl p-4 focus-within:border-[#CCFF00] transition-all">
+                    <Activity size={18} className="text-gray-700 mr-4" />
+                    <select name="specialization" value={formData.specialization} onChange={handleChange} className="bg-transparent w-full text-white font-black uppercase text-[10px] tracking-widest focus:outline-none">
+                      <option value="" className="bg-[#0B0B0B]">Unassigned</option>
+                      {specializations.map((s) => (
+                        <option key={s._id} value={s.name} className="bg-[#0B0B0B]">{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Secure Signal (Phone)</label>
+                  <div className="flex items-center bg-black border border-gray-800 rounded-2xl p-4 focus-within:border-[#CCFF00] transition-all">
+                    <Phone size={18} className="text-gray-700 mr-4" />
+                    <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="bg-transparent w-full text-white font-bold italic focus:outline-none" />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Biological Marker (Sex)</label>
+                  <div className="flex bg-black border border-gray-800 rounded-2xl p-1">
+                      {["Male", "Female"].map((s) => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, sex: s as any }))}
+                            className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.sex === s ? "bg-[#CCFF00] text-black" : "text-gray-700 hover:text-white"}`}
+                          >
+                            {s}
+                          </button>
+                      ))}
+                  </div>
                 </div>
               </div>
 
-              {/* Sex + Specialization */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Sex
-                  </label>
-                  <select
-                    name="sex"
-                    value={formData.sex || ""}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="">Select Sex</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
+              <div className="pt-10 border-t border-gray-900 flex flex-col sm:flex-row justify-between items-center gap-6">
+                <div className="flex items-center gap-3">
+                    {saveMsg && (
+                        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl ${saveMsg.includes("Success") ? "bg-[#CCFF00]/10 border border-[#CCFF00]/20 text-[#CCFF00]" : "bg-red-500/10 border border-red-500/20 text-red-500"}`}>
+                            <ShieldCheck size={14} />
+                            <span className="text-[10px] font-black uppercase tracking-widest italic">{saveMsg}</span>
+                        </div>
+                    )}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Specialization
-                  </label>
-                  <select
-                    name="specialization"
-                    value={formData.specialization}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="">Select Specialization</option>
-                    {specializations.map((s) => (
-                      <option key={s._id} value={s.name}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Email (read-only) + Phone */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    E-mail <span className="text-xs text-gray-500">(not editable)</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    readOnly
-                    className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-500 cursor-not-allowed opacity-60"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              {/* Save feedback */}
-              {saveMsg && (
-                <p className={`text-sm ${saveMsg.includes("success") ? "text-green-400" : "text-red-400"}`}>
-                  {saveMsg}
-                </p>
-              )}
-
-              {/* Save Button */}
-              <div className="flex justify-end">
+                
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full sm:w-auto px-10 py-5 bg-[#CCFF00] text-black font-black uppercase text-xs tracking-[0.3em] rounded-2xl hover:shadow-[0_0_30px_rgba(204,255,0,0.4)] transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
                 >
-                  {saving ? "Saving…" : "Save Changes"}
+                  {saving ? <Activity className="animate-spin" size={18} /> : <Save size={18} />}
+                  Synchronize Identity
                 </button>
               </div>
             </form>

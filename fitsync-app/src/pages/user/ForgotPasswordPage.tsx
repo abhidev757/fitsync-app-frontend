@@ -7,21 +7,19 @@ import { Link, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { forgotPasswordRequesting } from "../../axios/userApi";
+import { KeyRound, Mail } from "lucide-react";
 
 const ForgotPasswordPage: React.FC = () => {
   const location = useLocation();
   const [email, setEmail] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isChangePassword, setIsChangePassword] = useState<boolean>(false);
 
   useEffect(() => {
     if (location.state) {
-      const { email, isChangePassword } = location.state as {
+      const { email } = location.state as {
         email: string;
-        isChangePassword: boolean;
       };
       setEmail(email || "");
-      setIsChangePassword(isChangePassword || false);
     }
   }, [location.state]);
 
@@ -31,13 +29,12 @@ const ForgotPasswordPage: React.FC = () => {
 
     try {
       await forgotPasswordRequesting({ email });
-
-      toast.success("Password reset link sent to your email");
+      toast.success("Protocol Initiated: Check your email for the reset link");
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Failed to send reset link");
+        toast.error(err.response?.data?.message || "Transmission failed");
       } else {
-        toast.error("An unexpected error occurred");
+        toast.error("An unexpected system error occurred");
       }
     } finally {
       setIsLoading(false);
@@ -45,21 +42,30 @@ const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
-    <AuthLayout title="Forgot Password">
-      <p className="mt-2 text-center text-sm text-gray-300">
-        We can assign tasks, set deadlines, and track progress effortlessly.
-      </p>
+    <AuthLayout title="Recover Access">
+      <div className="flex flex-col items-center mb-6">
+        <div className="bg-[#CCFF00]/10 p-3 rounded-2xl border border-[#CCFF00]/20 mb-4">
+          <KeyRound className="text-[#CCFF00]" size={24} />
+        </div>
+        <p className="mt-2 text-center text-xs font-bold uppercase tracking-[0.2em] text-gray-500 max-w-[280px]">
+          Enter your registered email to receive recovery credentials.
+        </p>
+      </div>
+
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        <div className="rounded-md shadow-sm -space-y-px">
-          <div>
+        <div className="rounded-xl overflow-hidden border border-gray-800 bg-[#0D1117] transition-all focus-within:border-[#CCFF00]/50">
+          <div className="relative flex items-center">
+            <div className="pl-4 text-gray-600">
+              <Mail size={18} />
+            </div>
             <input
               id="email-address"
               name="email"
               type="email"
               autoComplete="email"
               required
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 focus:z-10 sm:text-sm"
-              placeholder="Email address"
+              className="appearance-none relative block w-full px-4 py-4 bg-transparent placeholder-gray-600 text-white focus:outline-none sm:text-sm italic"
+              placeholder="Enter your email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -69,19 +75,24 @@ const ForgotPasswordPage: React.FC = () => {
         <div>
           <button
             type="submit"
-            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+            className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-black rounded-xl text-black bg-[#CCFF00] hover:shadow-[0_0_25px_rgba(204,255,0,0.4)] transition-all focus:outline-none uppercase tracking-widest active:scale-[0.98]"
             disabled={isLoading}
           >
-            {isLoading ? "Sending..." : "Send E-mail"}
+            {isLoading ? "Transmitting..." : "Send Recovery Link"}
           </button>
         </div>
       </form>
 
-      <div className="mt-6 text-center">
-        <Link to="/signin" className="text-sm text-yellow-400 hover:text-yellow-500">
-          Remember your password? Sign in
+      <div className="mt-8 text-center">
+        <Link to="/signin" className="text-xs font-bold text-gray-500 hover:text-[#CCFF00] uppercase tracking-widest transition-all inline-flex items-center gap-2">
+          <span className="opacity-50">Remember credentials?</span>
+          <span className="text-white underline decoration-[#CCFF00] decoration-2 underline-offset-4">Sign in</span>
         </Link>
       </div>
+
+      <p className="mt-10 text-center text-[9px] font-black text-gray-700 uppercase tracking-[0.4em]">
+        FitSync Authentication Module // v2.0
+      </p>
     </AuthLayout>
   );
 };

@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { Play, Square, Video } from 'lucide-react';
+import { Play, Square, Video, Calendar, Clock, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
 import { getTrainerBookings, startVideoSession, completeSession } from '../../axios/trainerApi';
 
 interface Booking {
   _id: string;
-  meetingId: string;       // Added
-  meetingStatus: 'waiting' | 'live' | 'ended'; // Added
+  meetingId: string;
+  meetingStatus: 'waiting' | 'live' | 'ended';
   userId: {
     _id: string;
     name: string;
@@ -24,7 +24,7 @@ export default function TrainerLiveSessions() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const [confirmingEnd, setConfirmingEnd] = useState<string | null>(null); // bookingId being ended
+  const [confirmingEnd, setConfirmingEnd] = useState<string | null>(null);
 
   useEffect(() => {
     fetchLiveBookings();
@@ -35,45 +35,38 @@ export default function TrainerLiveSessions() {
       const trainerId = localStorage.getItem('trainerId');
       if (!trainerId) return;
       const data = await getTrainerBookings(trainerId);
-      console.log("Booking Data:",data);
-      
       const activeSessions = data.filter((b: Booking) => b.status === 'confirmed' && b.meetingStatus !== 'ended');
       setBookings(activeSessions);
     } catch (err) {
-        console.log('error fetching data',err); 
-        toast.error("Failed to load sessions");
+        toast.error("Failed to sync deployment schedule");
     } finally {
       setLoading(false);
     }
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   const handleStartCall = async (meetingId: string) => {
     try {
-      // 1. Call the backend API we created (POST /api/video/start)
       await startVideoSession(meetingId); 
-      
-      toast.success("Session started! Redirecting to call...");
-      
+      toast.success("Link Established. Initializing Video Stream...");
       const storedInfo = localStorage.getItem('trainerInfo');
       const trainerInfo = storedInfo ? JSON.parse(storedInfo) : null;
-      
-      // 2. Navigate to the video call page
       navigate(`/video-call/${meetingId}`, { state: { role: 'trainer', name: trainerInfo?.name } });
     } catch (err) {
-        console.log('error starting session',err);
-      toast.error("Could not start session. Ensure you are authorized.");
+      toast.error("Stream initialization failed. Check permissions.");
     }
   };
 
   const handleEndSession = async (bookingId: string) => {
     try {
       await completeSession(bookingId);
-      toast.success("Session ended and marked as completed.");
-      // Remove it from the list
+      toast.success("Protocol Terminated: Session marked complete.");
       setBookings(prev => prev.filter(b => b._id !== bookingId));
     } catch (err) {
-      console.log('error ending session', err);
-      toast.error("Could not end session. Please try again.");
+      toast.error("Termination failed. System retry required.");
     } finally {
       setConfirmingEnd(null);
     }
@@ -84,95 +77,108 @@ export default function TrainerLiveSessions() {
   const currentBookings = bookings.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(bookings.length / itemsPerPage);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  if (loading) return <div className="p-6 text-white">Loading live sessions...</div>;
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-gray-500">
+        <Activity className="animate-pulse mb-4 text-[#CCFF00]" />
+        <p className="text-[10px] font-black uppercase tracking-[0.4em]">Syncing Live Grid...</p>
+    </div>
+  );
 
   return (
-    <div className="flex-1 p-6 text-white bg-black min-h-screen">
+    <div className="flex-1 p-8 bg-[#0B0B0B] min-h-screen text-white font-sans">
       <div className="max-w-6xl mx-auto">
-        <header className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-[#d9ff00]">Live Training Sessions</h1>
-            <p className="text-gray-400">Start and manage your scheduled video calls</p>
-          </div>
+        <header className="mb-12">
+          <p className="text-[#CCFF00] font-black text-xs tracking-[0.3em] uppercase mb-2">Live Grid Operations</p>
+          <h1 className="text-4xl font-black tracking-tighter uppercase italic">Deployment Schedule</h1>
         </header>
 
-        <div className="grid grid-cols-1 gap-6">
+        <div className="space-y-6">
           {currentBookings.length > 0 ? (
             currentBookings.map((session) => (
-              <div key={session._id} className="bg-gray-900 border border-gray-800 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between hover:border-[#d9ff00] transition-colors">
-                <div className="flex items-center space-x-6">
-                  <div className="bg-gray-800 p-4 rounded-full">
-                    <Video className="text-[#d9ff00]" size={32} />
+              <div 
+                key={session._id} 
+                className={`bg-black border p-6 rounded-[2.5rem] flex flex-col lg:flex-row items-center justify-between transition-all duration-300 gap-6 ${
+                    session.meetingStatus === 'live' ? 'border-[#CCFF00] shadow-[0_0_30px_rgba(204,255,0,0.1)]' : 'border-gray-900'
+                }`}
+              >
+                {/* LEFT: ICON AND USER DATA */}
+                <div className="flex items-center gap-6 flex-1 min-w-0 w-full">
+                  <div className={`p-5 rounded-3xl shrink-0 ${session.meetingStatus === 'live' ? 'bg-[#CCFF00]/10' : 'bg-[#0B0B0B] border border-gray-900'}`}>
+                    <Video className={session.meetingStatus === 'live' ? 'text-[#CCFF00]' : 'text-gray-700'} size={28} />
                   </div>
-                  <div>
-                    <h3 className="text-xl font-semibold">{session.userId.name}</h3>
-                    <div className="flex space-x-4 text-sm text-gray-400 mt-1">
-                      <span>Date: {new Date(session.startDate).toLocaleDateString()}</span>
-                      <span>Time: {session.sessionTime}</span>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-4 mb-2">
+                        <h3 className="text-xl font-black italic uppercase tracking-tight truncate">{session.userId.name}</h3>
+                        {session.meetingStatus === 'live' && (
+                            <span className="px-2 py-0.5 bg-red-600 text-[8px] font-black uppercase rounded tracking-widest animate-pulse">Live Signal</span>
+                        )}
                     </div>
-                    {session.meetingStatus === 'live' && (
-                      <span className="inline-block mt-2 px-2 py-0.5 bg-red-600 text-[10px] font-bold uppercase rounded animate-pulse">
-                        Live Now
-                      </span>
-                    )}
+                    
+                    <div className="flex flex-wrap gap-6">
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest">
+                            <Calendar size={12} className="text-[#CCFF00]" /> {new Date(session.startDate).toLocaleDateString()}
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest">
+                            <Clock size={12} className="text-[#CCFF00]" /> {session.sessionTime}
+                        </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-4 md:mt-0 flex space-x-3">
+                {/* RIGHT: ACTION BUTTONS */}
+                <div className="flex shrink-0 items-center gap-4 w-full lg:w-auto">
                   <button 
                     onClick={() => handleStartCall(session.meetingId)}
-                    className={`flex items-center space-x-2 px-6 py-3 rounded-full font-bold transition-all active:scale-95 ${
+                    className={`flex-1 lg:flex-none flex items-center justify-center gap-3 px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] transition-all active:scale-95 ${
                       session.meetingStatus === 'live' 
-                      ? 'bg-blue-600 hover:bg-blue-700' 
-                      : 'bg-[#d9ff00] text-black hover:bg-[#c8e600]'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-[0_0_20px_rgba(37,99,235,0.3)]' 
+                      : 'bg-[#CCFF00] text-black hover:shadow-[0_0_25px_rgba(204,255,0,0.4)]'
                     }`}
                   >
-                    <Play size={18} fill="currentColor" />
-                    <span>{session.meetingStatus === 'live' ? 'Re-join Call' : 'Start Session'}</span>
+                    <Play size={16} fill="currentColor" />
+                    {session.meetingStatus === 'live' ? 'Re-Sync Stream' : 'Initialize Session'}
                   </button>
 
                   {session.meetingStatus === 'live' && (
                     <button
                       onClick={() => setConfirmingEnd(session._id)}
-                      className="flex items-center space-x-2 px-6 py-3 rounded-full font-bold bg-red-600 hover:bg-red-700 transition-all active:scale-95"
+                      className="p-5 rounded-2xl bg-[#0B0B0B] border border-gray-800 text-red-500 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all shadow-lg"
                     >
                       <Square size={18} fill="currentColor" />
-                      <span>End Session</span>
                     </button>
                   )}
                 </div>
               </div>
             ))
           ) : (
-            <div className="text-center py-20 bg-gray-900 rounded-xl border border-dashed border-gray-700">
-              <p className="text-gray-500">No sessions scheduled for today.</p>
+            <div className="text-center py-24 bg-[#0B0B0B] rounded-[2.5rem] border border-dashed border-gray-900">
+              <Activity size={40} className="mx-auto text-gray-800 mb-4" />
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-700">No active deployments found in grid.</p>
             </div>
           )}
         </div>
 
+        {/* PAGINATION */}
         {totalPages > 1 && (
-          <div className="flex justify-between items-center mt-8">
+          <div className="flex justify-center items-center gap-4 mt-16">
             <button 
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-4 py-2 bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed border border-gray-800"
+              className="p-3 bg-[#0B0B0B] border border-gray-900 rounded-xl text-gray-500 hover:text-[#CCFF00] disabled:opacity-20 transition-all"
             >
-              Previous
+              <ChevronLeft size={20} />
             </button>
             
-            <div className="flex space-x-2">
+            <div className="flex gap-2">
               {[...Array(totalPages)].map((_, index) => (
                 <button
                   key={index}
                   onClick={() => handlePageChange(index + 1)}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center text-[10px] font-black transition-all ${
                     currentPage === index + 1
-                      ? "bg-[#d9ff00] text-black font-bold"
-                      : "bg-gray-900 border border-gray-800 text-white hover:bg-gray-800"
+                      ? "bg-[#CCFF00] text-black"
+                      : "bg-[#0B0B0B] border border-gray-900 text-gray-500 hover:border-[#CCFF00]"
                   }`}
                 >
                   {index + 1}
@@ -183,38 +189,41 @@ export default function TrainerLiveSessions() {
             <button 
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed border border-gray-800"
+              className="p-3 bg-[#0B0B0B] border border-gray-900 rounded-xl text-gray-500 hover:text-[#CCFF00] disabled:opacity-20 transition-all"
             >
-              Next
+              <ChevronRight size={20} />
             </button>
           </div>
         )}
       </div>
 
-      {/* End Session Confirmation Modal */}
+      {/* TERMINATION MODAL */}
       {confirmingEnd && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-8 w-full max-w-md text-center">
-            <div className="bg-red-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Square size={28} fill="white" className="text-white" />
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-in fade-in">
+          <div className="bg-[#0B0B0B] border border-gray-900 rounded-[2.5rem] p-12 w-full max-w-md text-center shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-red-600 opacity-50"></div>
+            <div className="bg-red-500/10 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-red-500/20">
+              <Square size={32} fill="currentColor" className="text-red-600" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">End Session?</h2>
-            <p className="text-gray-400 mb-8">
-              This will permanently mark the session as <span className="text-white font-semibold">Completed</span> and remove it from your live sessions. This action cannot be undone.
+            <p className="text-red-500 font-black text-[10px] tracking-[0.4em] uppercase mb-2">Priority Override</p>
+            <h2 className="text-3xl font-black tracking-tighter uppercase italic text-white mb-4">End Deployment?</h2>
+            <p className="text-gray-500 text-xs italic mb-10 leading-relaxed px-4">
+              This action will permanently synchronize this session as <span className="text-white font-bold">COMPLETED</span>. 
+              The video uplink will be severed.
             </p>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setConfirmingEnd(null)}
-                className="flex-1 px-6 py-3 rounded-full font-bold bg-gray-700 hover:bg-gray-600 text-white transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleEndSession(confirmingEnd)}
-                className="flex-1 px-6 py-3 rounded-full font-bold bg-red-600 hover:bg-red-700 text-white transition-all"
-              >
-                End Session
-              </button>
+            <div className="flex flex-col gap-3">
+                <button
+                    onClick={() => handleEndSession(confirmingEnd)}
+                    className="w-full py-5 bg-red-600 text-white font-black uppercase text-xs tracking-[0.2em] rounded-2xl hover:bg-red-700 transition-all shadow-[0_0_20px_rgba(220,38,38,0.2)]"
+                >
+                    Authorize Termination
+                </button>
+                <button
+                    onClick={() => setConfirmingEnd(null)}
+                    className="w-full py-5 bg-transparent border border-gray-800 text-gray-500 font-black uppercase text-xs tracking-[0.2em] rounded-2xl hover:text-white hover:border-gray-600 transition-all"
+                >
+                    Abort Protocol
+                </button>
             </div>
           </div>
         </div>
