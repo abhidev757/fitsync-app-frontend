@@ -24,6 +24,7 @@ export interface IRegisterData {
     yearsOfExperience?: number;
     specialization?: string;
     specializations?: string[];
+    bio?: string;
   }
  }
 

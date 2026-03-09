@@ -13,6 +13,7 @@ interface TrainerDetails {
   specializations: string;
   yearsOfExperience: number;
   sex: string;
+  bio?: string;
   profileImage: string;
   certificateUrl: string;
   profileImageUrl: string;
@@ -101,6 +102,7 @@ const TrainerDetailsPage = () => {
               <InfoRow label="Specialization" value={trainerData.specializations} />
               <InfoRow label="Years of Experience" value={`${trainerData.yearsOfExperience} years`} />
               <InfoRow label="Sex" value={trainerData.sex || "N/A"} />
+              <InfoRow label="Biography" value={trainerData.bio || "No biography provided."} />
 
               {/* Overall Rating */}
               {avgRating && (

@@ -12,8 +12,8 @@ interface Trainer {
   name: string;
   specializations: string;
   profileImageUrl: string;
-  rating: number;
   description: string;
+  bio?: string;
   experience?: string[];
   timeSlots?: {
     time: string;
@@ -65,6 +65,10 @@ const TrainerDetails: React.FC = () => {
 
     fetchTrainerData();
   }, [id]);
+
+  const avgRating = trainerReviews && trainerReviews.length > 0
+    ? Number((trainerReviews.reduce((sum, r) => sum + r.rating, 0) / trainerReviews.length).toFixed(1))
+    : 0;
 
   const renderStars = (rating: number) => {
     return Array(5).fill(0).map((_, index) => (
@@ -145,8 +149,9 @@ const TrainerDetails: React.FC = () => {
                       {trainerData.specializations}
                     </span>
                     <div className="flex items-center gap-2 bg-gray-900/50 px-3 py-1 rounded-lg">
-                      {renderStars(trainerData.rating)}
-                      <span className="text-[10px] font-black text-gray-500 mt-0.5 italic">{trainerReviews?.length || 0} REVIEWS</span>
+                      {renderStars(avgRating)}
+                      <span className="text-[10px] font-black text-white mt-0.5">{avgRating > 0 ? avgRating : "NEW"}</span>
+                      <span className="text-[10px] font-black text-gray-500 mt-0.5 italic">({trainerReviews?.length || 0} REVIEWS)</span>
                     </div>
                   </div>
                 </div>
@@ -155,7 +160,7 @@ const TrainerDetails: React.FC = () => {
               <div className="mb-10">
                 <h3 className="text-xs font-black uppercase text-gray-600 tracking-[0.3em] mb-4">Professional Dossier</h3>
                 <p className="text-gray-400 text-lg leading-relaxed max-w-4xl italic border-l-2 border-[#CCFF00]/30 pl-6">
-                  "{trainerData.description}"
+                  "{trainerData.bio}"
                 </p>
               </div>
 
@@ -292,7 +297,7 @@ const TrainerDetails: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 
