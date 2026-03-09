@@ -2,11 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { fetchTrainer } from "../../axios/userApi";
+import { fetchTrainer, getTrainerReviews, createPaymentIntent, createBooking } from "../../axios/userApi";
 import { format, parseISO } from "date-fns";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import { createPaymentIntent, createBooking } from "../../axios/userApi";
 import { ShieldCheck, CreditCard, Receipt, User } from "lucide-react";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -54,19 +53,19 @@ const CheckoutForm: React.FC<{
     e.preventDefault();
     setProcessing(true);
     setError(null);
-  
+
     if (!stripe || !elements) return;
-  
+
     try {
       const userId = localStorage.getItem('userId');
       const userInfoString = localStorage.getItem('userInfo');
-  
+
       if (!userId || !userInfoString) {
         throw new Error("User not authenticated");
       }
-  
+
       const userInfo = JSON.parse(userInfoString);
-  
+
       const { clientSecret } = await createPaymentIntent({
         amount: total * 100,
         userId: userId,
@@ -75,31 +74,31 @@ const CheckoutForm: React.FC<{
         startDate: booking.startDate,
         isPackage: booking.isPackage
       });
-  
+
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: elements.getElement(CardElement)!,
           billing_details: {
-            name: userInfo.name, 
+            name: userInfo.name,
           },
         },
       });
-  
+
       if (stripeError) throw stripeError;
-  
+
       if (paymentIntent?.status === "succeeded") {
         await createBooking({
           user: userId,
           trainer: trainer._id,
-          clientName:userInfo.name,
-          clientEmail:userInfo.email,
+          clientName: userInfo.name,
+          clientEmail: userInfo.email,
           sessionTime: booking.time,
           startDate: booking.startDate,
           isPackage: booking.isPackage,
           paymentId: paymentIntent.id,
           amount: total
         });
-  
+
         onSuccess();
       }
     } catch (err: any) {
@@ -114,8 +113,8 @@ const CheckoutForm: React.FC<{
     <form onSubmit={handleSubmit} className="mt-8">
       <div className="bg-black border border-gray-900 rounded-2xl p-6 mb-8">
         <div className="flex items-center gap-2 mb-6 text-[#CCFF00]">
-            <CreditCard size={18} />
-            <h3 className="text-xs font-black uppercase tracking-widest">Secure Credit Card</h3>
+          <CreditCard size={18} />
+          <h3 className="text-xs font-black uppercase tracking-widest">Secure Credit Card</h3>
         </div>
         <div className="bg-[#0D1117] border border-gray-800 rounded-xl p-4 focus-within:border-[#CCFF00] transition-colors">
           <CardElement
@@ -142,13 +141,12 @@ const CheckoutForm: React.FC<{
 
       <div className="flex flex-col sm:flex-row justify-between items-center gap-6 border-t border-gray-900 pt-8">
         <div className="flex flex-col">
-            <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Authorized Amount</span>
-            <div className="text-3xl font-black text-white italic tracking-tighter">${total}.00</div>
+          <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Authorized Amount</span>
+          <div className="text-3xl font-black text-white italic tracking-tighter">${total}.00</div>
         </div>
         <button
-          className={`w-full sm:w-auto bg-[#CCFF00] text-black font-black py-4 px-12 rounded-xl uppercase text-xs tracking-widest hover:shadow-[0_0_20px_rgba(204,255,0,0.4)] transition-all ${
-            processing ? "opacity-50 cursor-not-allowed" : "active:scale-95"
-          }`}
+          className={`w-full sm:w-auto bg-[#CCFF00] text-black font-black py-4 px-12 rounded-xl uppercase text-xs tracking-widest hover:shadow-[0_0_20px_rgba(204,255,0,0.4)] transition-all ${processing ? "opacity-50 cursor-not-allowed" : "active:scale-95"
+            }`}
           type="submit"
           disabled={!stripe || processing}
         >
@@ -156,8 +154,8 @@ const CheckoutForm: React.FC<{
         </button>
       </div>
       <div className="mt-6 flex justify-center items-center gap-2 text-gray-600">
-          <ShieldCheck size={14} />
-          <span className="text-[10px] font-bold uppercase tracking-widest">Encrypted SSL Transaction</span>
+        <ShieldCheck size={14} />
+        <span className="text-[10px] font-bold uppercase tracking-widest">Encrypted SSL Transaction</span>
       </div>
     </form>
   );
@@ -169,9 +167,10 @@ const BookingCheckout: React.FC = () => {
   const location = useLocation();
   const state = location.state as BookingState | undefined;
   const { time, price, startDate, isPackage } = state || {};
-  
+
   const [trainerData, setTrainerData] = useState<Trainer | null>(null);
   const [loading, setLoading] = useState(true);
+  const [trainerRating, setTrainerRating] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchTrainerData = async () => {
@@ -179,6 +178,16 @@ const BookingCheckout: React.FC = () => {
         if (!id) return;
         const response = await fetchTrainer(id);
         setTrainerData(response);
+
+        try {
+          const reviews = await getTrainerReviews(id);
+          if (reviews && reviews.length > 0) {
+            const avgRating = reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length;
+            setTrainerRating(avgRating);
+          }
+        } catch (reviewErr) {
+          console.error("Error fetching reviews:", reviewErr);
+        }
       } catch (error) {
         console.error("Error fetching trainer data:", error);
       } finally {
@@ -246,19 +255,19 @@ const BookingCheckout: React.FC = () => {
           {/* Trainer Summary Card */}
           <div className="flex flex-col md:flex-row items-center gap-8 mb-12 pb-12 border-b border-gray-900">
             <div className="relative">
-                <div className="absolute -inset-1 bg-[#CCFF00] rounded-full blur opacity-10"></div>
-                <img
-                  src={trainerData.profileImageUrl || "/placeholder.svg"}
-                  alt={trainerData.name}
-                  className="relative w-28 h-28 rounded-full object-cover grayscale brightness-75 border-2 border-gray-800"
-                />
+              <div className="absolute -inset-1 bg-[#CCFF00] rounded-full blur opacity-10"></div>
+              <img
+                src={trainerData.profileImageUrl || "/placeholder.svg"}
+                alt={trainerData.name}
+                className="relative w-28 h-28 rounded-full object-cover grayscale brightness-75 border-2 border-gray-800"
+              />
             </div>
             <div className="text-center md:text-left">
               <h2 className="text-3xl font-black italic uppercase tracking-tighter text-[#CCFF00] mb-1">{trainerData.name}</h2>
               <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em]">{trainerData.specializations}</p>
               <div className="flex items-center justify-center md:justify-start mt-3 gap-1">
                 <span className="text-[#CCFF00] text-xs">★</span>
-                <span className="text-xs font-black italic">{trainerData.rating?.toFixed(1) || "N/A"}</span>
+                <span className="text-xs font-black italic">{trainerRating !== null ? trainerRating.toFixed(1) : "N/A"}</span>
               </div>
             </div>
           </div>
@@ -320,7 +329,7 @@ const BookingCheckout: React.FC = () => {
           </div>
 
           <Elements stripe={stripePromise}>
-            <CheckoutForm 
+            <CheckoutForm
               trainer={trainerData}
               booking={state}
               total={total}

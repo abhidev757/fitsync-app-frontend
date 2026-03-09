@@ -135,9 +135,8 @@ const TrainersList: React.FC = () => {
       pages.push(
         <button
           key={i}
-          className={`w-10 h-10 flex items-center justify-center rounded-xl font-black transition-all ${
-            currentPage === i ? "bg-[#CCFF00] text-black shadow-[0_0_15px_rgba(204,255,0,0.3)]" : "text-gray-500 hover:text-white hover:bg-gray-900"
-          }`}
+          className={`w-10 h-10 flex items-center justify-center rounded-xl font-black transition-all ${currentPage === i ? "bg-[#CCFF00] text-black shadow-[0_0_15px_rgba(204,255,0,0.3)]" : "text-gray-500 hover:text-white hover:bg-gray-900"
+            }`}
           onClick={() => handlePageChange(i)}
         >
           {i}
@@ -250,8 +249,11 @@ const TrainersList: React.FC = () => {
                         alt={trainer.name}
                         className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700"
                       />
-                      <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-lg border border-gray-800">
-                        <div className="flex items-center gap-1">{renderStars(trainer.rating)}</div>
+                      <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-gray-800">
+                        <div className="flex items-center gap-1.5">
+                          {renderStars(trainer.rating)}
+                          <span className="text-[10px] font-black text-white ml-1">{trainer.rating > 0 ? trainer.rating : "NEW"}</span>
+                        </div>
                       </div>
                       <div className="absolute bottom-4 left-4">
                         <span className="bg-[#CCFF00] text-black text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-md shadow-lg">
@@ -263,7 +265,7 @@ const TrainersList: React.FC = () => {
                     <div className="p-8 flex-1 flex flex-col">
                       <h3 className="text-2xl font-black tracking-tight uppercase italic mb-1 group-hover:text-[#CCFF00] transition-colors">{trainer.name}</h3>
                       <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-6">{trainer.specializations}</p>
-                      
+
                       <p className="text-gray-400 text-sm leading-relaxed mb-8 line-clamp-2">
                         {trainer.description}
                       </p>
@@ -327,30 +329,30 @@ const TrainersList: React.FC = () => {
               <X size={32} />
             </button>
           </div>
-          
-          <div className="space-y-12">
-             {/* Content similar to sidebar but adapted for mobile */}
-             <div>
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-600 mb-6">Specializations</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {specializationsList.map(spec => (
-                     <button 
-                      key={spec._id}
-                      onClick={() => handleFilterChange("specializations", spec.name)}
-                      className={`py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${activeFilters.specializations.includes(spec.name) ? "bg-[#CCFF00] border-[#CCFF00] text-black" : "bg-transparent border-gray-800 text-gray-500"}`}
-                     >
-                        {spec.name}
-                     </button>
-                  ))}
-                </div>
-             </div>
 
-             <button
-                className="w-full py-5 bg-[#CCFF00] text-black font-black uppercase tracking-widest rounded-2xl"
-                onClick={() => setIsFilterOpen(false)}
-              >
-                Apply Filters
-              </button>
+          <div className="space-y-12">
+            {/* Content similar to sidebar but adapted for mobile */}
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-600 mb-6">Specializations</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {specializationsList.map(spec => (
+                  <button
+                    key={spec._id}
+                    onClick={() => handleFilterChange("specializations", spec.name)}
+                    className={`py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${activeFilters.specializations.includes(spec.name) ? "bg-[#CCFF00] border-[#CCFF00] text-black" : "bg-transparent border-gray-800 text-gray-500"}`}
+                  >
+                    {spec.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              className="w-full py-5 bg-[#CCFF00] text-black font-black uppercase tracking-widest rounded-2xl"
+              onClick={() => setIsFilterOpen(false)}
+            >
+              Apply Filters
+            </button>
           </div>
         </div>
       )}

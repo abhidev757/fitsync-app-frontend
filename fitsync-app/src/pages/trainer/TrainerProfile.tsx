@@ -51,6 +51,7 @@ const TrainerProfile = () => {
     specialization: "",
     phone: "",
     email: "",
+    bio: "",
   });
 
   const [avatarUrl, setAvatarUrl] = useState("");
@@ -80,6 +81,7 @@ const TrainerProfile = () => {
             specialization: profile.specializations?.[0] || profile.specialization || "",
             phone: profile.phone || "",
             email: profile.email || "",
+            bio: profile.bio || "",
           });
           setAvatarUrl(profile.profileImageUrl || "");
         }
@@ -134,6 +136,7 @@ const TrainerProfile = () => {
             specialization: formData.specialization,
             specializations: formData.specialization ? [formData.specialization] : [],
             phone: formData.phone,
+            bio: formData.bio,
           },
         },
         trainerId
@@ -199,7 +202,7 @@ const TrainerProfile = () => {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
+
         {/* Left Column: Biometric ID & Performance */}
         <div className="lg:col-span-4 space-y-8">
           {/* Biometric identity Card */}
@@ -209,40 +212,40 @@ const TrainerProfile = () => {
               <div className="absolute -inset-4 bg-[#CCFF00] rounded-full blur-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-700"></div>
               <div className="relative">
                 <img
-                    src={avatarUrl || "https://via.placeholder.com/96"}
-                    alt="Identity"
-                    className="w-32 h-32 rounded-[2rem] mx-auto object-cover grayscale group-hover:grayscale-0 transition-all duration-500 border-2 border-gray-800 group-hover:border-[#CCFF00]"
+                  src={avatarUrl || "https://via.placeholder.com/96"}
+                  alt="Identity"
+                  className="w-32 h-32 rounded-[2rem] mx-auto object-cover grayscale group-hover:grayscale-0 transition-all duration-500 border-2 border-gray-800 group-hover:border-[#CCFF00]"
                 />
                 <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute -bottom-2 -right-2 bg-[#CCFF00] text-black p-3 rounded-2xl hover:scale-110 transition-all shadow-xl"
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute -bottom-2 -right-2 bg-[#CCFF00] text-black p-3 rounded-2xl hover:scale-110 transition-all shadow-xl"
                 >
-                    <Camera size={18} />
+                  <Camera size={18} />
                 </button>
               </div>
             </div>
             <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white leading-none mb-2">{formData.name || "Subject Alpha"}</h2>
             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">{formData.email}</p>
-            
+
             {pendingImageFile && (
               <div className="mt-6 inline-flex items-center gap-2 bg-[#CCFF00]/10 border border-[#CCFF00]/20 px-4 py-2 rounded-xl">
-                 <Activity size={12} className="text-[#CCFF00] animate-pulse" />
-                 <span className="text-[9px] font-black text-[#CCFF00] uppercase tracking-widest">Image Calibration Pending</span>
+                <Activity size={12} className="text-[#CCFF00] animate-pulse" />
+                <span className="text-[9px] font-black text-[#CCFF00] uppercase tracking-widest">Image Calibration Pending</span>
               </div>
             )}
-            
+
             <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handleImagePick} />
           </div>
 
           {/* Performance Telemetry */}
           <div className="bg-[#0B0B0B] border border-gray-900 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
             <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h3 className="text-lg font-black italic uppercase tracking-tighter text-white">Performance</h3>
-                    <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Efficiency Telemetry</p>
-                </div>
-                <Activity className="text-[#CCFF00]/20" size={24} />
+              <div>
+                <h3 className="text-lg font-black italic uppercase tracking-tighter text-white">Performance</h3>
+                <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Efficiency Telemetry</p>
+              </div>
+              <Activity className="text-[#CCFF00]/20" size={24} />
             </div>
             <div className="h-56 relative z-10">
               <Line data={performanceData} options={chartOptions} />
@@ -254,8 +257,8 @@ const TrainerProfile = () => {
         <div className="lg:col-span-8">
           <div className="bg-[#0B0B0B] border border-gray-900 rounded-[2.5rem] p-10 shadow-2xl relative">
             <div className="flex items-center gap-3 mb-10 border-b border-gray-900 pb-6">
-                <ShieldCheck className="text-[#CCFF00]" size={20} />
-                <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-gray-500">Service Configuration</h3>
+              <ShieldCheck className="text-[#CCFF00]" size={20} />
+              <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-gray-500">Service Configuration</h3>
             </div>
 
             <form className="space-y-8" onSubmit={handleSubmit}>
@@ -308,30 +311,44 @@ const TrainerProfile = () => {
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Biological Marker (Sex)</label>
                   <div className="flex bg-black border border-gray-800 rounded-2xl p-1">
-                      {["Male", "Female"].map((s) => (
-                          <button
-                            key={s}
-                            type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, sex: s as any }))}
-                            className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.sex === s ? "bg-[#CCFF00] text-black" : "text-gray-700 hover:text-white"}`}
-                          >
-                            {s}
-                          </button>
-                      ))}
+                    {["Male", "Female"].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, sex: s as any }))}
+                        className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.sex === s ? "bg-[#CCFF00] text-black" : "text-gray-700 hover:text-white"}`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Professional Biography</label>
+                  <div className="flex bg-black border border-gray-800 rounded-2xl p-4 focus-within:border-[#CCFF00] transition-all">
+                    <textarea
+                      name="bio"
+                      value={formData.bio}
+                      onChange={handleChange as any}
+                      placeholder="Share your experience, training philosophy, and achievements..."
+                      rows={4}
+                      className="bg-transparent w-full text-white font-bold italic focus:outline-none resize-none"
+                    />
                   </div>
                 </div>
               </div>
 
               <div className="pt-10 border-t border-gray-900 flex flex-col sm:flex-row justify-between items-center gap-6">
                 <div className="flex items-center gap-3">
-                    {saveMsg && (
-                        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl ${saveMsg.includes("Success") ? "bg-[#CCFF00]/10 border border-[#CCFF00]/20 text-[#CCFF00]" : "bg-red-500/10 border border-red-500/20 text-red-500"}`}>
-                            <ShieldCheck size={14} />
-                            <span className="text-[10px] font-black uppercase tracking-widest italic">{saveMsg}</span>
-                        </div>
-                    )}
+                  {saveMsg && (
+                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl ${saveMsg.includes("Success") ? "bg-[#CCFF00]/10 border border-[#CCFF00]/20 text-[#CCFF00]" : "bg-red-500/10 border border-red-500/20 text-red-500"}`}>
+                      <ShieldCheck size={14} />
+                      <span className="text-[10px] font-black uppercase tracking-widest italic">{saveMsg}</span>
+                    </div>
+                  )}
                 </div>
-                
+
                 <button
                   type="submit"
                   disabled={saving}

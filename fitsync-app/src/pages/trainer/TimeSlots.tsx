@@ -40,7 +40,7 @@ function generatePreviewSlots(blockStart: string, blockEnd: string, durationMins
       cur = lEnd;
       continue;
     }
-    slots.push(`${fmt24to12(`${String(Math.floor(cur/60)).padStart(2,"0")}:${String(cur%60).padStart(2,"0")}`)} - ${fmt24to12(`${String(Math.floor(end/60)).padStart(2,"0")}:${String(end%60).padStart(2,"0")}`)}`);
+    slots.push(`${fmt24to12(`${String(Math.floor(cur / 60)).padStart(2, "0")}:${String(cur % 60).padStart(2, "0")}`)} - ${fmt24to12(`${String(Math.floor(end / 60)).padStart(2, "0")}:${String(end % 60).padStart(2, "0")}`)}`);
     cur = end;
   }
   return slots;
@@ -144,14 +144,14 @@ export default function TimeSlots() {
       {/* Grid Display */}
       {isLoadingSlots ? (
         <div className="flex flex-col items-center justify-center min-h-[40vh] text-gray-700">
-           <Activity className="animate-pulse mb-4 text-[#CCFF00]" />
-           <p className="text-[10px] font-black uppercase tracking-[0.4em]">Syncing Calendar Data...</p>
+          <Activity className="animate-pulse mb-4 text-[#CCFF00]" />
+          <p className="text-[10px] font-black uppercase tracking-[0.4em]">Syncing Calendar Data...</p>
         </div>
       ) : timeSlots.length === 0 ? (
         <div className="bg-[#0B0B0B] border border-dashed border-gray-900 rounded-[3rem] py-32 text-center">
-            <Calendar className="mx-auto text-gray-800 mb-6" size={48} />
-            <p className="text-gray-600 text-[10px] font-black uppercase tracking-[0.5em] mb-8">Registry Empty // No Slots established</p>
-            <button onClick={() => setShowModal(true)} className="text-[#CCFF00] border-b border-[#CCFF00] font-black uppercase text-[10px] tracking-widest pb-1 hover:text-white hover:border-white transition-all">Initialize First Deployment</button>
+          <Calendar className="mx-auto text-gray-800 mb-6" size={48} />
+          <p className="text-gray-600 text-[10px] font-black uppercase tracking-[0.5em] mb-8">Registry Empty // No Slots established</p>
+          <button onClick={() => setShowModal(true)} className="text-[#CCFF00] border-b border-[#CCFF00] font-black uppercase text-[10px] tracking-widest pb-1 hover:text-white hover:border-white transition-all">Initialize First Deployment</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -165,22 +165,22 @@ export default function TimeSlots() {
                 {day.slots.map((slot) => (
                   <div key={slot.id} className="group relative flex items-center justify-between p-4 bg-black border border-gray-900 rounded-2xl hover:border-[#CCFF00]/30 transition-all">
                     <div className="flex items-center gap-4">
-                        <Clock size={16} className="text-gray-700 group-hover:text-[#CCFF00] transition-colors" />
-                        <div>
-                            <p className="text-white text-xs font-black italic uppercase tracking-tight">{slot.time}</p>
-                            <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">{slot.type}</p>
-                        </div>
+                      <Clock size={16} className="text-gray-700 group-hover:text-[#CCFF00] transition-colors" />
+                      <div>
+                        <p className="text-white text-xs font-black italic uppercase tracking-tight">{slot.time}</p>
+                        <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">{slot.type}</p>
+                      </div>
                     </div>
-                    <button 
-                        onClick={() => handleDeleteSlot(slot.id)}
-                        className="p-2 text-gray-800 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                    <button
+                      onClick={() => handleDeleteSlot(slot.id)}
+                      className="p-2 text-gray-800 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
                     >
-                        <Trash2 size={14} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 ))}
                 <button onClick={() => setShowModal(true)} className="w-full py-4 border border-dashed border-gray-900 rounded-2xl text-[9px] font-black uppercase tracking-widest text-gray-700 hover:text-white hover:border-gray-700 transition-all flex items-center justify-center gap-2">
-                    <Plus size={12} /> Sync Extra
+                  <Plus size={12} /> Sync Extra
                 </button>
               </div>
             </div>
@@ -193,7 +193,7 @@ export default function TimeSlots() {
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in">
           <div className="bg-[#0B0B0B] border border-gray-900 rounded-[2.5rem] w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1 bg-[#CCFF00] opacity-50"></div>
-            
+
             <div className="flex justify-between items-center p-8 border-b border-gray-900">
               <div>
                 <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white">Establish Slot</h3>
@@ -214,21 +214,37 @@ export default function TimeSlots() {
             <div className="p-10 space-y-8">
               {activeTab === "quick" ? (
                 <div className="space-y-6">
+                  {/* Deployment Date Field */}
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#CCFF00] ml-1">Deployment Date</label>
-                    <div className="flex items-center bg-black border border-gray-900 rounded-xl p-4">
-                        <Calendar size={18} className="text-gray-700 mr-4" />
-                        <input type="date" min={todayStr} value={qa.date} onChange={(e) => setQa({ ...qa, date: e.target.value })} className="bg-transparent w-full text-white font-bold italic focus:outline-none" />
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[#CCFF00] ml-1">
+                      Deployment Date
+                    </label>
+                    <div className="relative group flex items-center bg-black border border-gray-800 rounded-xl focus-within:border-[#CCFF00] transition-all overflow-hidden">
+                      {/* Visual Icon (Static) */}
+                      <Calendar size={18} className="absolute left-4 text-gray-700 pointer-events-none group-focus-within:text-[#CCFF00] transition-colors" />
+
+                      <input
+                        type="date"
+                        min={todayStr}
+                        value={qa.date}
+                        onChange={(e) => setQa({ ...qa, date: e.target.value })}
+                        className="w-full bg-transparent text-white font-bold italic pl-12 pr-4 py-4 focus:outline-none [color-scheme:dark] cursor-pointer"
+                        style={{
+                          // This ensures the entire field is clickable and forces the 
+                          // internal browser icon to be white/visible
+                          WebkitAppearance: 'none',
+                        }}
+                      />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Inbound</label>
-                        <input type="time" value={qa.startTime} onChange={(e) => setQa({ ...qa, startTime: e.target.value })} className="w-full bg-black border border-gray-900 text-white rounded-xl p-4 font-bold italic focus:border-[#CCFF00] transition-all focus:outline-none" />
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Inbound</label>
+                      <input type="time" value={qa.startTime} onChange={(e) => setQa({ ...qa, startTime: e.target.value })} className="w-full bg-black border border-gray-900 text-white rounded-xl p-4 font-bold italic focus:border-[#CCFF00] transition-all focus:outline-none [color-scheme:dark]" />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Outbound</label>
-                        <input type="time" value={qa.endTime} onChange={(e) => setQa({ ...qa, endTime: e.target.value })} className="w-full bg-black border border-gray-900 text-white rounded-xl p-4 font-bold italic focus:border-[#CCFF00] transition-all focus:outline-none" />
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Outbound</label>
+                      <input type="time" value={qa.endTime} onChange={(e) => setQa({ ...qa, endTime: e.target.value })} className="w-full bg-black border border-gray-900 text-white rounded-xl p-4 font-bold italic focus:border-[#CCFF00] transition-all focus:outline-none [color-scheme:dark]" />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -240,8 +256,8 @@ export default function TimeSlots() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-[#CCFF00] ml-1">Asset Value (₹)</label>
                     <div className="flex items-center bg-black border border-gray-900 rounded-xl p-4">
-                        <DollarSign size={18} className="text-gray-700 mr-4" />
-                        <input type="number" placeholder="500" value={qa.price} onChange={(e) => setQa({ ...qa, price: e.target.value })} className="bg-transparent w-full text-white font-bold italic focus:outline-none" />
+                      <DollarSign size={18} className="text-gray-700 mr-4" />
+                      <input type="number" placeholder="500" value={qa.price} onChange={(e) => setQa({ ...qa, price: e.target.value })} className="bg-transparent w-full text-white font-bold italic focus:outline-none [color-scheme:dark]" />
                     </div>
                   </div>
                   <button onClick={handleQuickSubmit} disabled={isLoading} className="w-full py-5 bg-[#CCFF00] text-black font-black uppercase text-xs tracking-[0.3em] rounded-2xl hover:shadow-[0_0_30px_rgba(204,255,0,0.4)] transition-all">
@@ -262,12 +278,12 @@ export default function TimeSlots() {
                   </div>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Shift Start</label>
-                        <input type="time" value={ba.blockStart} onChange={(e) => setBa({ ...ba, blockStart: e.target.value })} className="w-full bg-black border border-gray-900 text-white rounded-xl p-4 font-bold italic focus:outline-none" />
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Shift Start</label>
+                      <input type="time" value={ba.blockStart} onChange={(e) => setBa({ ...ba, blockStart: e.target.value })} className="w-full bg-black border border-gray-900 text-white rounded-xl p-4 font-bold italic focus:outline-none [color-scheme:dark]" />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Shift End</label>
-                        <input type="time" value={ba.blockEnd} onChange={(e) => setBa({ ...ba, blockEnd: e.target.value })} className="w-full bg-black border border-gray-900 text-white rounded-xl p-4 font-bold italic focus:outline-none" />
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">Shift End</label>
+                      <input type="time" value={ba.blockEnd} onChange={(e) => setBa({ ...ba, blockEnd: e.target.value })} className="w-full bg-black border border-gray-900 text-white rounded-xl p-4 font-bold italic focus:outline-none [color-scheme:dark]" />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -282,9 +298,9 @@ export default function TimeSlots() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-[#CCFF00] ml-1">Asset Value (₹)</label>
-                    <input type="number" placeholder="500" value={ba.price} onChange={(e) => setBa({ ...ba, price: e.target.value })} className="w-full bg-black border border-gray-900 text-white rounded-xl p-4 font-bold italic focus:outline-none" />
+                    <input type="number" placeholder="500" value={ba.price} onChange={(e) => setBa({ ...ba, price: e.target.value })} className="w-full bg-black border border-gray-900 text-white rounded-xl p-4 font-bold italic focus:outline-none [color-scheme:dark]" />
                   </div>
-                  
+
                   {previewSlots.length > 0 && (
                     <div className="bg-black border border-gray-900 rounded-2xl p-6">
                       <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-4">Transmission Preview // {previewSlots.length} Slots per cycle</p>
