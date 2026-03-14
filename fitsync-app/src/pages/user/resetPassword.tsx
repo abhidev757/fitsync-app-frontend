@@ -7,7 +7,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { resetUserPassword } from "../../axios/userApi";
-import { ShieldCheck, Lock } from "lucide-react";
+import { ShieldCheck, Lock, AlertTriangle } from "lucide-react";
 
 const ResetPasswordPage: React.FC = () => {
   const [password, setPassword] = useState("");
@@ -37,7 +37,7 @@ const ResetPasswordPage: React.FC = () => {
     }
     if (!validatePassword(password)) {
       setPasswordError(
-        "Criteria: 1 Uppercase, 1 Lowercase, 1 Digit, 1 Special Char, Min 8 Length."
+        "Criteria: 1 Upper, 1 Lower, 1 Digit, 1 Special, Min 8 Chars."
       );
       return;
     }
@@ -46,11 +46,11 @@ const ResetPasswordPage: React.FC = () => {
       return;
     }
     if (password !== confirmPassword) {
-      setConfirmPasswordError("Mismatch: Passwords do not align.");
+      setConfirmPasswordError("Mismatch: Credentials do not align.");
       return;
     }
     if (!token) {
-      toast.error("Auth Error: Invalid or missing token.");
+      toast.error("Auth Error: Invalid reset token.");
       return;
     }
 
@@ -72,67 +72,79 @@ const ResetPasswordPage: React.FC = () => {
   };
 
   return (
-    <AuthLayout title="Reset Credentials">
-      <div className="flex flex-col items-center mb-6">
-        <div className="bg-[#CCFF00]/10 p-3 rounded-2xl border border-[#CCFF00]/20 mb-4">
-            <Lock className="text-[#CCFF00]" size={24} />
-        </div>
-        <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-gray-500">
-          Enter your new security protocol below.
-        </p>
-      </div>
-
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        <div className="rounded-xl overflow-hidden border border-gray-800 bg-[#0D1117]">
-          <div className="border-b border-gray-800">
-            <input
-              type="password"
-              placeholder="New Password"
-              required
-              className="appearance-none relative block w-full px-4 py-4 bg-transparent placeholder-gray-600 text-white focus:outline-none focus:ring-1 focus:ring-[#CCFF00] focus:z-10 sm:text-sm italic"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              placeholder="Confirm New Password"
-              required
-              className="appearance-none relative block w-full px-4 py-4 bg-transparent placeholder-gray-600 text-white focus:outline-none focus:ring-1 focus:ring-[#CCFF00] focus:z-10 sm:text-sm italic"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {(passwordError || confirmPasswordError) && (
-            <div className="bg-red-500/10 border-l-2 border-red-500 p-3 space-y-1">
-                {passwordError && <p className="text-red-500 text-[10px] font-black uppercase tracking-widest italic">{passwordError}</p>}
-                {confirmPasswordError && <p className="text-red-500 text-[10px] font-black uppercase tracking-widest italic">{confirmPasswordError}</p>}
+    <AuthLayout title="Reset Protocol">
+      <div className="w-full max-w-md mx-auto px-2">
+        <div className="flex flex-col items-center mb-8">
+          <div className="relative mb-6">
+            <div className="absolute -inset-4 bg-[#CCFF00] rounded-full blur-2xl opacity-10 animate-pulse"></div>
+            <div className="relative bg-gray-900 p-4 rounded-2xl border border-gray-800">
+              <Lock className="text-[#CCFF00]" size={32} />
             </div>
-        )}
-
-        <div>
-          <button
-            type="submit"
-            className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-black rounded-xl text-black bg-[#CCFF00] hover:shadow-[0_0_20px_rgba(204,255,0,0.4)] transition-all focus:outline-none uppercase tracking-widest active:scale-95"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-                <span className="flex items-center gap-2">
-                    <ShieldCheck size={18} className="animate-pulse" /> Re-calibrating...
-                </span>
-            ) : (
-                "Update Credentials"
-            )}
-          </button>
+          </div>
+          <h2 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter text-white mb-2">New Credentials</h2>
+          <p className="text-center text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-gray-600 max-w-[260px] leading-relaxed italic">
+            Define your new security parameters.
+          </p>
         </div>
-      </form>
 
-      <p className="text-center mt-8 text-gray-700 text-[9px] font-black uppercase tracking-[0.4em]">
-        Secure Socket Encryption Active
-      </p>
+        <form className="mt-4 md:mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="rounded-2xl overflow-hidden border border-gray-900 bg-[#0B0B0B] shadow-2xl transition-all focus-within:border-[#CCFF00]/50">
+            <div className="border-b border-gray-900">
+              <input
+                type="password"
+                placeholder="NEW PASSWORD"
+                required
+                className="appearance-none relative block w-full px-5 py-5 bg-transparent placeholder-gray-700 text-white focus:outline-none text-sm font-bold italic"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <div>
+              <input
+                type="password"
+                placeholder="CONFIRM PASSWORD"
+                required
+                className="appearance-none relative block w-full px-5 py-5 bg-transparent placeholder-gray-700 text-white focus:outline-none text-sm font-bold italic"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {(passwordError || confirmPasswordError) && (
+            <div className="bg-red-500/5 border-l-2 border-red-600 p-4 rounded-r-xl space-y-2 animate-in fade-in slide-in-from-left-2 duration-300">
+              <div className="flex items-center gap-2 text-red-600">
+                <AlertTriangle size={14} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Protocol Warning</span>
+              </div>
+              {passwordError && <p className="text-gray-300 text-[10px] font-bold uppercase tracking-tight leading-relaxed">{passwordError}</p>}
+              {confirmPasswordError && <p className="text-gray-300 text-[10px] font-bold uppercase tracking-tight leading-relaxed">{confirmPasswordError}</p>}
+            </div>
+          )}
+
+          <div className="pt-2">
+            <button
+              type="submit"
+              className="group relative w-full flex justify-center py-5 px-4 border border-transparent text-[11px] font-black rounded-2xl text-black bg-[#CCFF00] hover:shadow-[0_0_30px_rgba(204,255,0,0.5)] transition-all focus:outline-none uppercase tracking-[0.2em] active:scale-95 disabled:opacity-50"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <ShieldCheck size={18} className="animate-pulse" /> Re-calibrating...
+                </span>
+              ) : (
+                "Update Secure Credentials"
+              )}
+            </button>
+          </div>
+        </form>
+
+        <div className="mt-16 pt-8 border-t border-gray-900/50">
+          <p className="text-center text-[8px] font-black text-gray-800 uppercase tracking-[0.5em] italic">
+            End of Line // Registry Lockdown Active
+          </p>
+        </div>
+      </div>
     </AuthLayout>
   );
 };

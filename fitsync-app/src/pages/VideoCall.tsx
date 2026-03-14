@@ -5,6 +5,7 @@ import { getUserSocket, connectUserSocket } from '../util/userSocket';
 import { getTrainerSocket, connectTrainerSocket } from '../util/trainerSocket';
 import { toast } from 'react-toastify';
 import { Socket } from 'socket.io-client';
+import { PhoneOff, User, Crown } from 'lucide-react';
 
 // Simple-peer compatibility for Vite/Modern Browsers
 if (typeof window.global === 'undefined') {
@@ -33,6 +34,14 @@ interface PeerState {
   role: string;
 }
 
+interface ParticipantView {
+  id: string;
+  name: string;
+  role: string;
+  isLocal: boolean;
+  stream: MediaStream | null;
+}
+
 const VideoCall: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
@@ -47,45 +56,32 @@ const VideoCall: React.FC = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const hasJoined = useRef(false);
 
-  // Determine local user details
   const isTrainerFallback = !!localStorage.getItem("trainerId");
   const localRole = state?.role || (isTrainerFallback ? "trainer" : "user");
   const localName = state?.name || localStorage.getItem("userName") || (localRole === 'trainer' ? "Trainer" : "User");
 
-  // 1. Handle Socket Initialization & Reconnection
   useEffect(() => {
     let activeSocket = getUserSocket() || getTrainerSocket();
-
     if (!activeSocket) {
-      console.log("⚠️ Socket missing, checking credentials...");
       const trainerId = localStorage.getItem('trainerId');
       const userId = localStorage.getItem('userId');
-
-      if (trainerId) {
-        activeSocket = connectTrainerSocket(trainerId);
-      } else if (userId) {
-        activeSocket = connectUserSocket(userId);
-      }
+      if (trainerId) activeSocket = connectTrainerSocket(trainerId);
+      else if (userId) activeSocket = connectUserSocket(userId);
     }
 
-    if (activeSocket) {
-      console.log("🟢 Socket set in state:", activeSocket.id);
-      setSocket(activeSocket);
-    } else {
-      toast.error("Auth session lost. Please log in again.");
+    if (activeSocket) setSocket(activeSocket);
+    else {
+      toast.error("Auth session lost.");
       navigate('/');
     }
   }, [navigate]);
 
-  // 2. WebRTC Signaling Logic
   useEffect(() => {
     if (!socket || !sessionId) return;
-
     const currentSocket = socket;
     const currentPeers = peersRef.current;
 
-    const updatePeerStream = (id: string, peer: Peer.Instance, remoteStream: MediaStream, name: string = "Participant", role: string = "user") => {
-      console.log("🎬 Setting remote stream for:", id, "Name:", name, "Role:", role);
+    const updatePeerStream = (id: string, peer: Peer.Instance, remoteStream: MediaStream, name: string, role: string) => {
       setPeers(prev => {
         const filtered = prev.filter(p => p.peerId !== id);
         return [...filtered, { peerId: id, peer, stream: remoteStream, name, role }];
@@ -93,41 +89,18 @@ const VideoCall: React.FC = () => {
     };
 
     const createPeer = (userToSignal: string, stream: MediaStream, remoteName: string, remoteRole: string): Peer.Instance => {
-      console.log("📡 Creating initiator peer for:", userToSignal);
-      
-      const peer = new Peer({ 
-        initiator: true, 
-        trickle: false, 
-        stream: stream 
-      });
-
+      const peer = new Peer({ initiator: true, trickle: false, stream });
       peer.on("signal", (signal: Peer.SignalData) => {
-        console.log("📤 Sending signal to:", userToSignal);
-        currentSocket.emit("send-signal", { 
-          toSocketId: userToSignal, 
-          signal,
-          fromName: localName,
-          role: localRole
-        });
+        currentSocket.emit("send-signal", { toSocketId: userToSignal, signal, fromName: localName, role: localRole });
       });
-
-      peer.on("stream", (remoteStream: MediaStream) => {
-        updatePeerStream(userToSignal, peer, remoteStream, remoteName, remoteRole);
-      });
-
-      peer.on("error", (err) => console.error("Peer Error:", err));
-
+      peer.on("stream", (remoteStream: MediaStream) => updatePeerStream(userToSignal, peer, remoteStream, remoteName, remoteRole));
       return peer;
     };
 
     const addPeer = (incomingSignal: Peer.SignalData, callerId: string, stream: MediaStream, remoteName: string, remoteRole: string): Peer.Instance => {
       const peer = new Peer({ initiator: false, trickle: false, stream });
-      peer.on("signal", (signal: Peer.SignalData) => {
-        currentSocket.emit("return-signal", { toSocketId: callerId, signal });
-      });
-      peer.on("stream", (remoteStream: MediaStream) => {
-        updatePeerStream(callerId, peer, remoteStream, remoteName, remoteRole);
-      });
+      peer.on("signal", (signal: Peer.SignalData) => currentSocket.emit("return-signal", { toSocketId: callerId, signal }));
+      peer.on("stream", (remoteStream: MediaStream) => updatePeerStream(callerId, peer, remoteStream, remoteName, remoteRole));
       peer.signal(incomingSignal);
       return peer;
     };
@@ -135,176 +108,119 @@ const VideoCall: React.FC = () => {
     const initializeCall = (stream: MediaStream) => {
       if (hasJoined.current) return;
       hasJoined.current = true;
-
-      console.log("📤 Emitting join-video-room:", sessionId);
-      currentSocket.emit("join-video-room", { 
-        sessionId, 
-        userId: localStorage.getItem("userId") || localStorage.getItem("trainerId"), 
-        name: localName,
-        role: localRole
-      });
+      currentSocket.emit("join-video-room", { sessionId, userId: localStorage.getItem("userId") || localStorage.getItem("trainerId"), name: localName, role: localRole });
 
       currentSocket.on("user-joined", (payload: JoinPayload) => {
-        console.log("👤 Someone joined:", payload.fromSocketId, payload.name, payload.role);
         const peer = createPeer(payload.fromSocketId, stream, payload.name, payload.role);
         currentPeers.push({ peerId: payload.fromSocketId, peer, stream: new MediaStream(), name: payload.name, role: payload.role });
       });
 
       currentSocket.on("receive-signal", (payload: SignalPayload) => {
-        console.log("📥 Received offer from:", payload.fromSocketId);
-        const remoteName = payload.fromName || "Participant";
-        const remoteRole = payload.role || "user";
-        const peer = addPeer(payload.signal, payload.fromSocketId, stream, remoteName, remoteRole);
-        currentPeers.push({ peerId: payload.fromSocketId, peer, stream: new MediaStream(), name: remoteName, role: remoteRole });
+        const peer = addPeer(payload.signal, payload.fromSocketId, stream, payload.fromName || "Participant", payload.role || "user");
+        currentPeers.push({ peerId: payload.fromSocketId, peer, stream: new MediaStream(), name: payload.fromName || "Participant", role: payload.role || "user" });
       });
 
       currentSocket.on("receiving-returned-signal", (payload: SignalPayload) => {
-        console.log("📤 Handshake finalized with:", payload.fromSocketId);
         const item = currentPeers.find(p => p.peerId === payload.fromSocketId);
         if (item) item.peer.signal(payload.signal);
       });
     };
 
-    // Get Media
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       .then((stream) => {
         streamRef.current = stream;
-
-        if (currentSocket.connected) {
-          initializeCall(stream);
-        } else {
-          currentSocket.on("connect", () => initializeCall(stream));
-        }
+        if (currentSocket.connected) initializeCall(stream);
+        else currentSocket.on("connect", () => initializeCall(stream));
       })
-      .catch(err => {
-        console.error("Media Error:", err);
-        toast.error("Camera access required for video calls.");
-      });
+      .catch(() => toast.error("Camera/Mic access required."));
 
     return () => {
-      console.log("🧹 Cleanup triggered");
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
+      if (streamRef.current) streamRef.current.getTracks().forEach(track => track.stop());
       currentSocket.off("user-joined");
       currentSocket.off("receive-signal");
       currentSocket.off("receiving-returned-signal");
-      currentSocket.off("connect");
       currentPeers.forEach(p => p.peer.destroy());
       hasJoined.current = false;
     };
-  }, [socket, sessionId]);
+  }, [socket, sessionId, localName, localRole]);
 
-  if (!socket) {
-    return (
-      <div className="h-screen bg-black flex items-center justify-center text-[#d9ff00]">
-        Connecting to signaling server...
-      </div>
-    );
-  }
+  const handlePin = (id: string) => setPinnedPeerId(prev => (prev === id ? null : id));
 
-  const handlePin = (id: string) => {
-    setPinnedPeerId(prev => (prev === id ? null : id));
-  };
-
-  // Determine which layout to show
-  const isGridView = localRole === "trainer" && !pinnedPeerId;
-
-  interface ParticipantView {
-    id: string;
-    name: string;
-    role: string;
-    isLocal: boolean;
-    stream: MediaStream | null;
-  }
-
-  // For Spotlight view, determine who gets the main stage
-  let spotlightPeer: ParticipantView | null = null;
-  
   const allParticipants: ParticipantView[] = [
-    { id: "local", name: `${localName} (You)`, role: localRole, isLocal: true, stream: streamRef.current },
+    { id: "local", name: localName, role: localRole, isLocal: true, stream: streamRef.current },
     ...peers.map(p => ({ id: p.peerId, name: p.name, role: p.role, isLocal: false, stream: p.stream }))
   ];
 
-  if (!isGridView) {
-    if (pinnedPeerId) {
-      spotlightPeer = allParticipants.find(p => p.id === pinnedPeerId) || null;
-    }
-    if (!spotlightPeer) {
-      // Default spotlight is the trainer
-      spotlightPeer = allParticipants.find(p => p.role === "trainer") || allParticipants[0];
-    }
-  }
+  const isGridView = localRole === "trainer" && !pinnedPeerId;
+  let spotlightPeer = pinnedPeerId ? allParticipants.find(p => p.id === pinnedPeerId) : (allParticipants.find(p => p.role === "trainer") || allParticipants[0]);
+  if (!spotlightPeer) spotlightPeer = allParticipants[0];
 
-  // Those who are not in spotlight
-  const thumbnails = isGridView ? allParticipants : allParticipants.filter(p => p.id !== (spotlightPeer?.id));
+  const thumbnails = isGridView ? allParticipants : allParticipants.filter(p => p.id !== spotlightPeer?.id);
+
+  if (!socket) return <div className="h-screen bg-black flex items-center justify-center text-[#CCFF00] animate-pulse uppercase font-black tracking-widest">Establishing Secure Link...</div>;
 
   return (
-    <div className="flex flex-col h-screen bg-[#0f0f0f] p-4 overflow-hidden">
+    <div className="flex flex-col h-[100dvh] bg-[#050505] text-white overflow-hidden font-sans">
       
-      {isGridView ? (
-        // Client Monitoring View (Trainer Default Grid)
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4 flex-1 auto-rows-[minmax(200px,1fr)] overflow-y-auto pr-2 pb-4 pt-2">
-          {thumbnails.map(p => (
-            <div 
-              key={p.id} 
-              onClick={() => handlePin(p.id)}
-              className="relative bg-gray-900 rounded-2xl overflow-hidden border-2 border-gray-800 shadow-xl cursor-pointer hover:border-[#d9ff00] transition-colors group"
-            >
-              <VideoItem stream={p.stream!} isLocal={p.isLocal} />
-              <div className="absolute bottom-4 left-4 bg-black/60 px-3 py-1 rounded text-white text-sm backdrop-blur-sm group-hover:text-[#d9ff00]">
-                {p.name} {p.role === "trainer" && "👑"}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        // Trainer View / Spotlight Layout (Client Default)
-        <div className="flex flex-col md:flex-row gap-4 flex-1 min-h-0">
-          
-          {/* Main Spotlight Video (70% width on Desktop) */}
-          <div 
-            onClick={() => handlePin(spotlightPeer!.id)}
-            className="relative flex-grow md:w-[70%] bg-gray-900 rounded-2xl overflow-hidden border-2 border-[#d9ff00] shadow-[0_0_15px_rgba(217,255,0,0.2)] cursor-pointer"
-          >
-            {spotlightPeer && <VideoItem stream={spotlightPeer.stream!} isLocal={spotlightPeer.isLocal} layoutClass="w-full h-full object-contain" />}
-            <div className="absolute bottom-6 left-6 bg-black/70 px-4 py-2 rounded-lg text-white font-medium backdrop-blur-md border border-gray-700">
-              {spotlightPeer?.name} {spotlightPeer?.role === "trainer" && "👑"}
-            </div>
-            {pinnedPeerId === spotlightPeer?.id && (
-              <div className="absolute top-6 right-6 bg-black/70 px-3 py-1.5 rounded text-[#d9ff00] text-xs font-bold uppercase tracking-wider">
-                Pinned 📌
-              </div>
-            )}
-          </div>
-
-          {/* Side/Bottom Thumbnails */}
-          <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto md:w-[30%] shrink-0 pb-2 md:pb-0 md:pr-2 snap-x md:snap-y">
-            {thumbnails.map(p => (
-              <div 
-                key={p.id}
-                onClick={() => handlePin(p.id)}
-                className="relative bg-gray-900 rounded-xl overflow-hidden border-2 border-gray-800 shadow-lg cursor-pointer hover:border-gray-500 transition-colors w-40 md:w-full h-28 md:h-48 shrink-0 snap-start group"
-              >
-                <VideoItem stream={p.stream!} isLocal={p.isLocal} />
-                <div className="absolute bottom-2 left-2 bg-black/70 px-2 py-1 rounded text-white text-xs backdrop-blur-sm truncate max-w-[90%]">
-                  {p.name}
+      <main className="flex-1 relative flex flex-col md:flex-row p-2 md:p-4 gap-2 md:gap-4 min-h-0">
+        {isGridView ? (
+          /* GRID VIEW - Optimal for Trainers on Desktop/Tablet */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full h-full overflow-y-auto content-start pb-20 md:pb-4">
+            {allParticipants.map(p => (
+              <div key={p.id} onClick={() => handlePin(p.id)} className="relative aspect-video bg-gray-900 rounded-xl overflow-hidden border border-gray-800 group cursor-pointer hover:border-[#CCFF00] transition-all">
+                <VideoItem stream={p.stream} isLocal={p.isLocal} />
+                <div className="absolute bottom-2 left-2 flex items-center gap-2 bg-black/60 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-tight backdrop-blur-md">
+                  {p.role === 'trainer' && <Crown size={12} className="text-[#CCFF00]" />}
+                  {p.name} {p.isLocal && "(You)"}
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          /* SPOTLIGHT VIEW - Optimal for Clients or Pinned Participants */
+          <>
+            <div className="flex-1 relative bg-gray-900 rounded-2xl overflow-hidden border border-gray-800 shadow-2xl min-h-0">
+              <VideoItem stream={spotlightPeer?.stream} isLocal={spotlightPeer?.isLocal} layoutClass="w-full h-full object-cover md:object-contain" />
+              
+              <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-xl border border-white/10">
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-widest">{sessionId?.slice(0, 8)} // LIVE</span>
+              </div>
 
-      {/* Controls */}
-      <div className="h-20 shrink-0 flex items-center justify-center mt-4">
-        <button 
-          onClick={() => navigate(-1)}
-          className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-12 rounded-full transition-all hover:scale-105 shadow-lg border-2 border-red-400/30"
-        >
-          End Call
-        </button>
-      </div>
+              <div className="absolute bottom-4 left-4 bg-black/60 px-4 py-2 rounded-xl backdrop-blur-md border border-gray-700 flex items-center gap-2">
+                {spotlightPeer?.role === 'trainer' && <Crown size={16} className="text-[#CCFF00]" />}
+                <span className="font-black uppercase italic tracking-tighter text-sm md:text-lg">{spotlightPeer?.name}</span>
+              </div>
+            </div>
+
+            {/* THUMBNAILS - Horizontal on Mobile, Vertical on Desktop */}
+            <aside className="flex md:flex-col gap-2 overflow-x-auto md:overflow-y-auto md:w-64 lg:w-80 shrink-0 scrollbar-hide snap-x md:snap-y pb-20 md:pb-0">
+              {thumbnails.map(p => (
+                <div key={p.id} onClick={() => handlePin(p.id)} className="relative aspect-video w-40 md:w-full shrink-0 bg-gray-900 rounded-xl overflow-hidden border border-gray-800 cursor-pointer snap-start group active:scale-95 transition-transform">
+                  <VideoItem stream={p.stream} isLocal={p.isLocal} />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                  <div className="absolute bottom-2 left-2 bg-black/70 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter backdrop-blur-sm truncate max-w-[80%]">
+                    {p.name}
+                  </div>
+                </div>
+              ))}
+            </aside>
+          </>
+        )}
+      </main>
+
+      {/* FOOTER CONTROLS - Fixed at bottom */}
+      <footer className="h-20 bg-gradient-to-t from-black to-transparent shrink-0 flex items-center justify-center px-6 absolute bottom-0 w-full z-50 pointer-events-none">
+        <div className="flex items-center gap-4 pointer-events-auto">
+          <button 
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-3 bg-red-600 hover:bg-red-700 text-white font-black uppercase text-xs tracking-widest py-3.5 px-8 md:px-12 rounded-full transition-all shadow-[0_0_20px_rgba(220,38,38,0.4)] active:scale-90"
+          >
+            <PhoneOff size={18} />
+            <span className="hidden sm:inline">Terminate Call</span>
+          </button>
+        </div>
+      </footer>
     </div>
   );
 };
@@ -314,14 +230,26 @@ const VideoItem = ({ stream, isLocal = false, layoutClass = "w-full h-full objec
   useEffect(() => {
     if (ref.current && stream) ref.current.srcObject = stream;
   }, [stream]);
+
   return (
-    <video 
-      ref={ref} 
-      autoPlay 
-      playsInline 
-      muted={isLocal} 
-      className={`${layoutClass} ${isLocal ? 'scale-x-[-1]' : ''}`} 
-    />
+    <div className="w-full h-full bg-[#111]">
+      {stream ? (
+        <video 
+          ref={ref} 
+          autoPlay 
+          playsInline 
+          muted={isLocal} 
+          className={`${layoutClass} ${isLocal ? 'scale-x-[-1]' : ''}`} 
+        />
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+          <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center animate-pulse">
+            <User className="text-gray-600" />
+          </div>
+          <span className="text-[8px] font-black text-gray-700 uppercase tracking-widest">Connecting Data...</span>
+        </div>
+      )}
+    </div>
   );
 };
 

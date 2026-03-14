@@ -6,7 +6,7 @@ import { fetchTrainer, getTrainerReviews, createPaymentIntent, createBooking } f
 import { format, parseISO } from "date-fns";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import { ShieldCheck, CreditCard, Receipt, User } from "lucide-react";
+import { ShieldCheck, CreditCard, Receipt, User, ChevronLeft } from "lucide-react";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -110,52 +110,47 @@ const CheckoutForm: React.FC<{
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-8">
-      <div className="bg-black border border-gray-900 rounded-2xl p-6 mb-8">
+    <form onSubmit={handleSubmit} className="mt-8 md:mt-12">
+      <div className="bg-black border border-gray-900 rounded-2xl p-5 md:p-8 mb-8">
         <div className="flex items-center gap-2 mb-6 text-[#CCFF00]">
           <CreditCard size={18} />
-          <h3 className="text-xs font-black uppercase tracking-widest">Secure Credit Card</h3>
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">Secure Data Link</h3>
         </div>
-        <div className="bg-[#0D1117] border border-gray-800 rounded-xl p-4 focus-within:border-[#CCFF00] transition-colors">
+        <div className="bg-[#0D1117] border border-gray-800 rounded-xl p-4 focus-within:border-[#CCFF00] transition-all">
           <CardElement
             options={{
               style: {
                 base: {
-                  fontSize: "16px",
+                  fontSize: "14px",
                   color: "#ffffff",
                   fontFamily: 'Inter, sans-serif',
-                  "::placeholder": {
-                    color: "#4B5563",
-                  },
+                  "::placeholder": { color: "#374151" },
                   backgroundColor: "transparent",
                 },
-                invalid: {
-                  color: "#FF5252",
-                },
+                invalid: { color: "#FF5252" },
               },
             }}
           />
         </div>
-        {error && <div className="text-red-500 mt-4 text-xs font-bold uppercase tracking-tight italic">{error}</div>}
+        {error && <div className="text-red-500 mt-4 text-[10px] font-black uppercase tracking-tight italic border-l-2 border-red-500 pl-3">{error}</div>}
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-6 border-t border-gray-900 pt-8">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Authorized Amount</span>
-          <div className="text-3xl font-black text-white italic tracking-tighter">₹{total}.00</div>
+      <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-t border-gray-900 pt-8">
+        <div className="flex flex-col text-center md:text-left w-full md:w-auto">
+          <span className="text-[9px] font-black text-gray-600 uppercase tracking-[0.3em]">Total Authorization</span>
+          <div className="text-4xl font-black text-white italic tracking-tighter">₹{total}.00</div>
         </div>
         <button
-          className={`w-full sm:w-auto bg-[#CCFF00] text-black font-black py-4 px-12 rounded-xl uppercase text-xs tracking-widest hover:shadow-[0_0_20px_rgba(204,255,0,0.4)] transition-all ${processing ? "opacity-50 cursor-not-allowed" : "active:scale-95"
-            }`}
+          className={`w-full md:w-auto bg-[#CCFF00] text-black font-black py-5 px-12 rounded-xl uppercase text-[10px] tracking-widest hover:shadow-[0_0_30px_rgba(204,255,0,0.4)] transition-all ${processing ? "opacity-50 cursor-not-allowed" : "active:scale-95"}`}
           type="submit"
           disabled={!stripe || processing}
         >
-          {processing ? "Authorizing..." : "Authorize & Pay"}
+          {processing ? "Establishing Link..." : "Initialize Payment"}
         </button>
       </div>
-      <div className="mt-6 flex justify-center items-center gap-2 text-gray-600">
-        <ShieldCheck size={14} />
-        <span className="text-[10px] font-bold uppercase tracking-widest">Encrypted SSL Transaction</span>
+      <div className="mt-8 flex justify-center items-center gap-3 text-gray-700">
+        <ShieldCheck size={14} className="text-[#CCFF00]/40" />
+        <span className="text-[8px] font-black uppercase tracking-[0.4em]">End-to-End Encryption Active</span>
       </div>
     </form>
   );
@@ -226,8 +221,8 @@ const BookingCheckout: React.FC = () => {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="h-12 w-12 border-2 border-t-[#CCFF00] border-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-[#CCFF00]">Securing Gateway</p>
+          <div className="h-10 w-10 border-2 border-t-[#CCFF00] border-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#CCFF00]">Securing Protocol</p>
         </div>
       </div>
     );
@@ -235,94 +230,93 @@ const BookingCheckout: React.FC = () => {
 
   if (!trainerData || !state) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center font-black uppercase italic tracking-tighter text-3xl">
-        Transaction Error
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center">
+        <h2 className="text-2xl font-black uppercase italic tracking-tighter mb-6">Link Mismatch Detected</h2>
+        <button onClick={() => navigate(-1)} className="bg-gray-900 text-[#CCFF00] px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest">Return to Roster</button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans p-8">
+    <div className="min-h-screen bg-black text-white font-sans p-4 md:p-8 pb-24 md:pb-8">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-10">
-          <p className="text-[#CCFF00] font-black text-xs tracking-widest uppercase mb-1">Secure Transaction</p>
-          <h1 className="text-5xl font-black tracking-tighter uppercase italic">Booking Checkout</h1>
+        <div className="flex items-center gap-4 mb-8 md:mb-12">
+          <button onClick={() => navigate(-1)} className="p-2.5 bg-gray-900 rounded-xl text-gray-400 hover:text-[#CCFF00] active:scale-90 transition-all">
+            <ChevronLeft size={20} />
+          </button>
+          <div>
+            <p className="text-[#CCFF00] font-black text-[9px] tracking-[0.4em] uppercase mb-0.5">Secure Transaction</p>
+            <h1 className="text-2xl md:text-5xl font-black tracking-tighter uppercase italic leading-none">Booking Checkout</h1>
+          </div>
         </div>
 
-        <div className="bg-[#0B0B0B] border border-gray-900 rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative overflow-hidden">
+        <div className="bg-[#0B0B0B] border border-gray-900 rounded-[2rem] md:rounded-[3rem] p-6 md:p-12 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#CCFF00] opacity-5 blur-[100px] pointer-events-none"></div>
 
           {/* Trainer Summary Card */}
-          <div className="flex flex-col md:flex-row items-center gap-8 mb-12 pb-12 border-b border-gray-900">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row items-center gap-6 md:gap-8 mb-10 pb-10 border-b border-gray-900">
+            <div className="relative shrink-0">
               <div className="absolute -inset-1 bg-[#CCFF00] rounded-full blur opacity-10"></div>
               <img
                 src={trainerData.profileImageUrl || "/placeholder.svg"}
                 alt={trainerData.name}
-                className="relative w-28 h-28 rounded-full object-cover grayscale brightness-75 border-2 border-gray-800"
+                className="relative w-24 h-24 md:w-28 md:h-28 rounded-full object-cover grayscale border-2 border-gray-800"
               />
             </div>
-            <div className="text-center md:text-left">
-              <h2 className="text-3xl font-black italic uppercase tracking-tighter text-[#CCFF00] mb-1">{trainerData.name}</h2>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em]">{trainerData.specializations}</p>
-              <div className="flex items-center justify-center md:justify-start mt-3 gap-1">
-                <span className="text-[#CCFF00] text-xs">★</span>
-                <span className="text-xs font-black italic">{trainerRating !== null ? trainerRating.toFixed(1) : "N/A"}</span>
+            <div className="text-center sm:text-left">
+              <h2 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter text-[#CCFF00] mb-1">{trainerData.name}</h2>
+              <p className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em]">{trainerData.specializations}</p>
+              <div className="flex items-center justify-center sm:justify-start mt-3 gap-2 bg-black/40 w-fit px-3 py-1 rounded-lg border border-gray-900 mx-auto sm:mx-0">
+                <span className="text-[#CCFF00] text-[10px]">★</span>
+                <span className="text-[10px] font-black italic">{trainerRating !== null ? trainerRating.toFixed(1) : "NEW"}</span>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            {/* Left: Booking Details */}
-            <div>
-              <div className="flex items-center gap-2 mb-6">
-                <Receipt className="text-[#CCFF00]" size={18} />
-                <h3 className="text-xs font-black uppercase tracking-widest">Booking Invoice</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+            {/* Booking Details */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Receipt className="text-[#CCFF00]" size={16} />
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Manifest</h3>
               </div>
-              <div className="bg-black border border-gray-900 rounded-2xl p-6 space-y-4">
-                <div className="flex justify-between items-center py-2 border-b border-gray-900/50">
-                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Plan</span>
-                  <span className="text-xs font-black uppercase italic text-[#CCFF00]">
-                    {isPackage ? "10 Session Package" : "Single Session"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-900/50">
-                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Deployment</span>
-                  <span className="text-xs font-black uppercase italic">
-                    {isPackage ? "Block Training" : formatDate(startDate)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-900/50">
-                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Time Slot</span>
-                  <span className="text-xs font-black uppercase italic">{time || "TBD"}</span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Expert</span>
-                  <span className="text-xs font-black uppercase italic">{trainerData.name}</span>
-                </div>
+              <div className="bg-black border border-gray-900 rounded-2xl p-5 md:p-6 space-y-5">
+                {[
+                  { label: "Operation", val: isPackage ? "10 Session Bundle" : "Single Deployment", highlight: true },
+                  { label: "Window", val: isPackage ? "Cycle Based" : formatDate(startDate) },
+                  { label: "Slot", val: time || "Pending Allocation" },
+                  { label: "Operative", val: trainerData.name }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex justify-between items-center py-1 border-b border-gray-900/50 last:border-0 pb-3 last:pb-0">
+                    <span className="text-[9px] font-black text-gray-700 uppercase tracking-widest">{item.label}</span>
+                    <span className={`text-[11px] font-black uppercase italic ${item.highlight ? "text-[#CCFF00]" : "text-gray-300"}`}>
+                      {item.val}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Right: Pricing Breakdown */}
-            <div>
-              <div className="flex items-center gap-2 mb-6">
-                <User className="text-[#CCFF00]" size={18} />
-                <h3 className="text-xs font-black uppercase tracking-widest">Pricing Ledger</h3>
+            {/* Pricing Ledger */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-2">
+                <User className="text-[#CCFF00]" size={16} />
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Ledger</h3>
               </div>
-              <div className="bg-black border border-gray-900 rounded-2xl p-6 space-y-4">
-                <div className="flex justify-between items-center py-2 border-b border-gray-900/50">
-                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Unit Price</span>
-                  <span className="text-xs font-black italic">₹{price}.00</span>
+              <div className="bg-black border border-gray-900 rounded-2xl p-5 md:p-6 space-y-4">
+                <div className="flex justify-between items-center py-1 border-b border-gray-900/50 pb-3">
+                  <span className="text-[9px] font-black text-gray-700 uppercase tracking-widest">Base Rate</span>
+                  <span className="text-[11px] font-black italic text-gray-400">₹{price}.00</span>
                 </div>
                 {isPackage && (
-                  <div className="flex justify-between items-center py-2 border-b border-gray-900/50">
-                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Quantity</span>
-                    <span className="text-xs font-black italic">x10</span>
+                  <div className="flex justify-between items-center py-1 border-b border-gray-900/50 pb-3">
+                    <span className="text-[9px] font-black text-gray-700 uppercase tracking-widest">Quantity</span>
+                    <span className="text-[11px] font-black italic text-[#CCFF00]">x10 Units</span>
                   </div>
                 )}
-                <div className="flex justify-between items-center py-4 bg-[#CCFF00]/5 -mx-6 px-6">
-                  <span className="text-[10px] font-black text-[#CCFF00] uppercase tracking-[0.2em]">Total Balance</span>
-                  <span className="text-xl font-black italic tracking-tighter text-white">₹{total}.00</span>
+                <div className="flex justify-between items-center py-4 bg-[#CCFF00]/5 -mx-5 md:-mx-6 px-5 md:px-6 mt-4">
+                  <span className="text-[10px] font-black text-[#CCFF00] uppercase tracking-[0.3em]">Net Balance</span>
+                  <span className="text-2xl font-black italic tracking-tighter text-white">₹{total}.00</span>
                 </div>
               </div>
             </div>
