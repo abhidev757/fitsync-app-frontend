@@ -74,9 +74,16 @@ const SigninPage: React.FC = () => {
 
   return (
     <AuthLayout title="Welcome Back">
+      {/* Top Left FitSync Branding */}
+      <div className="absolute top-6 left-6 z-10">
+        <Link to="/" className="text-[#CCFF00] font-black text-2xl uppercase italic tracking-tighter hover:drop-shadow-[0_0_15px_rgba(204,255,0,0.5)] transition-all">
+          FitSync
+        </Link>
+      </div>
+
       {/* Top Right "Become a Trainer" Button - Adjusted to Lime/Black */}
-      <div className="absolute top-6 right-6">
-        <Link to="/trainerSignup">
+      <div className="absolute top-6 right-6 z-10">
+        <Link to="/trainerSignin">
           <button className="px-4 py-2 bg-[#CCFF00] text-black font-bold rounded-sm shadow-[0_0_15px_rgba(204,255,0,0.2)] hover:bg-white transition-all text-sm uppercase tracking-tight">
             Become a Trainer
           </button>

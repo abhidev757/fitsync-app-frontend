@@ -79,9 +79,11 @@ function SigninPage() {
         <div className="max-w-7xl mx-auto flex justify-between items-center">
             <div className="flex flex-col">
                 <span className="text-[#CCFF00] font-black text-[10px] tracking-[0.4em] uppercase mb-0.5">Expert Portal</span>
-                <h1 className="text-xl font-black italic uppercase tracking-tighter">
-                FIT<span className="text-[#CCFF00]">SYNC</span> OPS
-                </h1>
+                <Link to="/">
+                  <h1 className="text-xl font-black italic uppercase tracking-tighter hover:drop-shadow-[0_0_15px_rgba(204,255,0,0.5)] transition-all cursor-pointer">
+                  FIT<span className="text-[#CCFF00]">SYNC</span> OPS
+                  </h1>
+                </Link>
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest text-gray-600 italic">Auth_Session_v2.0</span>
         </div>

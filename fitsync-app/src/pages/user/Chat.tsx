@@ -109,7 +109,7 @@ const ChatPage: React.FC = () => {
   }, [myUserId, trainerId, trainer.name]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages]);
 
   useEffect(() => {

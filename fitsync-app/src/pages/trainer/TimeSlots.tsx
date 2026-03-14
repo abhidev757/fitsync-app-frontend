@@ -162,23 +162,44 @@ export default function TimeSlots() {
                 <span className="text-[9px] font-black text-[#CCFF00] uppercase tracking-widest bg-[#CCFF00]/10 px-3 py-1 rounded-lg">Active</span>
               </div>
               <div className="p-6 space-y-3">
-                {day.slots.map((slot) => (
-                  <div key={slot.id} className="group relative flex items-center justify-between p-4 bg-black border border-gray-900 rounded-2xl hover:border-[#CCFF00]/30 transition-all">
-                    <div className="flex items-center gap-4">
-                      <Clock size={16} className="text-gray-700 group-hover:text-[#CCFF00] transition-colors" />
-                      <div>
-                        <p className="text-white text-xs font-black italic uppercase tracking-tight">{slot.time}</p>
-                        <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">{slot.type}</p>
+                {day.slots.map((slot) => {
+                  const now = new Date();
+                  const slotDate = new Date(day.date);
+                  const timeParts = slot.time.split('-').map(p => p.trim());
+                  const endTimeStr = timeParts.length > 1 ? timeParts[1] : timeParts[0];
+
+                  const match = endTimeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+                  if (match) {
+                    let hours = parseInt(match[1], 10);
+                    const minutes = parseInt(match[2], 10);
+                    const period = match[3].toUpperCase();
+                    if (period === 'PM' && hours < 12) hours += 12;
+                    if (period === 'AM' && hours === 12) hours = 0;
+                    slotDate.setHours(hours, minutes, 0, 0);
+                  }
+
+                  const isExpired = slotDate < now;
+
+                  return (
+                    <div key={slot.id} className={`group relative flex items-center justify-between p-4 bg-black border rounded-2xl transition-all ${isExpired ? "border-red-900/50 hover:border-red-800" : "border-gray-900 hover:border-[#CCFF00]/30"}`}>
+                      <div className="flex items-center gap-4">
+                        <Clock size={16} className={`transition-colors ${isExpired ? "text-red-900" : "text-gray-700 group-hover:text-[#CCFF00]"}`} />
+                        <div>
+                          <p className={`text-xs font-black italic uppercase tracking-tight ${isExpired ? "text-red-500/80" : "text-white"}`}>
+                            {slot.time} {isExpired && <span className="ml-2 text-[8px] tracking-widest text-red-500">EXPIRED</span>}
+                          </p>
+                          <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">{slot.type}</p>
+                        </div>
                       </div>
+                      <button
+                        onClick={() => handleDeleteSlot(slot.id)}
+                        className={`p-2 rounded-lg transition-all ${isExpired ? "text-red-600 hover:text-red-400 hover:bg-red-500/20" : "text-gray-800 hover:text-red-500 hover:bg-red-500/10"}`}
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleDeleteSlot(slot.id)}
-                      className="p-2 text-gray-800 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
                 <button onClick={() => setShowModal(true)} className="w-full py-4 border border-dashed border-gray-900 rounded-2xl text-[9px] font-black uppercase tracking-widest text-gray-700 hover:text-white hover:border-gray-700 transition-all flex items-center justify-center gap-2">
                   <Plus size={12} /> Sync Extra
                 </button>

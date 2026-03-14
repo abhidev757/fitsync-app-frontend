@@ -142,7 +142,7 @@ const CheckoutForm: React.FC<{
       <div className="flex flex-col sm:flex-row justify-between items-center gap-6 border-t border-gray-900 pt-8">
         <div className="flex flex-col">
           <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Authorized Amount</span>
-          <div className="text-3xl font-black text-white italic tracking-tighter">${total}.00</div>
+          <div className="text-3xl font-black text-white italic tracking-tighter">₹{total}.00</div>
         </div>
         <button
           className={`w-full sm:w-auto bg-[#CCFF00] text-black font-black py-4 px-12 rounded-xl uppercase text-xs tracking-widest hover:shadow-[0_0_20px_rgba(204,255,0,0.4)] transition-all ${processing ? "opacity-50 cursor-not-allowed" : "active:scale-95"
@@ -312,7 +312,7 @@ const BookingCheckout: React.FC = () => {
               <div className="bg-black border border-gray-900 rounded-2xl p-6 space-y-4">
                 <div className="flex justify-between items-center py-2 border-b border-gray-900/50">
                   <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Unit Price</span>
-                  <span className="text-xs font-black italic">${price}.00</span>
+                  <span className="text-xs font-black italic">₹{price}.00</span>
                 </div>
                 {isPackage && (
                   <div className="flex justify-between items-center py-2 border-b border-gray-900/50">
@@ -322,7 +322,7 @@ const BookingCheckout: React.FC = () => {
                 )}
                 <div className="flex justify-between items-center py-4 bg-[#CCFF00]/5 -mx-6 px-6">
                   <span className="text-[10px] font-black text-[#CCFF00] uppercase tracking-[0.2em]">Total Balance</span>
-                  <span className="text-xl font-black italic tracking-tighter text-white">${total}.00</span>
+                  <span className="text-xl font-black italic tracking-tighter text-white">₹{total}.00</span>
                 </div>
               </div>
             </div>

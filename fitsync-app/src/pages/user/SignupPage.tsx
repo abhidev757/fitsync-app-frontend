@@ -37,7 +37,7 @@ const SignupPage = () => {
     const hasNumber = /\d/.test(pwd);
     const isLongEnough = pwd.length >= 8;
     const isVeryLong = pwd.length >= 10;
-  
+
     if (hasUpper && hasLower && hasNumber && isVeryLong) return "Strong";
     if (hasUpper && hasLower && hasNumber && isLongEnough) return "Medium";
     return "Weak";
@@ -51,10 +51,41 @@ const SignupPage = () => {
     }
   }, [password]);
 
+  // --- Tactical Validation Logic ---
+  const validateForm = () => {
+    // 1. Name Check (Minimum 3 chars, letters only)
+    const nameRegex = /^[a-zA-Z\s]{3,}$/;
+    if (!nameRegex.test(name)) {
+      toast.error("IDENT-ERROR: Name must be at least 3 letters.");
+      return false;
+    }
+
+    // 2. Email Check (Standard Comms Format)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("COMMS-ERROR: Invalid email frequency.");
+      return false;
+    }
+
+    // 3. Password Strength (System Security Minimum)
+    if (strength === "Weak") {
+      toast.error("SEC-CRITICAL: Password protocol too weak.");
+      return false;
+    }
+
+    // 4. Credential Sync (Match Check)
+    if (password !== confirmPassword) {
+      toast.error("SYNC-ERROR: Credential mismatch.");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) {
       toast.error("Google authentication failed. No credentials received.");
-      return;
+      return false;
     }
 
     try {
@@ -72,13 +103,8 @@ const SignupPage = () => {
     e.preventDefault();
     setErrors([]);
 
-    if (password !== confirmPassword) {
-      return toast.error("Passwords do not match.");
-    }
-
-    if (strength === "Weak") {
-      return toast.error("Password is too weak.");
-    }
+    // Execute Pre-flight Validation
+    if (!validateForm()) return;
 
     try {
       const data = await registerUser({ name, email, password });
@@ -88,27 +114,36 @@ const SignupPage = () => {
       localStorage.setItem("userId", data._id);
       localStorage.setItem("emailId", data.email);
 
-      toast.success("Registration successful! Please verify your email.");
+      toast.success("Registration successful! Verify email to initialize.");
       setTimeout(() => navigate("/otpVerification"), 1000);
     } catch (error) {
       const err = error as AxiosError<{ message?: string; errors?: string[] }>;
-
-      if (err.response?.data?.errors) {
-        setErrors(err.response.data.errors);
+      if (err.response?.status === 409) {
+        toast.error("ID-EXISTS: Personnel already registered.");
       } else {
-        setErrors(["An unexpected error occurred. Please try again later."]);
+        toast.error("LINK-FAILURE: System could not reach registry.");
       }
-
-      toast.error("User already exist");
     }
+  };
+
+  // Border Style Helper
+  const getInputClass = (isValid: boolean, currentVal: string) => {
+    const base = "w-full px-4 py-3 bg-[#0D1117] border placeholder-gray-600 text-white rounded-xl focus:outline-none transition-all sm:text-sm";
+    if (currentVal.length === 0) return `${base} border-gray-800 focus:ring-1 focus:ring-[#CCFF00]`;
+    return `${base} ${isValid ? 'border-[#CCFF00]/40' : 'border-red-500/50'}`;
   };
 
   return (
     <AuthLayout title="Create An Account">
-      {/* Become a Trainer Button - Synced with Elite Hybrid style */}
-      <div className="absolute top-6 right-6">
-        <Link to="/trainerSignup">
-          <button className="px-4 py-2 bg-[#CCFF00] text-black font-black rounded-sm shadow-[0_0_15px_rgba(204,255,0,0.2)] hover:bg-white transition-all text-xs uppercase tracking-tight">
+      <div className="absolute top-6 left-6 z-10">
+        <Link to="/" className="text-[#CCFF00] font-black text-2xl uppercase italic tracking-tighter hover:drop-shadow-[0_0_15px_rgba(204,255,0,0.5)] transition-all">
+          FitSync
+        </Link>
+      </div>
+
+      <div className="absolute top-6 right-6 z-10">
+        <Link to="/trainerSignin">
+          <button className="px-4 py-2 bg-[#CCFF00] text-black font-black rounded-sm shadow-[0_0_15px_rgba(204,255,0,0.2)] hover:bg-white transition-all text-[10px] uppercase tracking-[0.2em]">
             Become a Trainer
           </button>
         </Link>
@@ -118,21 +153,18 @@ const SignupPage = () => {
         <div className="space-y-3">
           <input
             id="name"
-            name="name"
             type="text"
             required
-            className="w-full px-4 py-3 bg-[#0D1117] border border-gray-800 placeholder-gray-600 text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-[#CCFF00] transition-all sm:text-sm"
+            className={getInputClass(/^[a-zA-Z\s]{3,}$/.test(name), name)}
             placeholder="Your full name"
             value={name}
-            onChange={(e) => setName(e.target.value.trim())}
+            onChange={(e) => setName(e.target.value)}
           />
           <input
             id="email"
-            name="email"
             type="email"
-            autoComplete="email"
             required
-            className="w-full px-4 py-3 bg-[#0D1117] border border-gray-800 placeholder-gray-600 text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-[#CCFF00] transition-all sm:text-sm"
+            className={getInputClass(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email), email)}
             placeholder="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -141,10 +173,9 @@ const SignupPage = () => {
           <div className="relative">
             <input
               id="password"
-              name="password"
               type={showPassword ? "text" : "password"}
               required
-              className="w-full px-4 py-3 bg-[#0D1117] border border-gray-800 placeholder-gray-600 text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-[#CCFF00] transition-all sm:text-sm"
+              className={getInputClass(strength !== "Weak", password)}
               placeholder="Create Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -158,16 +189,15 @@ const SignupPage = () => {
             </button>
           </div>
 
-          {/* Password Strength Indicator - Color coded for brand sync */}
           {strength && (
             <div className="px-1 flex items-center justify-between">
               <div className="flex space-x-1">
-                <div className={`h-1 w-8 rounded-full ${password ? (strength === 'Weak' ? 'bg-red-500' : strength === 'Medium' ? 'bg-[#CCFF00]/50' : 'bg-[#CCFF00]') : 'bg-gray-800'}`}></div>
-                <div className={`h-1 w-8 rounded-full ${strength === 'Medium' || strength === 'Strong' ? (strength === 'Medium' ? 'bg-[#CCFF00]/50' : 'bg-[#CCFF00]') : 'bg-gray-800'}`}></div>
-                <div className={`h-1 w-8 rounded-full ${strength === 'Strong' ? 'bg-[#CCFF00]' : 'bg-gray-800'}`}></div>
+                <div className={`h-1 w-8 rounded-full transition-colors ${password ? (strength === 'Weak' ? 'bg-red-500' : 'bg-[#CCFF00]') : 'bg-gray-800'}`}></div>
+                <div className={`h-1 w-8 rounded-full transition-colors ${strength === 'Medium' || strength === 'Strong' ? 'bg-[#CCFF00]' : 'bg-gray-800'}`}></div>
+                <div className={`h-1 w-8 rounded-full transition-colors ${strength === 'Strong' ? 'bg-[#CCFF00]' : 'bg-gray-800'}`}></div>
               </div>
               <span className={`text-[10px] font-black uppercase tracking-widest ${strength === "Strong" ? "text-[#CCFF00]" : strength === "Medium" ? "text-[#CCFF00]/60" : "text-red-500"}`}>
-                {strength}
+                {strength} Protocol
               </span>
             </div>
           )}
@@ -175,10 +205,9 @@ const SignupPage = () => {
           <div className="relative">
             <input
               id="confirmPassword"
-              name="confirmPassword"
               type={showConfirm ? "text" : "password"}
               required
-              className="w-full px-4 py-3 bg-[#0D1117] border border-gray-800 placeholder-gray-600 text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-[#CCFF00] transition-all sm:text-sm"
+              className={getInputClass(confirmPassword.length > 0 && confirmPassword === password, confirmPassword)}
               placeholder="Confirm Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -196,9 +225,9 @@ const SignupPage = () => {
         <div className="pt-2">
           <button
             type="submit"
-            className="w-full py-4 px-4 bg-[#CCFF00] text-black font-black uppercase tracking-widest rounded-xl hover:shadow-[0_0_20px_rgba(204,255,0,0.4)] transition-all active:scale-[0.98] focus:outline-none"
+            className="w-full py-4 px-4 bg-[#CCFF00] text-black font-black uppercase tracking-[0.3em] text-[11px] rounded-xl hover:shadow-[0_0_20px_rgba(204,255,0,0.4)] transition-all active:scale-[0.98] focus:outline-none"
           >
-            Start Your Journey
+            Start Your Evolution
           </button>
         </div>
       </form>
@@ -214,12 +243,12 @@ const SignupPage = () => {
         </div>
 
         <div className="mt-8 flex justify-center">
-           <div className="p-1 bg-white rounded-md">
+           <div className="p-1 bg-white rounded-md overflow-hidden">
             <GoogleLogin
               theme="outline"
               shape="rectangular"
               onSuccess={handleGoogleSuccess}
-              onError={() => toast.error("Google Sign Up was unsuccessful")}
+              onError={() => toast.error("Google initialization failed.")}
             />
           </div>
         </div>
@@ -227,7 +256,7 @@ const SignupPage = () => {
 
       <div className="mt-10 text-center">
         <Link to="/signin">
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest hover:text-[#CCFF00] transition-all cursor-pointer">
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] hover:text-[#CCFF00] transition-all cursor-pointer">
             Already a member? <span className="text-white underline decoration-[#CCFF00] decoration-2 underline-offset-4">Sign in</span>
           </span>
         </Link>

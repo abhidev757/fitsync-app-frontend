@@ -117,7 +117,7 @@ export default function TrainerLiveSessions() {
                     
                     <div className="flex flex-wrap gap-6">
                         <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest">
-                            <Calendar size={12} className="text-[#CCFF00]" /> {new Date(session.startDate).toLocaleDateString()}
+                            <Calendar size={12} className="text-[#CCFF00]" /> {new Date(session.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                         </div>
                         <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest">
                             <Clock size={12} className="text-[#CCFF00]" /> {session.sessionTime}

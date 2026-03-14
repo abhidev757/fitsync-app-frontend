@@ -212,7 +212,7 @@ const TrainerProfile = () => {
               <div className="absolute -inset-4 bg-[#CCFF00] rounded-full blur-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-700"></div>
               <div className="relative">
                 <img
-                  src={avatarUrl || "https://via.placeholder.com/96"}
+                  src={avatarUrl || "/images/pro-pic.svg"}
                   alt="Identity"
                   className="w-32 h-32 rounded-[2rem] mx-auto object-cover grayscale group-hover:grayscale-0 transition-all duration-500 border-2 border-gray-800 group-hover:border-[#CCFF00]"
                 />

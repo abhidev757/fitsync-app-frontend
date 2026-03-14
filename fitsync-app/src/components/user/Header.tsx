@@ -16,12 +16,14 @@ const Header = () => {
   const userInfo = useSelector((state: RootState) => state.auth.userInfo);
   const [socketReady, setSocketReady] = useState(false);
   
-  const [profilePic, setProfilePic] = useState("/placeholder.svg");
+  const [profilePic, setProfilePic] = useState("/images/pro-pic.svg");
   
   useEffect(() => {
     const storedPic = localStorage.getItem("profilePic");
-    if (storedPic) {
+    if (storedPic && storedPic !== "undefined" && storedPic !== "null" && storedPic.trim() !== "") {
       setProfilePic(storedPic);
+    } else {
+      setProfilePic("/images/pro-pic.svg");
     }
   }, []);
 

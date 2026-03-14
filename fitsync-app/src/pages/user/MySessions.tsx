@@ -68,43 +68,77 @@ const MySessions: React.FC = () => {
     fetchBookings();
   }, []);
 
-  const sessions = bookings.map((booking) => ({
-    id: booking._id,
-    meetingId: booking.meetingId,
-    meetingStatus: booking.meetingStatus,
-    trainerName: booking.trainerId?.name,
-    trainerId: booking.trainerId?._id,
-    trainerImage: booking.trainerId.profileImageUrl || "https://via.placeholder.com/80",
-    sessionType: "Training Session",
-    date: new Date(booking.startDate).toLocaleDateString(),
-    time: booking.sessionTime,
-    status:
-      booking.status === "confirmed"
-        ? "upcoming"
-        : booking.status === "completed"
-        ? "completed"
-        : "cancelled",
-  }));
+  const parse12HourTime = (timeStr: string): { hours: number, minutes: number } => {
+    const [time, modifier] = timeStr.trim().split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    if (hours === 12) {
+      hours = 0;
+    }
+    if (modifier && modifier.toUpperCase() === 'PM') {
+      hours += 12;
+    }
+    return { hours, minutes };
+  };
 
-  const upcomingSessions = bookings
-    .filter((booking) => booking.status === "confirmed")
-    .map((booking) => ({
+  const isSessionPassed = (startDateStr: string, sessionTimeStr: string): boolean => {
+    try {
+      if (!sessionTimeStr) return false;
+      const parts = sessionTimeStr.split("-");
+      if (parts.length < 2) return false;
+
+      const endTimeStr = parts[1].trim();
+      const { hours, minutes } = parse12HourTime(endTimeStr);
+
+      const expirationDate = new Date(startDateStr);
+      expirationDate.setHours(hours, minutes, 0, 0);
+
+      return expirationDate < new Date();
+    } catch {
+      return false;
+    }
+  };
+
+  const sessions = bookings.map((booking) => {
+    const passed = booking.status === "confirmed" && isSessionPassed(booking.startDate, booking.sessionTime);
+    let statusStr = "upcoming";
+    
+    if (booking.status === "completed") statusStr = "completed";
+    else if (booking.status === "cancelled") statusStr = "cancelled";
+    else if (passed) statusStr = "passed";
+
+    return {
       id: booking._id,
-      trainer: booking.trainerId.name,
-      type: "Training Session",
+      meetingId: booking.meetingId,
+      meetingStatus: booking.meetingStatus,
+      trainerName: booking.trainerId?.name,
+      trainerId: booking.trainerId?._id,
+      trainerImage: booking.trainerId.profileImageUrl || "https://via.placeholder.com/80",
+      sessionType: "Training Session",
+      date: new Date(booking.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
       time: booking.sessionTime,
+      status: statusStr,
+    };
+  });
+
+  const upcomingSessions = sessions
+    .filter((session) => session.status === "upcoming")
+    .map((session) => ({
+      id: session.id,
+      trainer: session.trainerName,
+      type: session.sessionType,
+      time: session.time,
     }))
     .slice(0, 4);
 
-  const recentActivities = bookings
-    .map((booking) => ({
-      id: booking._id,
-      description: `Session with ${booking.trainerId.name}`,
-      date: new Date(booking.startDate).toLocaleDateString(),
+  const recentActivities = sessions
+    .map((session) => ({
+      id: session.id,
+      description: `Session with ${session.trainerName}`,
+      date: session.date,
       type:
-        booking.status === "confirmed"
+        session.status === "upcoming"
           ? "upcoming"
-          : booking.status === "completed"
+          : session.status === "completed"
           ? "completion"
           : "payment",
     }))
@@ -264,6 +298,11 @@ const MySessions: React.FC = () => {
                           <Video size={16} className="mr-2" />
                           {session.meetingStatus === "live" ? "Join Now" : "Waiting"}
                         </button>
+                      )}
+                      {session.status === "passed" && (
+                        <div className="flex items-center px-4 py-3 bg-gray-800 text-gray-400 rounded-xl text-xs font-black uppercase tracking-widest cursor-not-allowed">
+                          <Clock size={14} className="mr-2" /> Passed
+                        </div>
                       )}
                     </>
                   )}

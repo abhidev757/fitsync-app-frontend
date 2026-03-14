@@ -194,35 +194,63 @@ const TrainerDetails: React.FC = () => {
                 <div>
                   <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 mb-6">Individual Ops</h3>
                   <div className="grid grid-cols-1 gap-4">
-                    {trainerData.timeSlots && trainerData.timeSlots.length > 0 ? (
-                      trainerData.timeSlots.map((slot, i) => (
-                        <div key={i} className="flex flex-col sm:flex-row items-center justify-between p-6 bg-black border border-gray-900 rounded-2xl hover:border-[#CCFF00]/40 transition-all group">
-                          <div className="flex items-center gap-6 mb-4 sm:mb-0">
-                            <Calendar className="text-[#CCFF00] hidden sm:block" size={24} />
-                            <div>
-                              <p className="font-black text-xl italic uppercase tracking-tighter group-hover:text-[#CCFF00] transition-colors">
-                                {format(new Date(slot.startDate), "MMMM dd, yyyy")}
-                              </p>
-                              <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">{slot.time}</p>
+                    {(() => {
+                      const getFutureSlots = () => {
+                        if (!trainerData.timeSlots) return [];
+                        const now = new Date();
+                        return trainerData.timeSlots.filter(slot => {
+                          const slotDate = new Date(slot.startDate);
+                          // Extract start time, e.g., "10:00 AM" from "10:00 AM - 11:00 AM"
+                          const timeStr = slot.time.split('-')[0].trim();
+                          const timeMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+                          
+                          if (timeMatch) {
+                            let hours = parseInt(timeMatch[1], 10);
+                            const minutes = parseInt(timeMatch[2], 10);
+                            const period = timeMatch[3].toUpperCase();
+                            
+                            if (period === 'PM' && hours < 12) hours += 12;
+                            if (period === 'AM' && hours === 12) hours = 0;
+                            
+                            slotDate.setHours(hours, minutes, 0, 0);
+                          }
+                          
+                          return slotDate > now;
+                        });
+                      };
+
+                      const futureSlots = getFutureSlots();
+
+                      return futureSlots.length > 0 ? (
+                        futureSlots.map((slot, i) => (
+                          <div key={i} className="flex flex-col sm:flex-row items-center justify-between p-6 bg-black border border-gray-900 rounded-2xl hover:border-[#CCFF00]/40 transition-all group">
+                            <div className="flex items-center gap-6 mb-4 sm:mb-0">
+                              <Calendar className="text-[#CCFF00] hidden sm:block" size={24} />
+                              <div>
+                                <p className="font-black text-xl italic uppercase tracking-tighter group-hover:text-[#CCFF00] transition-colors">
+                                  {format(new Date(slot.startDate), "MMMM dd, yyyy")}
+                                </p>
+                                <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">{slot.time}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-6">
+                              <div className="text-right">
+                                <p className="text-2xl font-black text-[#CCFF00] tracking-tighter italic">₹{slot.price}</p>
+                                <p className="text-[8px] font-black text-gray-600 uppercase">Single Session</p>
+                              </div>
+                              <button
+                                onClick={() => handleBookNow(slot.time, slot.price, slot.startDate)}
+                                className="bg-[#CCFF00] text-black px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:shadow-[0_0_20px_rgba(204,255,0,0.4)] transition-all"
+                              >
+                                Reserve
+                              </button>
                             </div>
                           </div>
-                          <div className="flex items-center gap-6">
-                            <div className="text-right">
-                              <p className="text-2xl font-black text-[#CCFF00] tracking-tighter italic">${slot.price}</p>
-                              <p className="text-[8px] font-black text-gray-600 uppercase">Single Session</p>
-                            </div>
-                            <button
-                              onClick={() => handleBookNow(slot.time, slot.price, slot.startDate)}
-                              className="bg-[#CCFF00] text-black px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:shadow-[0_0_20px_rgba(204,255,0,0.4)] transition-all"
-                            >
-                              Reserve
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="py-12 text-center border-2 border-dashed border-gray-900 rounded-2xl italic text-gray-600 font-bold uppercase text-xs">No Active Slots</div>
-                    )}
+                        ))
+                      ) : (
+                        <div className="py-12 text-center border-2 border-dashed border-gray-900 rounded-2xl italic text-gray-600 font-bold uppercase text-xs">No Active Slots</div>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -238,7 +266,7 @@ const TrainerDetails: React.FC = () => {
                           <p className="text-[10px] text-gray-600 font-bold mt-2 uppercase">{pkg.dateRange}</p>
                         </div>
                         <div className="flex items-center justify-between pt-6 border-t border-gray-900/50">
-                          <p className="text-2xl font-black tracking-tighter italic">${pkg.price}</p>
+                          <p className="text-2xl font-black tracking-tighter italic">₹{pkg.price}</p>
                           <button
                             onClick={() => handleBookNow(pkg.time, pkg.price, pkg.dateRange, true)}
                             className="bg-white text-black px-6 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#CCFF00] transition-colors"

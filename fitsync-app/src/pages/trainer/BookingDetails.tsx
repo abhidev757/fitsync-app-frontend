@@ -186,7 +186,7 @@ export default function BookingDetailsPage() {
                         </div>
                         <div>
                             <p className="text-[9px] font-black text-gray-700 uppercase tracking-[0.2em] mb-1">Asset Value</p>
-                            <p className="text-xl font-black italic text-white tracking-tight">${booking.amount}</p>
+                            <p className="text-xl font-black italic text-white tracking-tight">₹{booking.amount}</p>
                         </div>
                     </div>
 
