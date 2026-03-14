@@ -150,7 +150,7 @@ export default function BookingsPage() {
                 <div className="space-y-4 mb-8">
                   <div className="flex justify-between items-center border-b border-gray-900 pb-3">
                     <span className="text-[9px] font-black text-gray-700 uppercase tracking-widest">Deployment Date</span>
-                    <span className="text-xs font-bold italic text-white">{new Date(booking.startDate).toLocaleDateString()}</span>
+                    <span className="text-xs font-bold italic text-white">{new Date(booking.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                   </div>
                   <div className="flex justify-between items-center border-b border-gray-900 pb-3">
                     <span className="text-[9px] font-black text-gray-700 uppercase tracking-widest">Time Slot</span>

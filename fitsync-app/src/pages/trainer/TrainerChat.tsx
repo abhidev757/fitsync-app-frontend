@@ -85,7 +85,7 @@ export default function TrainerChat() {
   }, [trainerId, selectedChatId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages]);
 
   useEffect(() => {
@@ -265,7 +265,7 @@ export default function TrainerChat() {
                         {m.imageUrl ? (
                           <img src={m.imageUrl} className="rounded-xl border border-black/10 shadow-lg" alt="" />
                         ) : (
-                          <p className="text-sm leading-relaxed tracking-tight font-medium uppercase italic">{m.text}</p>
+                          <p className="text-sm leading-relaxed tracking-tight font-medium italic">{m.text}</p>
                         )}
                       </div>
                       <div className={`mt-2 flex items-center gap-2 text-[8px] font-black uppercase tracking-widest ${m.sender === "trainer" ? "flex-row-reverse text-gray-500" : "text-gray-600"}`}>
@@ -300,7 +300,7 @@ export default function TrainerChat() {
               <input
                 type="text"
                 placeholder="Secure transmission..."
-                className="flex-1 bg-transparent text-sm font-bold italic uppercase tracking-tight text-white focus:outline-none placeholder-gray-800"
+                className="flex-1 bg-transparent text-sm font-bold italic tracking-tight text-white focus:outline-none placeholder-gray-800"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={(e) => {

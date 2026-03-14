@@ -82,7 +82,7 @@ const Profile = () => {
           activityLevel: userData.activity || "N/A",
           currentWeight: userData.weight || "N/A",
           targetWeight: userData.targetWeight || "N/A",
-          avatar: userData.profileImageUrl || "https://via.placeholder.com/150",
+          avatar: userData.profileImageUrl || "/images/pro-pic.svg",
         });
 
         setLoading(false);

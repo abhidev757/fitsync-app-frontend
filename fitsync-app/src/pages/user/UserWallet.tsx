@@ -95,7 +95,7 @@ export default function UserWalletPage() {
           <div>
             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Available Liquidity</p>
             <h2 className="text-5xl font-black text-white italic tracking-tighter">
-              ${balance.toFixed(2)}
+              ₹{balance.toFixed(2)}
             </h2>
           </div>
         </div>
@@ -143,7 +143,7 @@ export default function UserWalletPage() {
                   </td>
                   <td className={`py-5 px-4 text-right font-black italic text-lg tracking-tighter ${tx.type === "credit" ? "text-white" : "text-gray-500"
                     }`}>
-                    {tx.type === "credit" ? "+" : "-"}${tx.amount.toFixed(2)}
+                    {tx.type === "credit" ? "+" : "-"}₹{tx.amount.toFixed(2)}
                   </td>
                 </tr>
               ))}
@@ -196,11 +196,11 @@ export default function UserWalletPage() {
               <div className="space-y-8">
                 <div className="bg-black border border-gray-900 rounded-2xl p-6">
                   <label className="block text-gray-600 text-[9px] font-black uppercase tracking-widest mb-2">Maximum Allocation</label>
-                  <div className="text-3xl font-black text-white italic tracking-tighter">${balance.toFixed(2)}</div>
+                  <div className="text-3xl font-black text-white italic tracking-tighter">₹{balance.toFixed(2)}</div>
                 </div>
 
                 <div>
-                  <label className="block text-gray-600 text-[9px] font-black uppercase tracking-widest mb-3 ml-2">Withdrawal amount ($)</label>
+                  <label className="block text-gray-600 text-[9px] font-black uppercase tracking-widest mb-3 ml-2">Withdrawal amount (₹)</label>
                   <input
                     type="number"
                     value={withdrawAmount}

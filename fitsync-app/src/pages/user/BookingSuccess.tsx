@@ -61,7 +61,7 @@ const PaymentSuccess: React.FC = () => {
                   </div>
                   <div className="flex justify-between items-center py-1 border-b border-gray-900/50">
                     <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Schedule</span>
-                    <span className="text-sm font-black uppercase italic">{bookingData.startDate} @ {bookingData.time}</span>
+                    <span className="text-sm font-black uppercase italic">{new Date(bookingData.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} @ {bookingData.time}</span>
                   </div>
                   <div className="flex justify-between items-center py-1">
                     <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Integration</span>

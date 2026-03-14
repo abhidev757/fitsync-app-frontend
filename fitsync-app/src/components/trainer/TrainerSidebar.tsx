@@ -1,4 +1,5 @@
 // src/components/trainer/TrainerSidebar.tsx
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutGrid,
@@ -20,6 +21,7 @@ const TrainerSidebar = () => {
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -96,7 +98,7 @@ const TrainerSidebar = () => {
       <div className="mt-auto w-full flex flex-col items-center pb-4">
         <div className="w-8 h-[1px] bg-gray-900 mb-8"></div>
         <button
-          onClick={handleLogout}
+          onClick={() => setIsLogoutModalOpen(true)}
           className="group relative flex justify-center w-full py-2"
         >
           <div className="p-3.5 rounded-2xl text-gray-700 hover:text-red-500 hover:bg-red-500/10 transition-all">
@@ -108,6 +110,33 @@ const TrainerSidebar = () => {
           </span>
         </button>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {isLogoutModalOpen && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[100] p-6">
+          <div className="bg-[#0B0B0B] border border-gray-900 rounded-3xl p-8 w-full max-w-sm shadow-[0_0_50px_rgba(204,255,0,0.05)]">
+            <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter mb-2 text-center">Terminate Session?</h3>
+            <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest text-center mb-8">Confirm to exit FitSync Command Center</p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setIsLogoutModalOpen(false)}
+                className="flex-1 py-4 bg-gray-900 hover:bg-gray-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setIsLogoutModalOpen(false);
+                  handleLogout();
+                }}
+                className="flex-1 py-4 bg-[#CCFF00] hover:shadow-[0_0_20px_rgba(204,255,0,0.3)] text-black rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

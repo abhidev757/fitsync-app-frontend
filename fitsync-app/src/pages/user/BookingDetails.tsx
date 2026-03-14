@@ -157,7 +157,7 @@ const BookingDetails: React.FC = () => {
             </div>
             <div>
               <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Authorized Amount</p>
-              <p className="text-xl font-black italic uppercase tracking-tight">${booking.amount}.00</p>
+              <p className="text-xl font-black italic uppercase tracking-tight">₹{booking.amount}.00</p>
             </div>
           </div>
         </div>
