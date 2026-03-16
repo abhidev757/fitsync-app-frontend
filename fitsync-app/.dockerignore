@@ -1,0 +1,4 @@
+node_modules
+dist
+.git
+temp_tsc.txt
