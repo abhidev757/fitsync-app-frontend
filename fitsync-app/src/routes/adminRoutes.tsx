@@ -5,6 +5,7 @@ import Layout from "../components/admin/Layout";
 // Public pages
 import Homepage from "../pages/user/Homepage";
 import AdminLogin from '../pages/admin/Login'
+import AdminRegister from '../pages/admin/Register'
 import AdminLDashboard from '../pages/admin/Dashboard'
 import AdminUserManagement from '../pages/admin/UserManagement'
 import AdminTrainerManagement from '../pages/admin/TrainerManagement'
@@ -21,6 +22,7 @@ const adminRoutes = (
 
     {/* Public Routes */}
     <Route path="adminLogin" element={<AdminLogin />} />
+    <Route path="adminRegister" element={<AdminRegister />} />
 
     <Route path="admin" element={<Layout/>}>
     <Route index element={<Navigate to="adminDashboard" replace />} />

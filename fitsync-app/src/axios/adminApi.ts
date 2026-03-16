@@ -2,6 +2,12 @@ import axiosInstance from "./axiosInstance";
 import { AdminLoginData } from "../types/admin.types";
 
 
+// Admin Register
+export const registerAdmin = async (data: AdminLoginData) => {
+  const response = await axiosInstance.post("/admin/create", data);
+  return response.data;
+};
+
 // Admin Login
 export const loginAdmin = async (data: AdminLoginData) => {
   const response = await axiosInstance.post("/admin/login", data);
