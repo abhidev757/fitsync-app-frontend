@@ -4,7 +4,7 @@ let socket: Socket | null = null;
 
 export const connectAdminSocket = (adminId: string) => {
   if (!socket || !socket.connected) {
-    socket = io("http://localhost:4000", {
+    socket = io("https://fitsync-backend-mpqo.onrender.com", {
       transports: ["websocket"],
       withCredentials: true,
     });
