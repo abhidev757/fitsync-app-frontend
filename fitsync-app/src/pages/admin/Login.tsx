@@ -3,7 +3,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import { loginAdmin } from "../../axios/adminApi"; 
 import { AdminLoginData } from "../../types/admin.types";
 import { toast } from "react-toastify";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { AppDispatch, RootState } from "../../store";
 import { useDispatch, useSelector } from "react-redux";
 import { setAdminCredentials } from "../../slices/adminAuthSlice";
