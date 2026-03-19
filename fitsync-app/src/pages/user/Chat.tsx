@@ -202,9 +202,14 @@ const ChatPage: React.FC = () => {
               {/* Trainer Message Bubble */}
               {msg.sender === "trainer" && (
                 <div className="flex gap-3 max-w-[80%]">
-                  <div className="bg-[#CCFF00] text-black p-4 rounded-2xl rounded-tl-none shadow-[0_5px_15px_rgba(204,255,0,0.1)]">
+                <div className="bg-[#CCFF00] text-black p-4 rounded-2xl rounded-tl-none shadow-[0_5px_15px_rgba(204,255,0,0.1)]">
                     {msg.imageUrl ? (
-                      <img src={msg.imageUrl} alt="attachment" className="max-w-full rounded-lg mb-2" />
+                      <img
+                        src={msg.imageUrl}
+                        alt="attachment"
+                        className="max-w-[200px] max-h-[200px] w-auto h-auto rounded-lg mb-2 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => window.open(msg.imageUrl, '_blank')}
+                      />
                     ) : (
                       <p className="text-sm font-bold leading-relaxed">{msg.text}</p>
                     )}
@@ -218,7 +223,12 @@ const ChatPage: React.FC = () => {
                 <div className="flex items-end gap-3 max-w-[80%]">
                   <div className="bg-gray-900 border border-gray-800 text-white p-4 rounded-2xl rounded-tr-none">
                     {msg.imageUrl ? (
-                      <img src={msg.imageUrl} alt="attachment" className="max-w-full rounded-lg mb-2" />
+                      <img
+                        src={msg.imageUrl}
+                        alt="attachment"
+                        className="max-w-[200px] max-h-[200px] w-auto h-auto rounded-lg mb-2 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => window.open(msg.imageUrl, '_blank')}
+                      />
                     ) : (
                       <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
                     )}
