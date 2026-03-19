@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Users, BarChart2, Heart, LogOut, Wallet, LayoutGrid } from "lucide-react"
+import { Users, BarChart2, LogOut, Wallet, LayoutGrid, XCircle } from "lucide-react"
 import { logoutUser } from "../../axios/userApi"
 import { useDispatch } from "react-redux"
 import { logout } from "../../slices/authSlice"
@@ -44,7 +44,7 @@ const Sidebar = () => {
           { path: "/user/dashboard", icon: <LayoutGrid size={22} />, label: "Grid" },
           { path: "/user/mySessions", icon: <BarChart2 size={22} />, label: "Stats" },
           { path: "/user/trainersList", icon: <Users size={22} />, label: "Unit" },
-          { path: "/favorites", icon: <Heart size={22} />, label: "Mark" },
+          { path: "/Error", icon: <XCircle size={22} />, label: "404" },
           { path: "/user/userWallet", icon: <Wallet size={22} />, label: "Asset" },
         ].map((item) => (
           <Link

@@ -263,7 +263,12 @@ export default function TrainerChat() {
                         : "bg-gray-900 border border-gray-800 text-white rounded-tl-none"
                         }`}>
                         {m.imageUrl ? (
-                          <img src={m.imageUrl} className="rounded-xl border border-black/10 shadow-lg" alt="" />
+                          <img
+                            src={m.imageUrl}
+                            className="max-w-[200px] max-h-[200px] w-auto h-auto rounded-xl border border-black/10 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                            alt=""
+                            onClick={() => window.open(m.imageUrl!, '_blank')}
+                          />
                         ) : (
                           <p className="text-sm leading-relaxed tracking-tight font-medium italic">{m.text}</p>
                         )}

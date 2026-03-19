@@ -55,8 +55,8 @@ const TrainerSidebar = () => {
         <Link to="/trainer/trainerDashboard" className="group relative">
           <div className="absolute -inset-2 bg-[#CCFF00] rounded-full blur opacity-0 group-hover:opacity-10 transition-opacity"></div>
           <div className="relative text-center leading-none">
-            <span className="block text-[10px] font-black tracking-[0.3em] text-white">TS</span>
-            <span className="block text-[10px] font-black tracking-[0.3em] text-[#CCFF00]">OPS</span>
+            <span className="block text-[10px] font-black tracking-[0.3em] text-white">FIT</span>
+            <span className="block text-[10px] font-black tracking-[0.3em] text-[#CCFF00]">SYNC</span>
           </div>
         </Link>
       </div>

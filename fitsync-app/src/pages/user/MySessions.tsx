@@ -346,7 +346,7 @@ const MySessions: React.FC = () => {
         ) : (
           <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-gray-900 rounded-3xl">
             <p className="text-gray-600 font-bold uppercase tracking-widest mb-8 italic">No Session Data Found</p>
-            <Link to="/trainers">
+            <Link to="/user/trainersList">
               <button className="bg-[#CCFF00] text-black px-10 py-4 rounded-xl font-black uppercase tracking-widest hover:scale-105 transition-transform">
                 Initialize First Session
               </button>
@@ -390,7 +390,7 @@ const MySessions: React.FC = () => {
               <p className="text-gray-600 font-bold text-xs uppercase tracking-widest">Awaiting activity logs...</p>
             )}
           </div>
-          <Link to="/trainers" className="mt-8">
+          <Link to="/user/trainersList" className="mt-8">
             <button className="w-full border-2 border-[#CCFF00] text-[#CCFF00] py-4 rounded-xl font-black uppercase tracking-widest hover:bg-[#CCFF00] hover:text-black transition-all">
               View All Trainers
             </button>
