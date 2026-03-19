@@ -23,7 +23,8 @@ const adminRoutes = (
     {/* Public Routes */}
     <Route path="adminLogin" element={<AdminLogin />} />
     <Route path="adminRegister" element={<AdminRegister />} />
-
+    
+    {/* Protected Routes */}
     <Route path="admin" element={<Layout/>}>
     <Route index element={<Navigate to="adminDashboard" replace />} />
     <Route path="adminDashboard" element={<AdminLDashboard />} />

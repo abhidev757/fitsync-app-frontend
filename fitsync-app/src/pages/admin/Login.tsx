@@ -3,7 +3,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import { loginAdmin } from "../../axios/adminApi"; 
 import { AdminLoginData } from "../../types/admin.types";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { AppDispatch, RootState } from "../../store";
 import { useDispatch, useSelector } from "react-redux";
 import { setAdminCredentials } from "../../slices/adminAuthSlice";
@@ -120,6 +120,13 @@ function Login() {
             >
               {isLoading ? "Logging in..." : "LOGIN"}
             </button>
+
+            <Link
+              to="/adminRegister"
+              className="block w-full text-center border border-gray-600 text-gray-300 font-medium py-3 px-4 rounded hover:border-gray-400 hover:text-white transition duration-200"
+            >
+              REGISTER
+            </Link>
           </form>
 
           {/* Footer Decoration */}
