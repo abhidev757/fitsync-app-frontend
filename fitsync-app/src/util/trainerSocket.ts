@@ -4,8 +4,8 @@ let socket: Socket | null = null;
 
 export const connectTrainerSocket = (trainerId: string) => {
   if (!socket || !socket.connected) {
-    socket = io("http://localhost:4000", {
-      transports: ["websocket"],
+    socket = io("https://fitsync-backend-mpqo.onrender.com", {
+      transports: ["polling", "websocket"],
       withCredentials: true,
     });
 

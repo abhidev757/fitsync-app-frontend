@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Users, BarChart2, Heart, LogOut, Wallet, LayoutGrid } from "lucide-react"
+import { Users, BarChart2, LogOut, Wallet, LayoutGrid, XCircle } from "lucide-react"
 import { logoutUser } from "../../axios/userApi"
 import { useDispatch } from "react-redux"
 import { logout } from "../../slices/authSlice"

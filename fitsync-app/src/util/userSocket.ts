@@ -6,9 +6,9 @@ export const connectUserSocket = (userId: string) => {
     console.log('userId in connectUserSocket:',userId);
     
   if (!socket || !socket.connected) {
-    socket = io("http://localhost:4000", {
+    socket = io("https://fitsync-backend-mpqo.onrender.com", {
       withCredentials: true,
-      transports: ["websocket"],
+      transports: ["polling", "websocket"],
     });
 
     socket.on("connect", () => {
