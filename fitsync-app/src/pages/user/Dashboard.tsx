@@ -1,6 +1,8 @@
+"use client";
+
 import React, { useState, useEffect, ReactNode } from "react";
 import { useGoogleLogin } from "@react-oauth/google";
-import { ChevronRight, Flame, Footprints, Droplets, Moon, User } from "lucide-react";
+import { ChevronRight, Flame, Footprints, Droplets, Moon, User, Calendar } from "lucide-react";
 import { Button } from "../../components/user/ui/button";
 import { Card, CardContent } from "../../components/user/ui/card";
 import ProgressCircle from "../../components/user/Progress-circle";
@@ -131,17 +133,17 @@ const Dashboard: React.FC = () => {
   };
 
   const BlurSection = ({ active, children }: BlurSectionProps) => (
-    <div className="relative">
-      <div className={active ? "filter blur-xl grayscale opacity-40 transition-all" : "transition-all"}>{children}</div>
+    <div className="relative h-full">
+      <div className={active ? "filter blur-lg grayscale opacity-40 transition-all h-full" : "transition-all h-full"}>{children}</div>
       {active && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 rounded-2xl">
-          <p className="text-white font-bold mb-4 text-xs uppercase tracking-widest">Connect Data Stream</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 rounded-2xl p-4 text-center z-10">
+          <p className="text-[#CCFF00] font-black mb-3 text-[10px] uppercase tracking-[0.2em]">Bio-Link Required</p>
           <Button
             onClick={connectGoogleFit}
             disabled={loadingFit}
-            className="bg-[#CCFF00] text-black font-black hover:scale-105 transition-transform"
+            className="bg-[#CCFF00] text-black font-black text-xs py-5 px-6 rounded-xl hover:scale-105 active:scale-95 transition-all uppercase tracking-widest shadow-[0_0_20px_rgba(204,255,0,0.2)]"
           >
-            {loadingFit ? "Syncing..." : "Sync Google Fit"}
+            {loadingFit ? "Calibrating..." : "Sync Biometrics"}
           </Button>
         </div>
       )}
@@ -151,7 +153,7 @@ const Dashboard: React.FC = () => {
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const firstDow = (new Date(calYear, calMonth, 1).getDay() + 6) % 7;
   const apptDays = new Set(dashInfo?.appointmentDays ?? []);
-  const monthName = new Date(calYear, calMonth, 1).toLocaleString("default", { month: "long" });
+  const monthName = new Date(calYear, calMonth, 1).toLocaleString("default", { month: "short" });
 
   const prevMonth = () => calMonth === 0 ? (setCalYear(y => y - 1), setCalMonth(11)) : setCalMonth(m => m - 1);
   const nextMonth = () => calMonth === 11 ? (setCalYear(y => y + 1), setCalMonth(0)) : setCalMonth(m => m + 1);
@@ -159,98 +161,110 @@ const Dashboard: React.FC = () => {
   const fitness = dashInfo?.fitness;
 
   return (
-    <div className="p-6 space-y-8 bg-black min-h-screen text-white font-sans">
-      <div className="flex justify-between items-end">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-10 bg-black min-h-screen text-white font-sans pb-24 md:pb-8">
+      
+      {/* Tactical Header */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-2">
         <div>
-          <p className="text-[#CCFF00] font-black text-xs tracking-widest uppercase mb-1">Command Center</p>
-          <h1 className="text-4xl font-black tracking-tighter uppercase italic">Dashboard Overview</h1>
+          <p className="text-[#CCFF00] font-black text-[10px] tracking-[0.4em] uppercase mb-1">Grid Dashboard</p>
+          <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase italic leading-none">Command Center</h1>
         </div>
-        <div className="text-right hidden md:block text-gray-600 text-xs font-bold tracking-widest uppercase">
-          {now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+        <div className="text-gray-600 text-[10px] font-black tracking-widest uppercase italic border-l-2 border-[#CCFF00]/20 pl-3">
+          {now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} // SYNC ACTIVE
         </div>
       </div>
 
-      {/* Welcome Card */}
-      <Card className="bg-[#0B0B0B] border border-gray-900 overflow-hidden relative group">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#CCFF00] opacity-5 blur-3xl group-hover:opacity-10 transition-opacity"></div>
-        <CardContent className="flex justify-between items-center p-8">
-          <div>
-            <h2 className="text-3xl font-black tracking-tight mb-2">Welcome back, {dashInfo?.user.name?.split(' ')[0] ?? "Elite"}!</h2>
-            <p className="text-gray-500 font-medium max-w-md">Your bio-data is syncing. Continue your journey to peak performance.</p>
+      {/* Welcome Card - Adaptive Padding */}
+      <Card className="bg-[#0B0B0B] border border-gray-900 overflow-hidden relative group rounded-[2rem]">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-[#CCFF00] opacity-5 blur-[100px] pointer-events-none"></div>
+        <CardContent className="flex flex-col md:flex-row justify-between items-start md:items-center p-6 md:p-10 gap-6">
+          <div className="space-y-2">
+            <h2 className="text-2xl md:text-4xl font-black tracking-tighter uppercase italic">Welcome, {dashInfo?.user.name?.split(' ')[0] ?? "Operative"}</h2>
+            <p className="text-gray-500 font-bold text-xs md:text-sm uppercase tracking-tight max-w-sm">Dossier active. Biometrics syncing across all channels.</p>
           </div>
-          <div className="bg-[#CCFF00] p-3 rounded-full shadow-[0_0_20px_rgba(204,255,0,0.3)]">
-            <ChevronRight className="h-6 w-6 text-black" />
+          <div className="w-full md:w-auto flex items-center justify-between md:justify-end gap-4">
+             <span className="text-[10px] font-black text-gray-700 uppercase md:hidden tracking-widest">System Status</span>
+             <div className="bg-[#CCFF00] p-4 rounded-2xl shadow-[0_0_20px_rgba(204,255,0,0.2)] hover:scale-110 transition-transform cursor-pointer">
+               <ChevronRight className="h-5 w-5 text-black" />
+             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-10">
 
-        {/* Left – Metrics */}
-        <div className="lg:col-span-2 space-y-8">
-          <BlurSection active={!fitConnected}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-[#0B0B0B] border border-gray-900 p-2">
-                <CardContent className="flex flex-col items-center">
-                  <div className="flex items-center justify-between w-full mb-6">
-                    <span className="text-xs font-black uppercase tracking-widest text-gray-500">Total Calories</span>
-                    <Flame className="text-[#CCFF00] h-5 w-5" />
-                  </div>
-                  <ProgressCircle percentage={((healthData?.caloriesBurned ?? 0) / 2000) * 100} size={140} strokeWidth={12} color={limeColor}>
-                    <div className="text-center">
-                      <p className="text-4xl font-black tracking-tighter italic">{Math.round(healthData?.caloriesBurned ?? 0)}</p>
-                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">kcal / 2000</p>
+        {/* Left – Core Biometrics (8 Columns on Desktop) */}
+        <div className="lg:col-span-8 space-y-6 md:space-y-10">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <BlurSection active={!fitConnected}>
+                <Card className="bg-[#0B0B0B] border border-gray-900 p-2 rounded-[2.5rem] hover:border-[#CCFF00]/30 transition-all h-full">
+                  <CardContent className="flex flex-col items-center p-6">
+                    <div className="flex items-center justify-between w-full mb-8">
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">Energy Expenditure</span>
+                      <Flame className="text-[#CCFF00] h-4 w-4" />
                     </div>
-                  </ProgressCircle>
-                </CardContent>
-              </Card>
+                    <ProgressCircle percentage={((healthData?.caloriesBurned ?? 0) / 2000) * 100} size={160} strokeWidth={14} color={limeColor}>
+                      <div className="text-center">
+                        <p className="text-4xl font-black tracking-tighter italic">{Math.round(healthData?.caloriesBurned ?? 0)}</p>
+                        <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Kcal Output</p>
+                      </div>
+                    </ProgressCircle>
+                  </CardContent>
+                </Card>
+             </BlurSection>
 
-              <Card className="bg-[#0B0B0B] border border-gray-900 p-2">
-                <CardContent className="flex flex-col items-center">
-                  <div className="flex items-center justify-between w-full mb-6">
-                    <span className="text-xs font-black uppercase tracking-widest text-gray-500">Step Count</span>
-                    <Footprints className="text-[#CCFF00] h-5 w-5" />
-                  </div>
-                  <ProgressCircle percentage={((healthData?.steps ?? 0) / 10000) * 100} size={140} strokeWidth={12} color={limeColor}>
-                    <div className="text-center">
-                      <p className="text-4xl font-black tracking-tighter italic">{healthData?.steps ?? 0}</p>
-                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Steps / 10k</p>
+             <BlurSection active={!fitConnected}>
+                <Card className="bg-[#0B0B0B] border border-gray-900 p-2 rounded-[2.5rem] hover:border-[#CCFF00]/30 transition-all h-full">
+                  <CardContent className="flex flex-col items-center p-6">
+                    <div className="flex items-center justify-between w-full mb-8">
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">Locomotion Tracking</span>
+                      <Footprints className="text-[#CCFF00] h-4 w-4" />
                     </div>
-                  </ProgressCircle>
-                </CardContent>
-              </Card>
-            </div>
-          </BlurSection>
+                    <ProgressCircle percentage={((healthData?.steps ?? 0) / 10000) * 100} size={160} strokeWidth={14} color={limeColor}>
+                      <div className="text-center">
+                        <p className="text-4xl font-black tracking-tighter italic">{healthData?.steps ?? 0}</p>
+                        <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Step Registry</p>
+                      </div>
+                    </ProgressCircle>
+                  </CardContent>
+                </Card>
+             </BlurSection>
+          </div>
 
-          {/* Sleep & Water Row */}
+          {/* Secondary Stats - 1 Column on Mobile */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <BlurSection active={!fitConnected}>
-              <Card className="bg-[#0B0B0B] border border-gray-900 p-4 h-full">
-                <CardContent className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center text-[#CCFF00] text-xs font-black uppercase tracking-widest mb-4">
-                      <Moon className="mr-2 h-4 w-4" /> Sleep Cycles
+              <Card className="bg-[#0B0B0B] border border-gray-900 p-6 rounded-[2rem] h-full">
+                <CardContent className="p-0 flex items-center justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center text-[#CCFF00] text-[10px] font-black uppercase tracking-widest">
+                      <Moon className="mr-2 h-3.5 w-3.5" /> Recovery
                     </div>
-                    <p className="text-4xl font-black tracking-tighter italic">{Math.round(healthData?.sleepHours ?? 0)} <span className="text-xs font-bold text-gray-600 not-italic">HRS</span></p>
-                    <p className="text-xs text-gray-500">8h Target</p>
+                    <div>
+                      <p className="text-4xl font-black tracking-tighter italic">{Math.round(healthData?.sleepHours ?? 0)} <span className="text-xs font-black text-gray-700 not-italic">HRS</span></p>
+                      <p className="text-[10px] font-bold text-gray-600 uppercase">Target: 08.00</p>
+                    </div>
                   </div>
                   <ProgressCircle percentage={((healthData?.sleepHours ?? 0) / 8) * 100} size={80} strokeWidth={8} color={limeColor} />
                 </CardContent>
               </Card>
             </BlurSection>
 
-            <Card className="bg-[#0B0B0B] border border-gray-900 p-4 h-full">
-              <CardContent className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center text-[#CCFF00] text-xs font-black uppercase tracking-widest mb-4">
-                    <Droplets className="mr-2 h-4 w-4" /> Hydration
+            <Card className="bg-[#0B0B0B] border border-gray-900 p-6 rounded-[2rem] h-full">
+              <CardContent className="p-0 flex items-center justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center text-[#CCFF00] text-[10px] font-black uppercase tracking-widest">
+                    <Droplets className="mr-2 h-3.5 w-3.5" /> Hydration
                   </div>
-                  <p className="text-4xl font-black tracking-tighter italic">{waterGlasses} <span className="text-xs font-bold text-gray-600 not-italic">/ {totalGlasses}</span></p>
-                  <div className="flex gap-2 mt-4">
-                    <button onClick={() => handleWaterChange(Math.max(0, waterGlasses - 1))}
-                      className="w-8 h-8 bg-gray-900 border border-gray-800 rounded-lg hover:border-[#CCFF00] transition-colors flex items-center justify-center text-gray-400">−</button>
-                    <button onClick={() => handleWaterChange(Math.min(totalGlasses, waterGlasses + 1))}
-                      className="w-8 h-8 bg-[#CCFF00] rounded-lg flex items-center justify-center text-black font-black">+</button>
+                  <div>
+                    <p className="text-4xl font-black tracking-tighter italic">{waterGlasses} <span className="text-xs font-black text-gray-700 not-italic">/ {totalGlasses}</span></p>
+                    <div className="flex gap-2 mt-4">
+                      <button onClick={() => handleWaterChange(Math.max(0, waterGlasses - 1))}
+                        className="w-10 h-10 bg-black border border-gray-800 rounded-xl hover:border-[#CCFF00] transition-colors flex items-center justify-center text-gray-400">−</button>
+                      <button onClick={() => handleWaterChange(Math.min(totalGlasses, waterGlasses + 1))}
+                        className="w-10 h-10 bg-[#CCFF00] rounded-xl flex items-center justify-center text-black font-black">+</button>
+                    </div>
                   </div>
                 </div>
                 <ProgressCircle percentage={waterPct} size={80} strokeWidth={8} color={limeColor} />
@@ -259,61 +273,65 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Sidebar – Profile & Calendar */}
-        <div className="space-y-8">
+        {/* Right Sidebar – Dossier & Calendar (4 Columns on Desktop) */}
+        <div className="lg:col-span-4 space-y-6 md:space-y-10">
 
-          {/* Profile Card */}
-          <Card className="bg-[#0B0B0B] border border-gray-900 overflow-hidden">
-            <div className="h-1 bg-[#CCFF00]"></div>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4 mb-6">
-                <div className="h-16 w-16 rounded-2xl overflow-hidden bg-gray-900 border border-gray-800 flex items-center justify-center">
+          {/* Biometric Dossier */}
+          <Card className="bg-[#0B0B0B] border border-gray-900 overflow-hidden rounded-[2.5rem]">
+            <div className="h-1.5 bg-[#CCFF00]"></div>
+            <CardContent className="p-8">
+              <div className="flex items-center space-x-5 mb-8">
+                <div className="h-20 w-20 rounded-3xl overflow-hidden bg-black border border-gray-800 flex items-center justify-center">
                   {dashInfo?.user.profileImageUrl
-                    ? <img src={dashInfo.user.profileImageUrl} alt="Profile" className="object-cover w-full h-full" />
-                    : <User size={24} className="text-gray-700" />
+                    ? <img src={dashInfo.user.profileImageUrl} alt="Profile" className="object-cover w-full h-full grayscale hover:grayscale-0 transition-all" />
+                    : <User size={30} className="text-gray-800" />
                   }
                 </div>
                 <div>
-                  <h3 className="text-xl font-black tracking-tight">{dashInfo?.user.name ?? "—"}</h3>
-                  <p className="text-[#CCFF00] text-[10px] font-black uppercase tracking-widest">Pro Member</p>
+                  <h3 className="text-xl font-black tracking-tighter uppercase italic">{dashInfo?.user.name ?? "—"}</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="w-1.5 h-1.5 bg-[#CCFF00] rounded-full animate-pulse"></div>
+                    <p className="text-[#CCFF00] text-[9px] font-black uppercase tracking-widest">Active Operative</p>
+                  </div>
                 </div>
               </div>
 
               {fitness && (
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-black/50 border border-gray-900 rounded-xl p-3 text-center">
-                    <p className="text-white font-black text-sm italic">{fitness.weight}kg</p>
-                    <p className="text-[8px] uppercase tracking-tighter text-gray-600 font-bold">Current</p>
-                  </div>
-                  <div className="bg-black/50 border border-gray-900 rounded-xl p-3 text-center">
-                    <p className="text-white font-black text-sm italic">{fitness.height}cm</p>
-                    <p className="text-[8px] uppercase tracking-tighter text-gray-600 font-bold">Height</p>
-                  </div>
-                  <div className="bg-black/50 border border-gray-900 rounded-xl p-3 text-center">
-                    <p className="text-[#CCFF00] font-black text-sm italic">{fitness.targetWeight}kg</p>
-                    <p className="text-[8px] uppercase tracking-tighter text-gray-600 font-bold">Goal</p>
-                  </div>
+                  {[
+                    { val: `${fitness.weight}`, label: "Weight", unit: "kg" },
+                    { val: `${fitness.height}`, label: "Height", unit: "cm" },
+                    { val: `${fitness.targetWeight}`, label: "Goal", unit: "kg", color: "text-[#CCFF00]" }
+                  ].map((stat, idx) => (
+                    <div key={idx} className="bg-black/40 border border-gray-900 rounded-2xl p-4 text-center">
+                      <p className={`${stat.color || 'text-white'} font-black text-sm italic`}>{stat.val}<span className="text-[8px] not-italic ml-0.5">{stat.unit}</span></p>
+                      <p className="text-[8px] uppercase tracking-tighter text-gray-700 font-black mt-1">{stat.label}</p>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Appointment Calendar */}
-          <Card className="bg-[#0B0B0B] border border-gray-900">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h4 className="font-black text-xs uppercase tracking-widest italic">{monthName} {calYear}</h4>
-                <div className="flex space-x-1">
-                  <button onClick={prevMonth} className="w-6 h-6 flex items-center justify-center bg-gray-900 rounded-md text-gray-400 hover:text-[#CCFF00]">‹</button>
-                  <button onClick={nextMonth} className="w-6 h-6 flex items-center justify-center bg-gray-900 rounded-md text-gray-400 hover:text-[#CCFF00]">›</button>
+          {/* Deployment Calendar */}
+          <Card className="bg-[#0B0B0B] border border-gray-900 rounded-[2.5rem] overflow-hidden">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-2 text-[#CCFF00]">
+                  <Calendar size={14} />
+                  <h4 className="font-black text-[10px] uppercase tracking-[0.3em] italic">{monthName} {calYear}</h4>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center bg-black border border-gray-800 rounded-xl text-gray-500 hover:text-[#CCFF00] transition-all">‹</button>
+                  <button onClick={nextMonth} className="w-8 h-8 flex items-center justify-center bg-black border border-gray-800 rounded-xl text-gray-500 hover:text-[#CCFF00] transition-all">›</button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-7 gap-2 text-center text-[9px] font-black uppercase text-gray-600 mb-2">
+              <div className="grid grid-cols-7 gap-1 md:gap-2 text-center text-[9px] font-black uppercase text-gray-700 mb-4">
                 {DAYS.map((d) => <div key={d}>{d}</div>)}
               </div>
 
-              <div className="grid grid-cols-7 gap-2 text-center">
+              <div className="grid grid-cols-7 gap-1 md:gap-2 text-center">
                 {Array.from({ length: firstDow }).map((_, i) => <div key={`blank-${i}`} />)}
                 {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
                   const isToday = d === todayDate && calMonth === todayMonth && calYear === todayYear;
@@ -321,11 +339,11 @@ const Dashboard: React.FC = () => {
 
                   return (
                     <div key={d}
-                      className={`h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${isToday
-                          ? "bg-[#CCFF00] text-black shadow-[0_0_15px_rgba(204,255,0,0.3)]" // Solid Lime for Today
+                      className={`h-9 md:h-10 flex items-center justify-center rounded-xl text-[10px] md:text-xs font-black transition-all cursor-default ${isToday
+                          ? "bg-[#CCFF00] text-black shadow-[0_0_15px_rgba(204,255,0,0.4)] scale-110 z-10" 
                           : hasAppt
-                            ? "border-2 border-[#CCFF00] text-[#CCFF00] bg-[#CCFF00]/5" // Lime Border for Scheduled
-                            : "text-gray-500 hover:bg-gray-900"
+                            ? "border-2 border-[#CCFF00] text-[#CCFF00] bg-[#CCFF00]/5" 
+                            : "text-gray-700 hover:bg-gray-900/50"
                         }`}
                     >
                       {d}
@@ -334,15 +352,14 @@ const Dashboard: React.FC = () => {
                 })}
               </div>
 
-              {/* Updated Legend to match your request */}
-              <div className="mt-6 pt-6 border-t border-gray-900 flex flex-col gap-3">
+              <div className="mt-10 pt-8 border-t border-gray-900 space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-md bg-[#CCFF00]"></div>
-                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Today</span>
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#CCFF00] shadow-[0_0_8px_#CCFF00]"></div>
+                  <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Current Window</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-md border-2 border-[#CCFF00]"></div>
-                  <span className="text-[9px] font-black text-[#CCFF00] uppercase tracking-widest">Scheduled Session</span>
+                  <div className="w-2.5 h-2.5 rounded-full border-2 border-[#CCFF00]"></div>
+                  <span className="text-[9px] font-black text-[#CCFF00] uppercase tracking-widest">Active Deployment</span>
                 </div>
               </div>
             </CardContent>

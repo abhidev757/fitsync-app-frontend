@@ -9,17 +9,15 @@ const TrainerLayout = () => {
        on the outer wrapper to ensure the Obsidian background (#0B0B0B) 
        covers the entire page even if content grows.
     */
-    <div className="flex min-h-screen bg-black">
+    <div className="flex min-h-screen bg-black w-full overflow-x-hidden">
       <TrainerSidebar />
       
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         <TrainerHeader />
         
-        {/* Main Content Area: 
-           Using bg-[#0B0B0B] to ensure consistency with your high-end theme.
-        */}
-        <main className="flex-1 p-8 lg:p-12">
-          <div className="max-w-[1600px] mx-auto">
+        {/* Main Content Area */}
+        <main className="flex-1 p-0 md:p-8 lg:p-12 overflow-x-hidden w-full max-w-full">
+          <div className="w-full mx-auto">
             <Outlet />
           </div>
         </main>

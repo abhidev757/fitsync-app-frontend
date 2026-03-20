@@ -3,17 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Dialog, Transition } from '@headlessui/react';
 import { getBookingsDetails, cancelBooking } from '../../axios/userApi';
 import { toast, ToastContainer } from 'react-toastify';
-import { ShieldAlert, Calendar, User, Activity, DollarSign, Clock } from 'lucide-react';
+import { ShieldAlert, Calendar, User, Activity, DollarSign, Clock, ChevronLeft } from 'lucide-react';
 import 'react-toastify/dist/ReactToastify.css';
 
 interface Booking {
   _id: string;
-  userId: {
-    name: string;
-  };
-  trainerId: {
-    name: string;
-  };
+  userId: { name: string; };
+  trainerId: { name: string; };
   sessionTime: string;
   startDate: string;
   isPackage: boolean;
@@ -45,7 +41,6 @@ const BookingDetails: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchBooking();
   }, [bookingId]);
 
@@ -68,106 +63,70 @@ const BookingDetails: React.FC = () => {
   };
 
   if (loading) return (
-    <div className="p-8 text-[#CCFF00] font-black uppercase tracking-widest animate-pulse">
+    <div className="p-6 md:p-8 text-[#CCFF00] font-black uppercase tracking-[0.3em] animate-pulse h-screen flex items-center justify-center bg-black">
       Accessing Secure Logs...
     </div>
   );
   
   if (!booking) return (
-    <div className="p-8 text-red-500 font-black uppercase italic tracking-tighter">
+    <div className="p-6 md:p-8 text-red-500 font-black uppercase italic tracking-tighter h-screen flex items-center justify-center bg-black">
       File Not Found.
     </div>
   );
 
   return (
-    <div className="p-8 space-y-8 bg-black min-h-screen text-white">
-      <ToastContainer theme="dark" />
+    <div className="p-4 md:p-8 space-y-6 md:space-y-10 bg-black min-h-screen text-white font-sans pb-24 md:pb-8">
+      <ToastContainer theme="dark" position="top-center" autoClose={3000} hideProgressBar />
       
-      <div className="flex justify-between items-end">
+      {/* Responsive Header */}
+      <div className="flex items-center gap-4 md:gap-6">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="p-2.5 bg-gray-900 rounded-xl text-gray-400 hover:text-[#CCFF00] active:scale-90 transition-all shrink-0"
+        >
+          <ChevronLeft size={20} />
+        </button>
         <div>
-          <p className="text-[#CCFF00] font-black text-xs tracking-widest uppercase mb-1">Session Protocol</p>
-          <h1 className="text-4xl font-black tracking-tighter uppercase italic">Booking Details</h1>
+          <p className="text-[#CCFF00] font-black text-[9px] md:text-xs tracking-[0.4em] uppercase mb-0.5">Session Protocol</p>
+          <h1 className="text-2xl md:text-4xl font-black tracking-tighter uppercase italic leading-none">Booking Details</h1>
         </div>
       </div>
 
-      <div className="bg-[#0B0B0B] border border-gray-900 rounded-[2rem] p-8 md:p-12 shadow-2xl relative overflow-hidden">
-        {/* Decorative branding element */}
+      <div className="bg-[#0B0B0B] border border-gray-900 rounded-[2rem] md:rounded-[3rem] p-6 md:p-12 shadow-2xl relative overflow-hidden">
+        {/* Branding Glow */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#CCFF00] opacity-5 blur-[100px] pointer-events-none"></div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-8 md:gap-y-12 relative z-10">
           
-          {/* Data Points */}
-          <div className="flex items-center space-x-4 group">
-            <div className="p-3 bg-gray-900 rounded-xl text-gray-500 group-hover:text-[#CCFF00] transition-colors">
-              <User size={20} />
+          {/* Data Points Grid */}
+          {[
+            { icon: <User size={20} />, label: "Client Name", val: booking.userId.name, color: "text-white" },
+            { icon: <Activity size={20} />, label: "Expert Assigned", val: booking.trainerId.name, color: "text-[#CCFF00]" },
+            { icon: <Calendar size={20} />, label: "Deployment Date", val: new Date(booking.startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), color: "text-white" },
+            { icon: <Clock size={20} />, label: "Time Slot", val: booking.sessionTime, color: "text-white" },
+            { icon: <ShieldAlert size={20} />, label: "Integration Plan", val: booking.isPackage ? 'Multi-Session Block' : 'Individual Session', color: "text-white" },
+            { icon: <DollarSign size={20} />, label: "Authorized Amount", val: `₹${booking.amount}.00`, color: "text-white" }
+          ].map((item, idx) => (
+            <div key={idx} className="flex items-center space-x-4 md:space-x-6 group">
+              <div className="p-3.5 bg-black border border-gray-900 rounded-xl text-gray-600 group-hover:text-[#CCFF00] group-hover:border-[#CCFF00]/30 transition-all shrink-0">
+                {item.icon}
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-[9px] md:text-[10px] font-black text-gray-700 uppercase tracking-[0.2em] mb-1">{item.label}</p>
+                <p className={`text-lg md:text-xl font-black italic uppercase tracking-tight truncate ${item.color}`}>
+                  {item.val}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Client Name</p>
-              <p className="text-xl font-black italic uppercase tracking-tight">{booking.userId.name}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4 group">
-            <div className="p-3 bg-gray-900 rounded-xl text-gray-500 group-hover:text-[#CCFF00] transition-colors">
-              <Activity size={20} />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Expert Assigned</p>
-              <p className="text-xl font-black italic uppercase tracking-tight text-[#CCFF00]">{booking.trainerId.name}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4 group">
-            <div className="p-3 bg-gray-900 rounded-xl text-gray-500 group-hover:text-[#CCFF00] transition-colors">
-              <Calendar size={20} />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Deployment Date</p>
-              <p className="text-xl font-black italic uppercase tracking-tight">
-                {new Date(booking.startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4 group">
-            <div className="p-3 bg-gray-900 rounded-xl text-gray-500 group-hover:text-[#CCFF00] transition-colors">
-              <Clock size={20} />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Time Slot</p>
-              <p className="text-xl font-black italic uppercase tracking-tight">{booking.sessionTime}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4 group">
-            <div className="p-3 bg-gray-900 rounded-xl text-gray-500 group-hover:text-[#CCFF00] transition-colors">
-              <ShieldAlert size={20} />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Integration Plan</p>
-              <p className="text-xl font-black italic uppercase tracking-tight">
-                {booking.isPackage ? 'Multi-Session Package' : 'Individual Session'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4 group">
-            <div className="p-3 bg-gray-900 rounded-xl text-gray-500 group-hover:text-[#CCFF00] transition-colors">
-              <DollarSign size={20} />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Authorized Amount</p>
-              <p className="text-xl font-black italic uppercase tracking-tight">₹{booking.amount}.00</p>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Bottom Status Bar */}
-        <div className="mt-12 pt-12 border-t border-gray-900 flex flex-col sm:flex-row justify-between items-center gap-6">
-          <div className="flex items-center space-x-3">
-             <div className={`w-3 h-3 rounded-full animate-pulse ${booking.status === 'confirmed' ? 'bg-[#CCFF00]' : 'bg-red-500'}`}></div>
-             <span className="text-xs font-black uppercase tracking-[0.3em] text-gray-400">Status: </span>
-             <span className={`text-xs font-black uppercase tracking-[0.3em] ${booking.status === 'confirmed' ? 'text-[#CCFF00]' : 'text-red-500'}`}>
+        {/* Action Controls */}
+        <div className="mt-12 md:mt-20 pt-10 md:pt-12 border-t border-gray-900 flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="flex items-center space-x-4 bg-black/40 px-6 py-3 rounded-2xl border border-gray-900 w-full md:w-auto justify-center md:justify-start">
+             <div className={`w-2 h-2 rounded-full animate-pulse shrink-0 ${booking.status === 'confirmed' ? 'bg-[#CCFF00] shadow-[0_0_8px_#CCFF00]' : 'bg-red-500'}`}></div>
+             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">System Status: </span>
+             <span className={`text-[10px] font-black uppercase tracking-[0.3em] ${booking.status === 'confirmed' ? 'text-[#CCFF00]' : 'text-red-500'}`}>
                {booking.status}
              </span>
           </div>
@@ -175,17 +134,17 @@ const BookingDetails: React.FC = () => {
           {booking.status === 'confirmed' && (
             <button
               onClick={handleCancel}
-              className="w-full sm:w-auto border-2 border-red-900/50 text-red-500 hover:bg-red-500 hover:text-white font-black py-4 px-10 rounded-xl text-xs uppercase tracking-widest transition-all active:scale-95"
+              className="w-full md:w-auto border border-red-900/50 bg-red-950/10 text-red-500 hover:bg-red-600 hover:text-white font-black py-5 px-12 rounded-2xl text-[10px] uppercase tracking-[0.2em] transition-all active:scale-95 shadow-lg"
             >
-              Terminate Booking
+              Terminate Protocol
             </button>
           )}
         </div>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* Confirmation Modal - Optimized for Touch */}
       <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-50" onClose={() => setIsOpen(false)}>
+        <Dialog as="div" className="relative z-[100]" onClose={() => setIsOpen(false)}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -195,34 +154,34 @@ const BookingDetails: React.FC = () => {
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-black/90 backdrop-blur-md" />
+            <div className="fixed inset-0 bg-black/95 backdrop-blur-xl" />
           </Transition.Child>
 
           <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-6 text-center">
+            <div className="flex min-h-full items-end md:items-center justify-center p-4 md:p-6 text-center">
               <Transition.Child
                 as={Fragment}
                 enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
+                enterFrom="opacity-0 translate-y-10 md:scale-95"
+                enterTo="opacity-100 translate-y-0 md:scale-100"
                 leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
+                leaveFrom="opacity-100 translate-y-0 md:scale-100"
+                leaveTo="opacity-0 translate-y-10 md:scale-95"
               >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-[2rem] bg-[#0B0B0B] border border-gray-800 p-10 text-left align-middle shadow-2xl transition-all">
-                  <Dialog.Title as="h3" className="text-2xl font-black italic uppercase tracking-tighter text-white">
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-[2.5rem] bg-[#0B0B0B] border border-gray-800 p-8 md:p-12 text-left align-middle shadow-2xl transition-all">
+                  <Dialog.Title as="h3" className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter text-white">
                     Confirm Termination
                   </Dialog.Title>
                   <div className="mt-4">
-                    <p className="text-sm text-gray-500 font-medium leading-relaxed">
-                      Are you sure you want to terminate this protocol? This action will remove the assigned trainer from your schedule and cannot be undone.
+                    <p className="text-xs md:text-sm text-gray-600 font-bold uppercase tracking-tight leading-relaxed italic">
+                      Warning: Terminating this protocol will decouple the assigned expert from your deployment grid. This action is irreversible.
                     </p>
                   </div>
 
-                  <div className="mt-10 flex gap-4">
+                  <div className="mt-10 flex flex-col sm:flex-row gap-4">
                     <button
                       type="button"
-                      className="flex-1 rounded-xl bg-gray-900 px-6 py-4 text-xs font-black uppercase tracking-widest text-white hover:bg-gray-800 transition-colors"
+                      className="flex-1 order-2 sm:order-1 rounded-xl bg-gray-900 px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white hover:bg-gray-800 active:scale-95 transition-all"
                       onClick={() => setIsOpen(false)}
                       disabled={isCancelling}
                     >
@@ -230,11 +189,11 @@ const BookingDetails: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      className="flex-1 rounded-xl bg-red-600 px-6 py-4 text-xs font-black uppercase tracking-widest text-white hover:bg-red-700 shadow-[0_0_20px_rgba(220,38,38,0.3)] transition-all"
+                      className="flex-1 order-1 sm:order-2 rounded-xl bg-red-600 px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white hover:bg-red-700 shadow-[0_0_20px_rgba(220,38,38,0.4)] active:scale-95 transition-all"
                       onClick={confirmCancel}
                       disabled={isCancelling}
                     >
-                      {isCancelling ? 'Processing...' : 'Yes, Terminate'}
+                      {isCancelling ? 'Processing...' : 'Confirm'}
                     </button>
                   </div>
                 </Dialog.Panel>
