@@ -27,7 +27,7 @@ const Sidebar = () => {
     { path: "/user/dashboard", icon: <LayoutGrid size={20} />, label: "Grid" },
     { path: "/user/mySessions", icon: <BarChart2 size={20} />, label: "Stats" },
     { path: "/user/trainersList", icon: <Users size={20} />, label: "Unit" },
-    { path: "/favorites", icon: <Heart size={20} />, label: "Mark" },
+    { path: "/error", icon: <XCircle size={20} />, label: "Error" },
     { path: "/user/userWallet", icon: <Wallet size={20} />, label: "Asset" },
   ]
 
