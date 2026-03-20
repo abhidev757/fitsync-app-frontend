@@ -41,6 +41,7 @@ const Dashboard = () => {
       backgroundColor: 'rgba(99, 102, 241, 0.15)',
       tension: 0.4,
       fill: true,
+      pointRadius: 3, // Smaller points for mobile clarity
     }],
   };
 
@@ -53,6 +54,7 @@ const Dashboard = () => {
       backgroundColor: 'rgba(217, 255, 0, 0.1)',
       tension: 0.4,
       fill: true,
+      pointRadius: 3,
     }],
   };
 
@@ -62,35 +64,50 @@ const Dashboard = () => {
     : `₹${n}`;
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-white mb-6">Welcome to Dashboard</h1>
+    <div className="p-4 sm:p-6 lg:p-8 animate-in fade-in duration-500">
+      <div className="mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+          Welcome to Dashboard
+        </h1>
+        <p className="text-gray-500 text-xs sm:text-sm mt-1 uppercase tracking-widest font-bold">
+          System Overview // 2026
+        </p>
+      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      {/* Stats Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
         <StatCard
           title="Total Clients"
           value={loading ? '—' : String(stats?.totalUsers ?? 0)}
-          icon={<Users className="h-6 w-6 text-green-600" />}
+          icon={<Users className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />}
           bgColor="bg-green-100"
         />
         <StatCard
           title="Total Trainers"
           value={loading ? '—' : String(stats?.totalTrainers ?? 0)}
-          icon={<UserCog className="h-6 w-6 text-blue-600" />}
+          icon={<UserCog className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />}
           bgColor="bg-blue-100"
         />
-        <StatCard
-          title="Total Revenue"
-          value={loading ? '—' : fmt(stats?.totalRevenue ?? 0)}
-          icon={<DollarSign className="h-6 w-6 text-red-600" />}
-          bgColor="bg-red-100"
-        />
+        {/* Full width on sm:grid but back to 1/3 on lg:grid */}
+        <div className="sm:col-span-2 lg:col-span-1">
+          <StatCard
+            title="Total Revenue"
+            value={loading ? '—' : fmt(stats?.totalRevenue ?? 0)}
+            icon={<DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />}
+            bgColor="bg-red-100"
+          />
+        </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <LineChart title="User Growth (This Year)" data={userGrowthData} />
-        <LineChart title="Revenue Growth (This Year)" data={revenueGrowthData} />
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* Wrapping charts in a container to ensure they handle overflow/aspect ratio on tiny screens */}
+        <div className="bg-gray-900/40 p-1 rounded-2xl border border-gray-800">
+          <LineChart title="User Growth" data={userGrowthData} />
+        </div>
+        <div className="bg-gray-900/40 p-1 rounded-2xl border border-gray-800">
+          <LineChart title="Revenue Growth" data={revenueGrowthData} />
+        </div>
       </div>
     </div>
   );

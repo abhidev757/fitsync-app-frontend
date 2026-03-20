@@ -19,7 +19,6 @@ function Login() {
     }
   }, [navigate, adminInfo]);
 
-
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<AdminLoginData>({
@@ -43,14 +42,11 @@ function Login() {
       const response = await loginAdmin(formData);
       dispatch(setAdminCredentials({ ...response }));
       toast.success("Login successful!");
-      console.log("Login success:", response);
       navigate("/admin/adminDashboard");
     } catch (error: unknown) {
       if (error instanceof Error) {
-        console.error("Login failed:", error.message);
         toast.error(error.message || "Login failed");
       } else {
-        console.error("Unexpected error:", error);
         toast.error("An unexpected error occurred");
       }
     } finally {
@@ -59,22 +55,27 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="p-6">
-        <h1 className="text-xl font-bold flex items-center">
+    <div className="min-h-screen bg-black text-white flex flex-col">
+      {/* Header */}
+      <header className="p-6 md:p-8">
+        <h1 className="text-xl font-bold flex items-center justify-center md:justify-start">
           <span className="text-white font-bold mr-1">FIT</span>
           <span className="text-gray-400">SYNC</span>
         </h1>
-      </div>
+      </header>
 
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-120px)]">
-        <div className="w-full max-w-md px-6">
-          <h2 className="text-2xl font-semibold text-center mb-8">LOGIN</h2>
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+        <div className="w-full max-w-sm sm:max-w-md">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 tracking-tight uppercase">
+            ADMIN LOGIN
+          </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email Field */}
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium">
-                Email (admin@gmail.com)
+              <label htmlFor="email" className="block text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-500">
+                Email Address
               </label>
               <input
                 type="email"
@@ -82,15 +83,16 @@ function Login() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                placeholder="Enter your email"
-                className="w-full p-3 rounded bg-gray-800/50 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
+                placeholder="admin@gmail.com"
+                className="w-full p-4 rounded-xl bg-gray-900 border border-gray-800 focus:outline-none focus:border-gray-500 transition-all text-sm font-medium"
                 required
               />
             </div>
 
+            {/* Password Field */}
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-medium">
-                Password (admin123)
+              <label htmlFor="password" className="block text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-500">
+                Password
               </label>
               <div className="relative">
                 <input
@@ -99,30 +101,36 @@ function Login() {
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  placeholder="Enter your password"
-                  className="w-full p-3 rounded bg-gray-800/50 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
+                  placeholder="••••••••"
+                  className="w-full p-4 rounded-xl bg-gray-900 border border-gray-800 focus:outline-none focus:border-gray-500 transition-all text-sm font-medium"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-white transition-colors"
                 >
                   {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
                 </button>
               </div>
             </div>
 
+            {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-gray-200 text-black font-medium py-3 px-4 rounded hover:bg-gray-300 transition duration-200 disabled:bg-gray-500"
+              className="w-full bg-white text-black font-black py-4 px-4 rounded-xl uppercase text-xs tracking-[0.2em] hover:bg-gray-200 transition-all active:scale-[0.98] disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed mt-4"
               disabled={isLoading}
             >
-              {isLoading ? "Logging in..." : "LOGIN"}
+              {isLoading ? "Validating..." : "Execute Login"}
             </button>
           </form>
+
+          {/* Footer Decoration */}
+          <p className="mt-12 text-center text-[8px] font-black text-gray-700 uppercase tracking-[0.4em]">
+            Secure Admin Terminal // 2026
+          </p>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
