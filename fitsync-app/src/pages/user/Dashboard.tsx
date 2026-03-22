@@ -137,13 +137,13 @@ const Dashboard: React.FC = () => {
       <div className={active ? "filter blur-lg grayscale opacity-40 transition-all h-full" : "transition-all h-full"}>{children}</div>
       {active && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 rounded-2xl p-4 text-center z-10">
-          <p className="text-[#CCFF00] font-black mb-3 text-[10px] uppercase tracking-[0.2em]">Bio-Link Required</p>
+          <p className="text-[#CCFF00] font-black mb-3 text-[10px] uppercase tracking-[0.2em]">Google Fit Required</p>
           <Button
             onClick={connectGoogleFit}
             disabled={loadingFit}
             className="bg-[#CCFF00] text-black font-black text-xs py-5 px-6 rounded-xl hover:scale-105 active:scale-95 transition-all uppercase tracking-widest shadow-[0_0_20px_rgba(204,255,0,0.2)]"
           >
-            {loadingFit ? "Calibrating..." : "Sync Biometrics"}
+            {loadingFit ? "Syncing..." : "Sync Google Fit"}
           </Button>
         </div>
       )}
@@ -180,7 +180,7 @@ const Dashboard: React.FC = () => {
         <CardContent className="flex flex-col md:flex-row justify-between items-start md:items-center p-6 md:p-10 gap-6">
           <div className="space-y-2">
             <h2 className="text-2xl md:text-4xl font-black tracking-tighter uppercase italic">Welcome, {dashInfo?.user.name?.split(' ')[0] ?? "Operative"}</h2>
-            <p className="text-gray-500 font-bold text-xs md:text-sm uppercase tracking-tight max-w-sm">Dossier active. Biometrics syncing across all channels.</p>
+            <p className="text-gray-500 font-bold text-xs md:text-sm uppercase tracking-tight max-w-sm">Stay healthy by connecting your Google Fit account.</p>
           </div>
           <div className="w-full md:w-auto flex items-center justify-between md:justify-end gap-4">
              <span className="text-[10px] font-black text-gray-700 uppercase md:hidden tracking-widest">System Status</span>
